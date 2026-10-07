@@ -1,6 +1,5 @@
 import React from "react";
 import { rpc } from "@/lib/senzu-api";
-import { SystemStatus } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Cpu, CheckCircle2, XCircle } from "lucide-react";
@@ -9,7 +8,7 @@ import { Cpu, CheckCircle2, XCircle } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function KnowledgePage() {
-  const status = await rpc<SystemStatus>("getSystemStatus");
+  const status = await rpc("getSystemStatus");
 
   return (
     <div className="space-y-6">

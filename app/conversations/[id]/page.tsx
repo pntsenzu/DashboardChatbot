@@ -1,7 +1,6 @@
 import React from "react";
 import Link from "next/link";
 import { rpc } from "@/lib/senzu-api";
-import { ConversationMessage, MessageProcessing, AttentionItem } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 import { ArrowLeft, Bot, User, Cpu, AlertTriangle } from "lucide-react";
 
@@ -16,9 +15,9 @@ export default async function ConversationDetailPage({
   const conversationId = params.id;
 
   const [messages, processing, attention] = await Promise.all([
-    rpc<ConversationMessage[]>("getConversationMessages", conversationId),
-    rpc<MessageProcessing[]>("getConversationProcessing", conversationId),
-    rpc<AttentionItem[]>("getConversationAttention", conversationId),
+    rpc("getConversationMessages", conversationId),
+    rpc("getConversationProcessing", conversationId),
+    rpc("getConversationAttention", conversationId),
   ]);
 
   return (

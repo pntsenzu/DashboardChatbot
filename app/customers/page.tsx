@@ -1,7 +1,6 @@
 import React from "react";
 import Link from "next/link";
 import { rpc } from "@/lib/senzu-api";
-import { CustomerListRow, CustomerSummary } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -12,8 +11,8 @@ export default async function CustomersPage() {
   const now = Date.now();
 
   const [customers, summary] = await Promise.all([
-    rpc<CustomerListRow[]>("getCustomersWithInterest", { limit: 50 }),
-    rpc<CustomerSummary>("getCustomerSummary", now - 7 * DAY),
+    rpc("getCustomersWithInterest", { limit: 50 }),
+    rpc("getCustomerSummary", now - 7 * DAY),
   ]);
 
   return (

@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import { AppShellClient } from "@/components/app-shell-client";
 import { authOptions } from "@/lib/auth";
 import { rpc, isMockMode } from "@/lib/senzu-api";
-import { SystemStatus } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "Senzu Chatbot Dashboard",
@@ -24,8 +23,8 @@ export default async function RootLayout({
     (async () => {
       try {
         const [count, status] = await Promise.all([
-          rpc<number>("getOpenAttentionCount"),
-          rpc<SystemStatus>("getSystemStatus"),
+          rpc("getOpenAttentionCount"),
+          rpc("getSystemStatus"),
         ]);
         openAttentionCount = typeof count === "number" ? count : 0;
         botStatusIsStale = status?.isStale ?? null;

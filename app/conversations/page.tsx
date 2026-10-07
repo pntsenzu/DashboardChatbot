@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { rpc } from "@/lib/senzu-api";
-import { ConversationListItem, ConversationStatus } from "@/lib/types";
+import { ConversationStatus } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ConversationsToolbar } from "@/components/conversations-toolbar";
@@ -28,7 +28,7 @@ export default async function ConversationsPage({
   const limitParam = Number(searchParams.limit);
   const limit = [20, 50, 100, 200].includes(limitParam) ? limitParam : 50;
 
-  const conversations = await rpc<ConversationListItem[]>("getConversations", {
+  const conversations = await rpc("getConversations", {
     search: search || undefined,
     status,
     limit,

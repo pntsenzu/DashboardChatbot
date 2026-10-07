@@ -1,4 +1,152 @@
 import "server-only";
+import { DataApiError, type DataApiErrorKind } from "@/lib/api-error";
+import type {
+  AiInsightCounts,
+  AttentionItem,
+  ConversationListItem,
+  ConversationMessage,
+  ConversationStatus,
+  ConversationVolumePoint,
+  CustomerActivityPoint,
+  CustomerActivityStats,
+  CustomerDetail,
+  CustomerInterest,
+  CustomerListItem,
+  CustomerListRow,
+  CustomerNote,
+  CustomerPurchaseSignal,
+  CustomerRow,
+  CustomerSummary,
+  DailyPerformancePoint,
+  HeatmapCell,
+  InterestSignalPoint,
+  InterestStatus,
+  LatencyStats,
+  MessageProcessing,
+  PeriodStats,
+  ProductMentionSummary,
+  QuestionTypeCount,
+  RecentConversation,
+  RecentMessage,
+  SystemStatus,
+  TopProductRow,
+  UnknownProductMention,
+  VolumePoint,
+} from "@/lib/types";
+
+/** Nhóm thời gian hợp lệ của `getVolume` / `getCustomersPerBucket`. */
+export type GroupBy = "day" | "hour";
+
+/** Tham số của `getConversations` (data-api §6). */
+export interface ConversationQuery {
+  search?: string;
+  status?: ConversationStatus;
+  limit: number;
+}
+
+/** Tham số của `getCustomersWithInterest` (data-api §6). */
+export interface CustomerQuery {
+  search?: string;
+  status?: InterestStatus;
+  limit: number;
+}
+
+/**
+ * Chữ ký của toàn bộ 36 hàm đọc + 1 hàm ghi của Senzu Data API (data-api §6).
+ * Bảng này là nguồn sự thật về kiểu tham số/kết quả: `rpc("getPeriodStats", a, b)`
+ * sẽ trả về `Promise<PeriodStats>` và từ chối tên hàm sai ngay lúc type-check.
+ */
+export interface RpcMap {
+  // 1. Tổng quan & hệ thống
+  getPeriodStats: { args: [sinceMs: number, untilMs: number]; result: PeriodStats };
+  getDailyPerformanceTrend: {
+    args: [sinceMs: number, untilMs: number];
+    result: DailyPerformancePoint[];
+  };
+  getAiInsightCounts: { args: [sinceMs: number, untilMs: number]; result: AiInsightCounts };
+  getCustomersPerBucket: {
+    args: [sinceMs: number, groupBy: GroupBy, untilMs?: number];
+    result: VolumePoint[];
+  };
+  getAttentionItems: { args: [limit: number]; result: AttentionItem[] };
+  getRecentConversations: { args: [limit: number]; result: RecentConversation[] };
+  getOpenAttentionCount: { args: []; result: number };
+  getSystemStatus: { args: []; result: SystemStatus };
+
+  // 2. Lưu lượng & hiệu suất
+  getVolume: { args: [sinceMs: number, groupBy: GroupBy, untilMs?: number]; result: VolumePoint[] };
+  getHeatmap: { args: [sinceMs: number]; result: HeatmapCell[] };
+  getTopCustomers: { args: [sinceMs: number, limit: number]; result: CustomerRow[] };
+  getCustomerSummary: { args: [sinceMs: number]; result: CustomerSummary };
+  getResponseLatency: { args: [sinceMs: number]; result: LatencyStats };
+  getRecentMessages: { args: [limit: number, threadId?: string]; result: RecentMessage[] };
+
+  // 3. Hội thoại
+  getConversations: { args: [options: ConversationQuery]; result: ConversationListItem[] };
+  getConversationMessages: {
+    args: [conversationId: string];
+    result: ConversationMessage[];
+  };
+  getConversationProcessing: {
+    args: [conversationId: string];
+    result: MessageProcessing[];
+  };
+  getConversationAttention: { args: [conversationId: string]; result: AttentionItem[] };
+
+  // 4. Khách hàng
+  getCustomersWithInterest: { args: [options: CustomerQuery]; result: CustomerListRow[] };
+  getAllCustomers: { args: [limit: number]; result: CustomerListItem[] };
+  getTotalCustomersLifetime: { args: []; result: number };
+  getCustomerActivityStats: {
+    args: [sinceMs: number, untilMs: number];
+    result: CustomerActivityStats;
+  };
+  getCustomerActivityTrend: {
+    args: [sinceMs: number, untilMs: number];
+    result: CustomerActivityPoint[];
+  };
+  getConversationVolumeTrend: {
+    args: [sinceMs: number, untilMs: number];
+    result: ConversationVolumePoint[];
+  };
+  getInterestSignalsTrend: {
+    args: [sinceMs: number, untilMs: number];
+    result: InterestSignalPoint[];
+  };
+  getOpenAttentionItems: { args: [limit: number]; result: AttentionItem[] };
+  getCustomerDetail: { args: [customerId: string]; result: CustomerDetail | null };
+  getCustomerConversations: {
+    args: [customerId: string, limit: number];
+    result: ConversationListItem[];
+  };
+  getCustomerInterests: { args: [customerId: string]; result: CustomerInterest[] };
+  getCustomerPurchaseSignal: {
+    args: [customerId: string];
+    result: CustomerPurchaseSignal;
+  };
+  getCustomerOpenAttention: { args: [customerId: string]; result: AttentionItem[] };
+  getCustomerNotes: { args: [customerId: string]; result: CustomerNote[] };
+  insertCustomerNote: {
+    args: [customerId: string, authorEmail: string, authorName: string | null, text: string];
+    result: null;
+  };
+
+  // 5. Sản phẩm
+  getTopProducts: { args: [sinceMs: number, limit: number]; result: TopProductRow[] };
+  getProductQuestionBreakdown: {
+    args: [sinceMs: number, productId?: string];
+    result: QuestionTypeCount[];
+  };
+  getProductMentionSummary: { args: [sinceMs: number]; result: ProductMentionSummary };
+  getUnknownProductMentions: {
+    args: [sinceMs: number, limit: number];
+    result: UnknownProductMention[];
+  };
+}
+
+export type RpcFn = keyof RpcMap;
+export type RpcArgs<F extends RpcFn> = RpcMap[F]["args"];
+export type RpcResult<F extends RpcFn> = RpcMap[F]["result"];
 
 /**
  * true khi mọi dữ liệu đang là dữ liệu mẫu (không có DATA_API_TOKEN).
@@ -10,53 +158,392 @@ export function isMockMode(): boolean {
 
 const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
 
+/** data-api §9: timeout của client. */
+const RPC_TIMEOUT_MS = 15_000;
+/** data-api §9: body request tối đa 64 KB. */
+const MAX_BODY_BYTES = 64 * 1024;
+/** data-api §9: "Luôn truyền limit hợp lý (20–200)" — chặn limit quét quá lớn. */
+const MAX_LIMIT = 200;
+const MIN_LIMIT = 1;
+const MAX_SEARCH_LEN = 120;
+/** data-api §9: UI tự giới hạn nội dung ghi chú. */
+const MAX_NOTE_LEN = 2_000;
+
+const CONVERSATION_STATUSES: readonly ConversationStatus[] = ["attention", "active", "answered"];
+const INTEREST_STATUSES: readonly InterestStatus[] = [
+  "purchase_intent",
+  "considering",
+  "new",
+  "inactive",
+  "unknown",
+];
+
 function hasRealToken(): boolean {
   return Boolean(process.env.DATA_API_TOKEN?.trim());
 }
 
 /**
- * Gọi một hàm của Senzu Data API.
+ * Kiểm tra tham số của TỪNG hàm (data-api §3: "Server không kiểm tra kiểu
+ * tham số — hãy validate ở phía UI").
+ *
+ * Ký hiệu: hậu tố `?` = tham số tùy chọn ở cuối (server đổi `null` -> `undefined`).
+ * Khối `Record` bắt buộc đủ mọi khóa của `RpcFn`, nên thiếu hàm là lỗi type-check.
+ */
+const ARG_SPECS: Record<RpcFn, readonly string[]> = {
+  // Tổng quan & hệ thống
+  getPeriodStats: ["ms", "ms"],
+  getDailyPerformanceTrend: ["ms", "ms"],
+  getAiInsightCounts: ["ms", "ms"],
+  getCustomersPerBucket: ["ms", "groupBy", "ms?"],
+  getAttentionItems: ["limit"],
+  getRecentConversations: ["limit"],
+  getOpenAttentionCount: [],
+  getSystemStatus: [],
+  // Lưu lượng & hiệu suất
+  getVolume: ["ms", "groupBy", "ms?"],
+  getHeatmap: ["ms"],
+  getTopCustomers: ["ms", "limit"],
+  getCustomerSummary: ["ms"],
+  getResponseLatency: ["ms"],
+  getRecentMessages: ["limit", "id?"],
+  // Hội thoại
+  getConversations: ["conversationQuery"],
+  getConversationMessages: ["id"],
+  getConversationProcessing: ["id"],
+  getConversationAttention: ["id"],
+  // Khách hàng
+  getCustomersWithInterest: ["customerQuery"],
+  getAllCustomers: ["limit"],
+  getTotalCustomersLifetime: [],
+  getCustomerActivityStats: ["ms", "ms"],
+  getCustomerActivityTrend: ["ms", "ms"],
+  getConversationVolumeTrend: ["ms", "ms"],
+  getInterestSignalsTrend: ["ms", "ms"],
+  getOpenAttentionItems: ["limit"],
+  getCustomerDetail: ["id"],
+  getCustomerConversations: ["id", "limit"],
+  getCustomerInterests: ["id"],
+  getCustomerPurchaseSignal: ["id"],
+  getCustomerOpenAttention: ["id"],
+  getCustomerNotes: ["id"],
+  insertCustomerNote: ["id", "email", "nullableString", "text"],
+  // Sản phẩm
+  getTopProducts: ["ms", "limit"],
+  getProductQuestionBreakdown: ["ms", "id?"],
+  getProductMentionSummary: ["ms"],
+  getUnknownProductMentions: ["ms", "limit"],
+};
+
+function badRequest(fn: string, message: string): DataApiError {
+  return new DataApiError({ kind: "bad-request", fn, body: message });
+}
+
+/** Trích thông điệp gốc của lỗi mạng (fetch -> TypeError: fetch failed -> ECONNREFUSED...). */
+function networkDetail(cause: unknown): string {
+  const parts: string[] = [];
+  let current: unknown = cause;
+  for (let i = 0; i < 4 && current; i++) {
+    const message = (current as Error | undefined)?.message;
+    if (message && !parts.includes(message)) parts.push(message);
+    current = (current as { cause?: unknown }).cause;
+  }
+  return parts.join(" -> ");
+}
+
+function normalizeLimit(fn: string, value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw badRequest(fn, `limit phải là số, nhận được ${JSON.stringify(value)}`);
+  }
+  const n = Math.round(value);
+  if (n < MIN_LIMIT) throw badRequest(fn, `limit phải >= ${MIN_LIMIT}`);
+  if (n > MAX_LIMIT) {
+    // data-api §9: limit lớn làm chậm hàm quét theo từng thread.
+    console.warn(`[senzu-api] ${fn}: limit ${n} > ${MAX_LIMIT} -> chặn về ${MAX_LIMIT}.`);
+    return MAX_LIMIT;
+  }
+  return n;
+}
+
+function normalizeEpochMs(fn: string, label: string, value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw badRequest(fn, `${label} phải là epoch millisecond (number), nhận được ${JSON.stringify(value)}`);
+  }
+  if (value < 0) throw badRequest(fn, `${label} không được âm`);
+  return value;
+}
+
+function normalizeId(fn: string, label: string, value: unknown): string {
+  if (typeof value !== "string" || value.trim() === "") {
+    throw badRequest(fn, `${label} phải là chuỗi không rỗng`);
+  }
+  return value;
+}
+
+function normalizeEnum<T extends string>(
+  fn: string,
+  label: string,
+  value: unknown,
+  allowed: readonly T[]
+): T {
+  if (typeof value !== "string" || !allowed.includes(value as T)) {
+    throw badRequest(
+      fn,
+      `${label} không hợp lệ (${JSON.stringify(value)}); chỉ chấp nhận: ${allowed.join(", ")}`
+    );
+  }
+  return value as T;
+}
+
+function normalizeQuery<T extends { limit: number; search?: string; status?: string }>(
+  fn: string,
+  value: unknown,
+  statuses: readonly string[],
+  build: (input: { limit: number; search?: string; status?: string }) => T
+): T {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw badRequest(fn, "options phải là object { search?, status?, limit }");
+  }
+  const raw = value as Record<string, unknown>;
+  const input: { limit: number; search?: string; status?: string } = {
+    limit: normalizeLimit(fn, raw.limit ?? 50),
+  };
+  if (raw.search !== undefined && raw.search !== null && raw.search !== "") {
+    if (typeof raw.search !== "string") throw badRequest(fn, "options.search phải là chuỗi");
+    const search = raw.search.trim().slice(0, MAX_SEARCH_LEN);
+    if (search) input.search = search;
+  }
+  if (raw.status !== undefined && raw.status !== null && raw.status !== "") {
+    input.status = normalizeEnum(fn, "options.status", raw.status, statuses);
+  }
+  return build(input);
+}
+
+/** Trả về mảng tham số đã chuẩn hoá; ném `DataApiError` (bad-request) nếu sai. */
+function normalizeArgs(fn: RpcFn, args: readonly unknown[]): unknown[] {
+  const spec = ARG_SPECS[fn];
+  if (!spec) return [...args];
+  if (args.length > spec.length) {
+    throw badRequest(fn, `thừa ${args.length - spec.length} tham số (chỉ nhận tối đa ${spec.length})`);
+  }
+
+  const out: unknown[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const token = spec[i];
+    const optional = token.endsWith("?");
+    const kind = optional ? token.slice(0, -1) : token;
+    const value = args[i];
+
+    if (value === undefined || value === null) {
+      if (kind === "nullableString" || optional) {
+        out.push(value);
+        continue;
+      }
+      throw badRequest(fn, `tham số #${i + 1} (${kind}) là bắt buộc`);
+    }
+
+    switch (kind) {
+      case "ms":
+        out.push(normalizeEpochMs(fn, `tham số #${i + 1}`, value));
+        break;
+      case "limit":
+        out.push(normalizeLimit(fn, value));
+        break;
+      case "groupBy":
+        out.push(normalizeEnum(fn, `tham số #${i + 1}`, value, ["day", "hour"] as const));
+        break;
+      case "id":
+        out.push(normalizeId(fn, `tham số #${i + 1}`, value));
+        break;
+      case "email": {
+        const email = normalizeId(fn, "authorEmail", value);
+        if (!email.includes("@")) throw badRequest(fn, "authorEmail phải là địa chỉ email hợp lệ");
+        out.push(email);
+        break;
+      }
+      case "nullableString":
+        if (typeof value !== "string") throw badRequest(fn, `tham số #${i + 1} phải là chuỗi hoặc null`);
+        out.push(value);
+        break;
+      case "text": {
+        if (typeof value !== "string") throw badRequest(fn, "text phải là chuỗi");
+        const text = value.trim();
+        if (!text) throw badRequest(fn, "text không được rỗng");
+        if (text.length > MAX_NOTE_LEN) {
+          throw badRequest(fn, `text dài ${text.length} ký tự, tối đa ${MAX_NOTE_LEN}`);
+        }
+        out.push(text);
+        break;
+      }
+      case "conversationQuery":
+        out.push(
+          normalizeQuery<ConversationQuery>(fn, value, CONVERSATION_STATUSES, (input) => ({
+            ...(input.search ? { search: input.search } : {}),
+            ...(input.status ? { status: input.status as ConversationStatus } : {}),
+            limit: input.limit,
+          }))
+        );
+        break;
+      case "customerQuery":
+        out.push(
+          normalizeQuery<CustomerQuery>(fn, value, INTEREST_STATUSES, (input) => ({
+            ...(input.search ? { search: input.search } : {}),
+            ...(input.status ? { status: input.status as InterestStatus } : {}),
+            limit: input.limit,
+          }))
+        );
+        break;
+      default:
+        throw badRequest(fn, `không biết cách kiểm tra tham số loại "${kind}"`);
+    }
+  }
+  return out;
+}
+
+function classifyHttpError(fn: string, status: number, body: string): DataApiError {
+  const kind: DataApiErrorKind =
+    status === 400
+      ? "bad-request"
+      : status === 401 || status === 403
+        ? "unauthorized"
+        : status === 404
+          ? "not-found"
+          : status >= 500
+            ? "upstream"
+            : "unknown";
+  return new DataApiError({ kind, fn, status, body });
+}
+
+/** Lấy `error` từ body JSON của Data API (nếu có) để báo lỗi đúng nguyên nhân. */
+function extractErrorBody(text: string): string {
+  if (!text) return "";
+  try {
+    const parsed = JSON.parse(text) as { error?: unknown; message?: unknown };
+    const detail =
+      typeof parsed.error === "string"
+        ? parsed.error
+        : typeof parsed.message === "string"
+          ? parsed.message
+          : null;
+    if (detail) return `${detail} — ${text.slice(0, 200)}`;
+  } catch {
+    // body không phải JSON -> dùng nguyên văn (đã cắt bớt ở DataApiError)
+  }
+  return text;
+}
+
+/**
+ * Gọi một hàm của Senzu Data API (data-api §3).
+ *
+ * Kiểu dữ liệu: tên hàm và tham số được kiểm tra bằng `RpcMap`, kết quả suy ra
+ * tự động — không còn `rpc<SomeType>("tên-hàm-chuỗi")` được.
+ *
+ * Xử lý lỗi: mọi thất bại đều ném `DataApiError` có `kind` để UI phân biệt
+ * "thiếu cấu hình" / "token sai" / "hàm không tồn tại" / "server lỗi" / "mạng".
  *
  * Quy tắc (data-api §9):
- * - Có token -> PHẢI gọi thật; HTTP != 200 hoặc lỗi mạng -> ném lỗi (không rơi về mock).
- * - Không token -> chỉ được dùng mock ở development / lúc build;
+ * - Có token -> PHẢI gọi thật; lỗi HTTP/mạng -> ném lỗi (không rơi về mock).
+ * - Không token -> chỉ mock ở development / lúc build;
  *   ở production runtime phải ném lỗi cấu hình thay vì trả dữ liệu giả.
  */
-export async function rpc<T>(fn: string, ...args: unknown[]): Promise<T> {
+export async function rpc<F extends RpcFn>(fn: F, ...args: RpcArgs<F>): Promise<RpcResult<F>> {
+  const validated = normalizeArgs(fn, args);
+
   const url = process.env.DATA_API_URL || "https://api-bot.senzu-base.vn";
   const token = process.env.DATA_API_TOKEN?.trim();
 
   if (!token) {
     if (process.env.NODE_ENV === "production" && !isBuildPhase) {
-      throw new Error(
-        `Cấu hình thiếu DATA_API_TOKEN: không thể gọi ${fn} và không được dùng dữ liệu mẫu ở production.`
-      );
+      throw new DataApiError({
+        kind: "config",
+        fn,
+        body: "DATA_API_TOKEN trống",
+        message: `Cấu hình thiếu DATA_API_TOKEN: không thể gọi ${fn} và không được dùng dữ liệu mẫu ở production.`,
+      });
     }
     console.warn(`[senzu-api] DATA_API_TOKEN trống -> dùng dữ liệu MẪU cho ${fn}.`);
-    return getMockData<T>(fn, args);
+    return getMockData<RpcResult<F>>(fn, validated);
   }
 
-  const res = await fetch(`${url}/rpc`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ fn, args }),
-    cache: "no-store",
-    signal: AbortSignal.timeout(10_000),
-  });
+  const body = JSON.stringify({ fn, args: validated });
+  if (Buffer.byteLength(body, "utf8") > MAX_BODY_BYTES) {
+    throw badRequest(fn, `body dài hơn ${MAX_BODY_BYTES / 1024} KB`);
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(`${url}/rpc`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body,
+      cache: "no-store",
+      signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
+    });
+  } catch (cause) {
+    const name = (cause as Error | undefined)?.name;
+    const timedOut = name === "TimeoutError" || name === "AbortError";
+    const error = new DataApiError({
+      kind: timedOut ? "timeout" : "network",
+      fn,
+      body: timedOut ? `quá ${RPC_TIMEOUT_MS}ms` : networkDetail(cause),
+      cause,
+    });
+    console.error(error.toLogString(), timedOut ? "" : cause);
+    throw error;
+  }
+
+  const text = await res.text().catch(() => "");
 
   if (!res.ok) {
-    const errorText = await res.text().catch(() => "");
-    throw new Error(`Data API ${fn} HTTP ${res.status}: ${errorText.slice(0, 300)}`);
+    const error = classifyHttpError(fn, res.status, extractErrorBody(text));
+    console.error(error.toLogString());
+    throw error;
   }
 
-  const json = (await res.json()) as { result: T };
-  return json.result;
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch (cause) {
+    const error = new DataApiError({ kind: "bad-response", fn, status: res.status, body: text, cause });
+    console.error(error.toLogString());
+    throw error;
+  }
+
+  if (typeof json !== "object" || json === null || !("result" in json)) {
+    const error = new DataApiError({
+      kind: "bad-response",
+      fn,
+      status: res.status,
+      body: text,
+      message: `Data API ${fn}: body 200 thiếu khóa "result"`,
+    });
+    console.error(error.toLogString());
+    throw error;
+  }
+
+  return (json as { result: RpcResult<F> }).result;
 }
 
-function getMockData<T>(fn: string, args: unknown[]): T {
+/** Kiểm tra `/health` của Data API (data-api §1) — không cần token. */
+export async function getDataApiHealth(
+  timeoutMs = 5_000
+): Promise<{ ok: boolean; detail: string }> {
+  const url = process.env.DATA_API_URL || "https://api-bot.senzu-base.vn";
+  try {
+    const res = await fetch(`${url}/health`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    const text = await res.text().catch(() => "");
+    return { ok: res.ok && text.includes("true"), detail: text.slice(0, 200) };
+  } catch (cause) {
+    return { ok: false, detail: String((cause as Error | undefined)?.message ?? cause) };
+  }
+}
+
+function getMockData<T>(fn: RpcFn, args: readonly unknown[]): T {
   const now = Date.now();
   const DAY = 86_400_000;
 

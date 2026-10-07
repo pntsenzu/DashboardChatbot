@@ -1,7 +1,6 @@
 import React from "react";
 import Link from "next/link";
 import { rpc } from "@/lib/senzu-api";
-import { PeriodStats, AttentionItem, RecentConversation, SystemStatus, AiInsightCounts } from "@/lib/types";
 import { formatMs, formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,12 +20,12 @@ export default async function OverviewPage() {
   const now = Date.now();
 
   const [currentStats, prevStats, attentionItems, recentConvs, systemStatus, aiInsights] = await Promise.all([
-    rpc<PeriodStats>("getPeriodStats", now - 7 * DAY, now),
-    rpc<PeriodStats>("getPeriodStats", now - 14 * DAY, now - 7 * DAY),
-    rpc<AttentionItem[]>("getAttentionItems", 5),
-    rpc<RecentConversation[]>("getRecentConversations", 5),
-    rpc<SystemStatus>("getSystemStatus"),
-    rpc<AiInsightCounts>("getAiInsightCounts", now - 7 * DAY, now),
+    rpc("getPeriodStats", now - 7 * DAY, now),
+    rpc("getPeriodStats", now - 14 * DAY, now - 7 * DAY),
+    rpc("getAttentionItems", 5),
+    rpc("getRecentConversations", 5),
+    rpc("getSystemStatus"),
+    rpc("getAiInsightCounts", now - 7 * DAY, now),
   ]);
 
   const calcDiff = (curr: number, prev: number): number | null => {

@@ -1,6 +1,5 @@
 import React from "react";
 import { rpc } from "@/lib/senzu-api";
-import { TopProductRow, QuestionTypeCount, ProductMentionSummary, UnknownProductMention } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 
 export const revalidate = 30;
@@ -10,10 +9,10 @@ export default async function ProductsPage() {
   const now = Date.now();
 
   const [topProducts, questionTypes, summary, unknownProducts] = await Promise.all([
-    rpc<TopProductRow[]>("getTopProducts", now - 7 * DAY, 10),
-    rpc<QuestionTypeCount[]>("getProductQuestionBreakdown", now - 7 * DAY),
-    rpc<ProductMentionSummary>("getProductMentionSummary", now - 7 * DAY),
-    rpc<UnknownProductMention[]>("getUnknownProductMentions", now - 7 * DAY, 10),
+    rpc("getTopProducts", now - 7 * DAY, 10),
+    rpc("getProductQuestionBreakdown", now - 7 * DAY),
+    rpc("getProductMentionSummary", now - 7 * DAY),
+    rpc("getUnknownProductMentions", now - 7 * DAY, 10),
   ]);
 
   return (

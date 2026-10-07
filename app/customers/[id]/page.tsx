@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { rpc } from "@/lib/senzu-api";
-import { CustomerDetail, CustomerInterest, CustomerNote, ConversationListItem } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MessageSquare, ShoppingBag, FileText, Send } from "lucide-react";
@@ -18,7 +17,8 @@ async function addNoteAction(formData: FormData) {
   "use server";
   const customerId = String(formData.get("customerId") || "");
   const text = String(formData.get("text") || "").trim();
-  if (!text || !customerId) return;
+  // data-api §9: UI tự giới hạn ghi chú (tối đa 2000 ký tự).
+  if (!text || text.length > 2000 || !customerId) return;
 
   // data-api §9: insertCustomerNote tin tưởng tác giả do bên gọi gửi lên,
   // nên BẮT BUỘC lấy từ session — không bao giờ hardcode.
@@ -43,10 +43,10 @@ export default async function CustomerDetailPage({
 
   // getCustomerConversations: danh sách hội thoại của khách (data-api §6).
   const [detail, interests, notes, conversations] = await Promise.all([
-    rpc<CustomerDetail | null>("getCustomerDetail", customerId),
-    rpc<CustomerInterest[]>("getCustomerInterests", customerId),
-    rpc<CustomerNote[]>("getCustomerNotes", customerId),
-    rpc<ConversationListItem[]>("getCustomerConversations", customerId, 10),
+    rpc("getCustomerDetail", customerId),
+    rpc("getCustomerInterests", customerId),
+    rpc("getCustomerNotes", customerId),
+    rpc("getCustomerConversations", customerId, 10),
   ]);
 
   if (!detail) {

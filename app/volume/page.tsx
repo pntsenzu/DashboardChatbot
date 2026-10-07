@@ -1,6 +1,5 @@
 import React from "react";
 import { rpc } from "@/lib/senzu-api";
-import { VolumePoint, LatencyStats, CustomerRow } from "@/lib/types";
 import { formatMs } from "@/lib/utils";
 
 export const revalidate = 30;
@@ -10,9 +9,9 @@ export default async function VolumePage() {
   const now = Date.now();
 
   const [volume, latency, topCustomers] = await Promise.all([
-    rpc<VolumePoint[]>("getVolume", now - 7 * DAY, "day"),
-    rpc<LatencyStats>("getResponseLatency", now - 7 * DAY),
-    rpc<CustomerRow[]>("getTopCustomers", now - 7 * DAY, 10),
+    rpc("getVolume", now - 7 * DAY, "day"),
+    rpc("getResponseLatency", now - 7 * DAY),
+    rpc("getTopCustomers", now - 7 * DAY, 10),
   ]);
 
   return (
