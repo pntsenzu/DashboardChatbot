@@ -1,6 +1,8 @@
 import React from "react";
 import Link from "next/link";
 import { rpc } from "@/lib/senzu-api";
+import { fmt } from "@/lib/i18n";
+import { getDict } from "@/lib/i18n-server";
 import { formatDateTime } from "@/lib/utils";
 import { ArrowLeft, Bot, User, Cpu } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
@@ -23,8 +25,11 @@ export default async function ConversationDetailPage({
     rpc("getConversationAttention", conversationId),
   ]);
 
+  const t = getDict();
+  const dl = t.dateLocale;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Màn chi tiết: tiêu đề trang = link quay lại (§7) */}
       <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
@@ -33,17 +38,22 @@ export default async function ConversationDetailPage({
             className="hit-area inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
-            Quay lại danh sách hội thoại
+            {t.conversationDetail.back}
           </Link>
-          <h1 className="t-page mt-1 truncate">Thread: {conversationId}</h1>
+          <h1 className="t-page mt-1 truncate">
+            {t.conversationDetail.threadPrefix} {conversationId}
+          </h1>
           <p className="t-meta tabular">
-            {messages.length} tin nhắn · {processing.length} lượt xử lý AI
+            {fmt(t.conversationDetail.meta, {
+              messages: messages.length,
+              processings: processing.length,
+            })}
           </p>
         </div>
       </div>
 
       {attention.length > 0 && (
-        <Alert variant="warning" title="Cảnh báo cần chú ý">
+        <Alert variant="warning" title={t.conversationDetail.warningTitle}>
           <ul className="mt-1 space-y-1">
             {attention.map((a) => (
               <li key={a.id} className="t-meta text-foreground">
@@ -56,15 +66,15 @@ export default async function ConversationDetailPage({
 
       <Section
         titleId="message-history"
-        title="Lịch sử tin nhắn"
-        description="Bên trái: khách gửi · Bên phải: bot / nhân viên trả lời"
+        title={t.conversationDetail.historyTitle}
+        description={t.conversationDetail.historyDesc}
       >
         <Card>
-          <CardContent className="min-h-[400px] space-y-4">
+          <CardContent className="space-y-4">
             {messages.length === 0 ? (
               <EmptyState
-                title="Chưa có tin nhắn nào"
-                description="Hội thoại này chưa ghi nhận tin nhắn."
+                title={t.conversationDetail.emptyTitle}
+                description={t.conversationDetail.emptyDesc}
               />
             ) : (
               <ul className="space-y-3">
@@ -85,8 +95,13 @@ export default async function ConversationDetailPage({
                         ) : (
                           <User className="size-3 text-muted-foreground" aria-hidden="true" />
                         )}
-                        <span>{msg.senderName || (isBot ? "Bot AI" : "Khách")}</span>
-                        <span className="tabular text-2xs">{formatDateTime(msg.timestampMs)}</span>
+                        <span>
+                          {msg.senderName ||
+                            (isBot
+                              ? t.conversationDetail.senderBot
+                              : t.conversationDetail.senderCustomer)}
+                        </span>
+                        <span className="tabular text-2xs">{formatDateTime(msg.timestampMs, dl)}</span>
                       </span>
 
                       {/* Bong bóng tin nhắn (§14) — có tiền tố sr-only cho screen reader */}
@@ -97,15 +112,23 @@ export default async function ConversationDetailPage({
                             : "rounded-bl-sm border-border bg-card text-foreground"
                         }`}
                       >
-                        <span className="sr-only">{isBot ? "Bạn gửi: " : "Khách gửi: "}</span>
+                        <span className="sr-only">
+                          {isBot
+                            ? t.conversationDetail.srYou
+                            : t.conversationDetail.srCustomer}
+                        </span>
                         {msg.text}
                       </div>
 
                       {proc ? (
                         <span className="mt-1 flex items-center gap-2 rounded border border-border bg-muted/60 px-2 py-0.5 text-2xs">
                           <Cpu className="size-3" aria-hidden="true" />
-                          <span className="tabular">Model: {proc.aiModel}</span>
-                          <span className="truncate">Knowledge: {proc.knowledgePath}</span>
+                          <span className="tabular">
+                            {t.conversationDetail.modelLabel} {proc.aiModel}
+                          </span>
+                          <span className="truncate">
+                            {t.conversationDetail.knowledgeLabel} {proc.knowledgePath}
+                          </span>
                         </span>
                       ) : null}
                     </li>

@@ -43,40 +43,43 @@ export interface DataApiErrorInit {
   message?: string;
 }
 
-/** Thông báo thân thiện (tiếng Việt) — hiển thị được cho người dùng. */
-function friendlyMessage(init: DataApiErrorInit): string {
+import { DICT, fmt, type Locale } from "@/lib/i18n";
+
+/**
+ * Thông báo thân thiện — hiển thị được cho người dùng, dịch theo `locale`.
+ * Cùng bảng chuỗi với `t.apiErrors` trong `lib/i18n.ts`.
+ */
+function friendlyMessage(init: DataApiErrorInit, locale: Locale = "vi"): string {
   const { kind, fn } = init;
   const status = init.status ?? 0;
   const body = (init.body ?? "").slice(0, 300);
   if (init.message) return init.message;
 
+  const m = DICT[locale].apiErrors;
+
   switch (kind) {
     case "config":
-      return `Cấu hình thiếu DATA_API_TOKEN nên không thể gọi ${fn}. Liên hệ quản trị viên để điền token vào .env.`;
+      return fmt(m.config, { fn });
     case "bad-request":
-      return `Yêu cầu dữ liệu không hợp lệ (${fn}): ${body || "tham số sai"}.`;
+      return fmt(m.badRequest, { fn, detail: body || m.badRequestDetail });
     case "unauthorized":
-      return `Máy chủ dữ liệu từ chối truy cập ${fn}: DATA_API_TOKEN sai hoặc đã bị thu hồi. Liên hệ quản trị viên Senzu cấp token mới.`;
+      return fmt(m.unauthorized, { fn });
     case "not-found":
-      return `Hàm ${fn} không tồn tại trên máy chủ. Phiên bản Data API có thể đã cũ — báo team backend cập nhật.`;
+      return fmt(m.notFound, { fn });
     case "timeout":
-      return `Máy chủ dữ liệu phản hồi quá chậm khi gọi ${fn} (${body}). Kiểm tra mạng hoặc thử lại sau.`;
+      return fmt(m.timeout, { fn });
     case "network":
-      return `Không kết nối được tới máy chủ dữ liệu khi gọi ${fn}. Kiểm tra mạng hoặc biến DATA_API_URL.`;
+      return fmt(m.network, { fn });
     case "bad-response":
-      return `Dữ liệu trả về từ ${fn} không đúng định dạng mà Data API cam kết.`;
+      return fmt(m.badResponse, { fn });
     case "upstream":
-      if (status === 500) {
-        return `Máy chủ dữ liệu gặp lỗi khi truy vấn ${fn}. Vui lòng thử lại sau ít phút.`;
-      }
-      if (status >= 502 && status <= 504) {
-        return `Máy chủ dữ liệu đang dừng hoặc khởi động lại (${fn}). Vui lòng thử lại sau.`;
-      }
-      return `Data API ${fn} lỗi HTTP ${status}: ${body}`;
+      if (status === 500) return fmt(m.upstream500, { fn });
+      if (status >= 502 && status <= 504) return fmt(m.upstreamGateway, { fn });
+      return fmt(m.upstreamHttp, { fn, status, body });
     default:
       return status
-        ? `Data API ${fn} lỗi HTTP ${status}: ${body}`
-        : `Data API ${fn}: ${body || "lỗi không xác định"}`;
+        ? fmt(m.upstreamHttp, { fn, status, body })
+        : fmt(m.unknownWithFn, { fn, detail: body || m.unknownDetail });
   }
 }
 
@@ -113,9 +116,16 @@ export function isDataApiError(error: unknown): error is DataApiError {
  *
  * Nhận cả instance (server) lẫn Error thường do Next serialize sang client —
  * nên fallback về `error.message` (đã thân thiện) thay vì chuỗi HTTP thô.
+ * Lưu ý: lỗi ném từ server sang client chỉ giữ `{ message, digest }`, nên chỉ
+ * dịch được khi còn nguyên instance `DataApiError`.
  */
-export function describeApiError(error: unknown): string {
-  if (isDataApiError(error)) return error.message;
+export function describeApiError(error: unknown, locale: Locale = "vi"): string {
+  if (isDataApiError(error)) {
+    return friendlyMessage(
+      { kind: error.kind, fn: error.fn, status: error.status, body: error.body },
+      locale
+    );
+  }
   if (error instanceof Error && error.message) return error.message;
-  return "Máy chủ dữ liệu không phản hồi hoặc cấu hình chưa đúng.";
+  return DICT[locale].apiErrors.unknown;
 }

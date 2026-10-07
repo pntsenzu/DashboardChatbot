@@ -1,9 +1,13 @@
+"use client";
+
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { fmt as tfmt } from "@/lib/i18n";
+import { useI18n } from "@/components/i18n-provider";
 import type { HeatmapCell } from "@/lib/types";
 
-/** data-api §5: `weekday` 0=CN … 6=T7. */
-const WEEK_LABELS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+/** data-api §5: `weekday` 0=CN … 6=T7 — nhãn cột lấy theo locale. */
+/** 24 cột giờ (00…23). */
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 /** 8 nhãn trục giờ, mỗi nhãn phủ 3 cột. */
 const HOUR_TICKS = [0, 3, 6, 9, 12, 15, 18, 21];
@@ -28,6 +32,8 @@ export interface HeatmapProps {
  * Cột `< 640px` cuộn ngang trong khung (§16: bảng/ma trận không được tràn trang).
  */
 export function Heatmap({ cells, title, description, className }: HeatmapProps) {
+  const { t } = useI18n();
+  const weekLabels = t.chart.weekdays;
   const key = (w: number, h: number) => `${w}:${h}`;
   const lookup = new Map<string, number>();
   for (const cell of cells) {
@@ -50,9 +56,15 @@ export function Heatmap({ cells, title, description, className }: HeatmapProps) 
     return STEPS[step];
   };
 
+  const top = nonZero[0];
   const label = nonZero.length
-    ? `${title}: ${nonZero.length} khung giờ có tin, cao nhất ${max} tin lúc ${WEEK_LABELS[nonZero[0].weekday]} ${String(nonZero[0].hour).padStart(2, "0")}:00.`
-    : `${title}: chưa có dữ liệu.`;
+    ? tfmt(t.chart.heatmapSummary, {
+        title,
+        n: nonZero.length,
+        max,
+        when: `${weekLabels[top.weekday]} ${String(top.hour).padStart(2, "0")}:00`,
+      })
+    : tfmt(t.chart.heatmapSummaryEmpty, { title });
 
   return (
     <figure className={cn("m-0 space-y-3", className)}>
@@ -73,14 +85,16 @@ export function Heatmap({ cells, title, description, className }: HeatmapProps) 
                 />
               ))}
             </span>
-            <span className="text-2xs tabular text-muted-foreground">{max} tin</span>
+            <span className="text-2xs tabular text-muted-foreground">
+              {tfmt(t.chart.heatmapMaxUnit, { max })}
+            </span>
           </div>
         )}
       </figcaption>
 
       {nonZero.length === 0 ? (
         <p className="t-meta" role="status">
-          Chưa có tin nhắn nào trong kỳ để dựng ma trận giờ.
+          {t.chart.heatmapEmpty}
         </p>
       ) : (
         <div
@@ -104,7 +118,7 @@ export function Heatmap({ cells, title, description, className }: HeatmapProps) 
               ))}
             </div>
 
-            {WEEK_LABELS.map((weekLabel, weekday) => (
+            {weekLabels.map((weekLabel, weekday) => (
               <div
                 key={weekLabel}
                 className="grid grid-cols-[2rem_repeat(24,minmax(0,1fr))] items-center gap-1"
@@ -118,11 +132,12 @@ export function Heatmap({ cells, title, description, className }: HeatmapProps) 
                       key={hour}
                       title={
                         count > 0
-                          ? `${weekLabel} ${String(hour).padStart(2, "0")}:00 · ${count} tin`
+                          ? `${weekLabel} ${String(hour).padStart(2, "0")}:00 · ${count} ${t.common.unit.message}`
                           : undefined
                       }
-                      className="h-4 rounded-[2px] border border-border/40"
+                      className="rounded-[2px] border border-border/40"
                       style={{
+                        height: "clamp(10px,2vh,16px)",
                         backgroundColor:
                           alpha > 0 ? `hsl(var(--foreground) / ${alpha})` : "hsl(var(--muted) / 0.6)",
                       }}
@@ -138,18 +153,18 @@ export function Heatmap({ cells, title, description, className }: HeatmapProps) 
       {/* Bảng số liệu thay thế: chỉ các ô có dữ liệu, xếp theo số tin giảm dần. */}
       {nonZero.length > 0 && (
         <table className="sr-only">
-          <caption>{title} — số liệu theo từng khung giờ</caption>
+          <caption>{tfmt(t.chart.heatmapTableCaption, { title })}</caption>
           <thead>
             <tr>
-              <th scope="col">Thứ</th>
-              <th scope="col">Giờ</th>
-              <th scope="col">Số tin</th>
+              <th scope="col">{t.chart.heatmapWeekdayHeader}</th>
+              <th scope="col">{t.chart.heatmapHourHeader}</th>
+              <th scope="col">{t.chart.heatmapCountHeader}</th>
             </tr>
           </thead>
           <tbody>
             {nonZero.map((c) => (
               <tr key={`${c.weekday}-${c.hour}`}>
-                <th scope="row">{WEEK_LABELS[c.weekday]}</th>
+                <th scope="row">{weekLabels[c.weekday]}</th>
                 <td>{String(c.hour).padStart(2, "0")}:00</td>
                 <td>{c.count}</td>
               </tr>

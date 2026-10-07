@@ -2,9 +2,12 @@ import React from "react";
 import Link from "next/link";
 import { SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getDict } from "@/lib/i18n-server";
 
 /** Trạng thái KHÔNG KHỚP / KHÔNG TỒN TẠI (mục 13 UI Spec). */
 export default function NotFound() {
+  const t = getDict();
+
   return (
     <div className="min-h-[50vh] flex items-center justify-center py-10">
       <div className="max-w-[460px] w-full p-6 rounded-lg border border-border bg-card shadow-xs text-center space-y-4">
@@ -12,20 +15,18 @@ export default function NotFound() {
           <SearchX className="w-6 h-6 text-muted-foreground" aria-hidden="true" />
         </div>
         <div className="space-y-1">
-          <h1 className="t-page">Không tìm thấy</h1>
-          <p className="t-meta">
-            Trang hoặc dữ liệu bạn yêu cầu không tồn tại, đã bị xoá, hoặc bạn đã gõ sai đường dẫn.
-          </p>
+          <h1 className="t-page">{t.states.notFoundTitle}</h1>
+          <p className="t-meta">{t.states.notFoundDesc}</p>
         </div>
         <div className="flex justify-center gap-2">
           <Link href="/">
             <Button type="button" variant="default" size="sm">
-              Về trang chủ
+              {t.states.notFoundAction}
             </Button>
           </Link>
           <Link href="/conversations">
             <Button type="button" variant="outline" size="sm">
-              Xem hội thoại
+              {t.states.notFoundOther}
             </Button>
           </Link>
         </div>

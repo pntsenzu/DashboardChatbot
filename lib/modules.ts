@@ -7,45 +7,57 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import type { Dict } from "@/lib/i18n";
+
+/** Khóa dịch cho một mục điều hướng — chuỗi lấy từ `t.nav[id]`. */
+export type NavId = keyof Dict["nav"];
+/** Khóa dịch cho nhóm điều hướng — chuỗi lấy từ `t.navGroup[id]`. */
+export type NavGroupId = keyof Dict["navGroup"];
 
 /** Một mục điều hướng — dùng cho sidebar, rail, thanh đáy và sheet "Khác". */
 export interface NavItem {
   href: string;
-  label: string;
+  id: NavId;
   icon: LucideIcon;
-  group: string;
+  group: NavGroupId;
   /** Tối đa 4 mục hiển thị trực tiếp trên thanh đáy mobile (§7). */
   mobilePrimary?: boolean;
 }
 
 /** Thứ tự nhóm cố định — sidebar, rail và sheet đều sinh từ đây (§7). */
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/", label: "Tổng quan", icon: LayoutDashboard, group: "Theo dõi", mobilePrimary: true },
+  { href: "/", id: "overview", icon: LayoutDashboard, group: "monitoring", mobilePrimary: true },
   {
     href: "/conversations",
-    label: "Hội thoại",
+    id: "conversations",
     icon: MessageSquare,
-    group: "Theo dõi",
+    group: "monitoring",
     mobilePrimary: true,
   },
-  { href: "/customers", label: "Khách hàng", icon: Users, group: "Danh bạ", mobilePrimary: true },
+  {
+    href: "/customers",
+    id: "customers",
+    icon: Users,
+    group: "directory",
+    mobilePrimary: true,
+  },
   {
     href: "/volume",
-    label: "Lưu lượng & Hiệu suất",
+    id: "volume",
     icon: BarChart2,
-    group: "Phân tích",
+    group: "analytics",
   },
-  { href: "/products", label: "Sản phẩm", icon: ShoppingBag, group: "Phân tích" },
+  { href: "/products", id: "products", icon: ShoppingBag, group: "analytics" },
   {
     href: "/knowledge",
-    label: "Hệ thống & Tri thức",
+    id: "knowledge",
     icon: Cpu,
-    group: "Hệ thống",
+    group: "system",
   },
 ];
 
 export interface NavGroup {
-  name: string;
+  name: NavGroupId;
   items: NavItem[];
 }
 

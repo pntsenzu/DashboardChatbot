@@ -1,11 +1,14 @@
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getDict } from "@/lib/i18n-server";
 
 /** Skeleton cho bảng danh sách (hội thoại / khách hàng). */
 export default function ConversationsLoading() {
+  const t = getDict();
+
   return (
-    <div role="status" aria-busy="true" aria-live="polite" className="space-y-6">
-      <span className="sr-only">Đang tải danh sách hội thoại</span>
+    <div role="status" aria-busy="true" aria-live="polite" className="space-y-4">
+      <span className="sr-only">{t.common.loadingList}</span>
 
       <div className="border-b border-border pb-4 space-y-2">
         <Skeleton className="h-3 w-28" />

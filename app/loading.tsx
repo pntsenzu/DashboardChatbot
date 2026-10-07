@@ -1,14 +1,17 @@
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getDict } from "@/lib/i18n-server";
 
 /**
  * Trạng thái ĐANG TẢI (mục 13 UI Spec): skeleton khớp hình khối trang thật,
  * không phải spinner, không phải số 0.
  */
 export default function Loading() {
+  const t = getDict();
+
   return (
-    <div role="status" aria-busy="true" aria-live="polite" className="space-y-6">
-      <span className="sr-only">Đang tải trang</span>
+    <div role="status" aria-busy="true" aria-live="polite" className="space-y-4">
+      <span className="sr-only">{t.common.loadingPage}</span>
 
       {/* Page header */}
       <div className="border-b border-border pb-4 space-y-2">
@@ -28,7 +31,7 @@ export default function Loading() {
       </div>
 
       {/* Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {Array.from({ length: 2 }, (_, i) => (
           <div key={i} className="p-4 rounded-lg border border-border bg-card shadow-xs space-y-3">
             <Skeleton className="h-4 w-44" />

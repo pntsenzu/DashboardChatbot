@@ -1,5 +1,9 @@
+"use client";
+
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { fmt } from "@/lib/i18n";
+import { useI18n } from "@/components/i18n-provider";
 
 type Tone = "primary" | "info" | "success" | "warning" | "destructive" | "muted";
 
@@ -49,22 +53,28 @@ export function Sparkline({
   height = 28,
   unit = "",
 }: SparklineProps) {
+  const { t } = useI18n();
   const values = data.filter((v): v is number => typeof v === "number" && Number.isFinite(v));
 
   const summary = () => {
-    if (values.length < 2) return `${label}: chưa đủ dữ liệu`;
+    if (values.length < 2) return fmt(t.chart.sparkSummaryShort, { label });
     const min = Math.min(...values);
     const max = Math.max(...values);
     const last = values[values.length - 1];
-    const fmt = (n: number) =>
-      `${Number.isInteger(n) ? n : n.toFixed(1)}${unit}`;
-    return `${label}: ${values.length} mốc, thấp nhất ${fmt(min)}, cao nhất ${fmt(max)}, mới nhất ${fmt(last)}`;
+    const fmtValue = (n: number) => `${Number.isInteger(n) ? n : n.toFixed(1)}${unit}`;
+    return fmt(t.chart.sparkSummary, {
+      label,
+      n: values.length,
+      min: fmtValue(min),
+      max: fmtValue(max),
+      last: fmtValue(last),
+    });
   };
 
   if (values.length < 2) {
     return (
       <p className={cn("t-meta", className)} role="img" aria-label={summary()}>
-        Chưa đủ dữ liệu
+        {t.chart.sparkNotEnough}
       </p>
     );
   }

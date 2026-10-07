@@ -1,7 +1,8 @@
 import React from "react";
 import Link from "next/link";
 import { rpc } from "@/lib/senzu-api";
-import { formatDateTime } from "@/lib/utils";
+import { getDict } from "@/lib/i18n-server";
+import { formatDateTime, formatNumber } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetricGrid, Metric } from "@/components/ui/metric";
@@ -9,16 +10,21 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 
 export const revalidate = 15;
 
-/** Nhãn + tone cho mức độ quan tâm — mỗi màu một nghĩa (§4). */
-const INTEREST: Record<string, { label: string; variant: "priority" | "info" | "success" | "default" }> = {
-  purchase_intent: { label: "Ý định mua", variant: "priority" },
-  considering: { label: "Đang cân nhắc", variant: "info" },
-  new: { label: "Mới quan tâm", variant: "success" },
+/** Khóa dịch cho mức độ quan tâm — mỗi màu một nghĩa (§4). */
+const INTEREST: Record<
+  string,
+  { key: "purchase_intent" | "considering" | "new" | "inactive"; variant: "priority" | "info" | "success" | "default" }
+> = {
+  purchase_intent: { key: "purchase_intent", variant: "priority" },
+  considering: { key: "considering", variant: "info" },
+  new: { key: "new", variant: "success" },
 };
 
 export default async function CustomersPage() {
   const DAY = 86_400_000;
   const now = Date.now();
+  const t = getDict();
+  const dl = t.dateLocale;
 
   const [customers, summary] = await Promise.all([
     rpc("getCustomersWithInterest", { limit: 50 }),
@@ -26,30 +32,30 @@ export default async function CustomersPage() {
   ]);
 
   const interestOf = (status: string) =>
-    INTEREST[status] ?? { label: "Không hoạt động", variant: "default" as const };
+    INTEREST[status] ?? { key: "inactive" as const, variant: "default" as const };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
-        overline="Quản lý Khách hàng"
-        title="Danh sách khách hàng & Mức độ quan tâm"
-        description="50 khách hoạt động gần nhất trong 7 ngày qua"
+        overline={t.customers.overline}
+        title={t.customers.title}
+        description={t.customers.description}
       />
 
       {/* KPI: một khung hairline thay vì 3 Card rời (§11) */}
-      <MetricGrid className="sm:grid-cols-3" aria-label="Tổng hợp khách hàng trong kỳ">
-        <Metric label="Tổng khách trong kỳ" value={summary.totalCustomers.toLocaleString()} />
+      <MetricGrid className="sm:grid-cols-3" aria-label={t.customers.kpiGridAria}>
+        <Metric label={t.customers.kpiTotal} value={formatNumber(summary.totalCustomers, dl)} />
         <Metric
-          label="Khách hàng mới"
-          value={summary.newCustomers.toLocaleString()}
+          label={t.customers.kpiNew}
+          value={formatNumber(summary.newCustomers, dl)}
           valueClassName="text-success"
-          meta="Lần đầu nhắn trong kỳ"
+          meta={t.customers.kpiNewMeta}
         />
         <Metric
-          label="Khách quay lại"
-          value={summary.returningCustomers.toLocaleString()}
+          label={t.customers.kpiReturning}
+          value={formatNumber(summary.returningCustomers, dl)}
           valueClassName="text-info"
-          meta="Đã từng nhắn trước đây"
+          meta={t.customers.kpiReturningMeta}
         />
       </MetricGrid>
 
@@ -58,10 +64,8 @@ export default async function CustomersPage() {
           className="rounded-lg border border-dashed border-border bg-card p-10 text-center"
           role="status"
         >
-          <p className="t-label">Chưa có khách hàng nào trong kỳ</p>
-          <p className="t-meta mx-auto mt-1 max-w-[42ch]">
-            Khi khách nhắn tin Messenger, hồ sơ sẽ tự động được tạo tại đây.
-          </p>
+          <p className="t-label">{t.customers.emptyTitle}</p>
+          <p className="t-meta mx-auto mt-1 max-w-[42ch]">{t.customers.emptyDesc}</p>
         </div>
       ) : (
         <>
@@ -70,11 +74,11 @@ export default async function CustomersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tên / ID Khách</TableHead>
-                  <TableHead>Sản phẩm quan tâm</TableHead>
-                  <TableHead>Mức độ quan tâm</TableHead>
-                  <TableHead className="hidden lg:table-cell">Lý do ghi nhận</TableHead>
-                  <TableHead className="text-right">Lần cuối nhắn</TableHead>
+                  <TableHead>{t.customers.thCustomer}</TableHead>
+                  <TableHead>{t.customers.thProduct}</TableHead>
+                  <TableHead>{t.customers.thInterest}</TableHead>
+                  <TableHead className="hidden lg:table-cell">{t.customers.thReason}</TableHead>
+                  <TableHead className="text-right">{t.customers.thLastSeen}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -91,16 +95,16 @@ export default async function CustomersPage() {
                         </Link>
                       </TableCell>
                       <TableCell className="t-meta text-foreground">
-                        {c.primaryProductName || "Chưa xác định"}
+                        {c.primaryProductName || t.customers.unknown}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={interest.variant}>{interest.label}</Badge>
+                        <Badge variant={interest.variant}>{t.customers.interest[interest.key]}</Badge>
                       </TableCell>
                       <TableCell className="t-meta hidden lg:table-cell">
                         {c.interest.reasons.join(" · ")}
                       </TableCell>
                       <TableCell className="t-meta text-right tabular">
-                        {formatDateTime(c.lastInteractionMs)}
+                        {formatDateTime(c.lastInteractionMs, dl)}
                       </TableCell>
                     </TableRow>
                   );
@@ -123,16 +127,16 @@ export default async function CustomersPage() {
                       <span className="t-label min-w-0 truncate">
                         {c.customerName || c.customerId}
                       </span>
-                      <Badge variant={interest.variant}>{interest.label}</Badge>
+                      <Badge variant={interest.variant}>{t.customers.interest[interest.key]}</Badge>
                     </span>
                     <span className="t-meta mt-0.5 block truncate text-foreground">
-                      {c.primaryProductName || "Chưa xác định sản phẩm"}
+                      {c.primaryProductName || t.customers.unknownProduct}
                     </span>
                     {c.interest.reasons.length > 0 ? (
                       <span className="t-meta block truncate">{c.interest.reasons.join(" · ")}</span>
                     ) : null}
                     <span className="mt-1 block text-2xs tabular text-muted-foreground">
-                      Lần cuối: {formatDateTime(c.lastInteractionMs)}
+                      {t.customers.lastSeenPrefix} {formatDateTime(c.lastInteractionMs, dl)}
                     </span>
                   </Link>
                 </li>

@@ -45,6 +45,13 @@ export function safeCallbackUrl(raw?: string | null): string {
   return fallback;
 }
 
+export type DateLocale = "vi-VN" | "ja-JP";
+
+/** Định dạng số theo locale (`vi-VN` -> 1.234, `ja-JP` -> 1,234). */
+export function formatNumber(value: number, locale: DateLocale = "vi-VN"): string {
+  return value.toLocaleString(locale);
+}
+
 export function formatMs(ms: number | null | undefined): string {
   if (ms == null) return "—";
   if (ms < 1000) return `${ms} ms`;
@@ -54,10 +61,13 @@ export function formatMs(ms: number | null | undefined): string {
   return `${minutes}m ${seconds}s`;
 }
 
-export function formatDateTime(ms: number | null | undefined): string {
+export function formatDateTime(
+  ms: number | null | undefined,
+  locale: DateLocale = "vi-VN"
+): string {
   if (!ms) return "—";
   const d = new Date(ms);
-  return d.toLocaleString("vi-VN", {
+  return d.toLocaleString(locale, {
     timeZone: "Asia/Ho_Chi_Minh",
     hour: "2-digit",
     minute: "2-digit",
@@ -67,10 +77,13 @@ export function formatDateTime(ms: number | null | undefined): string {
   });
 }
 
-export function formatDateShort(ms: number | null | undefined): string {
+export function formatDateShort(
+  ms: number | null | undefined,
+  locale: DateLocale = "vi-VN"
+): string {
   if (!ms) return "—";
   const d = new Date(ms);
-  return d.toLocaleDateString("vi-VN", {
+  return d.toLocaleDateString(locale, {
     timeZone: "Asia/Ho_Chi_Minh",
     day: "2-digit",
     month: "2-digit",

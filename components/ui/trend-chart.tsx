@@ -1,5 +1,9 @@
+"use client";
+
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { fmt as tfmt } from "@/lib/i18n";
+import { useI18n } from "@/components/i18n-provider";
 
 type Tone = "primary" | "info" | "success" | "warning" | "destructive";
 
@@ -55,6 +59,7 @@ export function TrendChart({
   unit = "",
   className,
 }: TrendChartProps) {
+  const { t } = useI18n();
   const max = Math.max(
     1,
     ...series.flatMap((s) => s.values.map((v) => (typeof v === "number" && Number.isFinite(v) ? v : 0)))
@@ -83,11 +88,12 @@ export function TrendChart({
 
       {!hasData ? (
         <p className="t-meta" role="status">
-          Chưa có số liệu trong kỳ để vẽ biểu đồ.
+          {t.chart.empty}
         </p>
       ) : (
         <div aria-hidden="true">
-          <div className="relative h-40 border-b border-border">
+          {/* Cao bám theo viewport: trang dài không bị đẩy nội dung ra ngoài màn hình. */}
+          <div className="relative h-[clamp(140px,22vh,240px)] border-b border-border">
             {gridLines.map((g) => (
               <span
                 key={g}
@@ -113,8 +119,7 @@ export function TrendChart({
                           BAR[s.tone]
                         )}
                       />
-                    );
-                  })}
+                    );                  })}
                 </div>
               ))}
             </div>
@@ -136,10 +141,10 @@ export function TrendChart({
 
       {/* Bảng số liệu thay thế — đọc được bằng bàn phím / screen reader. */}
       <table className="sr-only">
-        <caption>{title} — số liệu chi tiết</caption>
+        <caption>{tfmt(t.chart.tableCaption, { title })}</caption>
         <thead>
           <tr>
-            <th scope="col">Thời điểm</th>
+            <th scope="col">{t.chart.timeHeader}</th>
             {series.map((s) => (
               <th key={s.key} scope="col">
                 {s.label}

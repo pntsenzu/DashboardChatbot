@@ -2,6 +2,8 @@ import React from "react";
 import Link from "next/link";
 import { rpc } from "@/lib/senzu-api";
 import { ConversationStatus } from "@/lib/types";
+import { fmt } from "@/lib/i18n";
+import { getDict } from "@/lib/i18n-server";
 import { formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ConversationsToolbar } from "@/components/conversations-toolbar";
@@ -34,55 +36,62 @@ export default async function ConversationsPage({
     limit,
   });
 
+  const t = getDict();
+  const dl = t.dateLocale;
+  const statusLabel = (value: ConversationStatus) =>
+    value === "attention"
+      ? t.common.status.attention
+      : value === "active"
+        ? t.common.status.active
+        : t.common.status.answered;
+
   const hasFilter = Boolean(search) || Boolean(status);
 
   const emptyState = hasFilter ? (
     <div className="p-10 text-center space-y-3" role="status">
       <SearchX className="w-8 h-8 text-muted-foreground mx-auto" aria-hidden="true" />
-      <p className="t-label">Không có hội thoại nào khớp bộ lọc</p>
+      <p className="t-label">{t.conversations.filteredTitle}</p>
       <p className="t-meta">
         {search && (
           <>
-            Từ khoá <b className="text-foreground">“{search}”</b>
+            {t.conversations.filteredKeyword} <b className="text-foreground">“{search}”</b>
             {" · "}
           </>
         )}
         {status && (
           <>
-            Trạng thái{" "}
-            <b className="text-foreground">
-              {status === "attention" ? "Cần chú ý" : status === "active" ? "Đang chờ" : "Đã trả lời"}
-            </b>
+            {t.conversations.filteredStatus}{" "}
+            <b className="text-foreground">{statusLabel(status)}</b>
             {" · "}
           </>
         )}
-        thử rút gọn từ khoá hoặc bỏ bộ lọc.
+        {t.conversations.filteredHint}
       </p>
       <Link
         href="/conversations"
         className="inline-flex h-8 items-center rounded-md border border-input bg-card px-3 text-sm font-medium shadow-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring coarse:h-11"
       >
-        Xoá bộ lọc
+        {t.common.clearFilter}
       </Link>
     </div>
   ) : (
     <div className="p-10 text-center space-y-2" role="status">
-      <p className="t-label">Chưa có hội thoại nào</p>
-      <p className="t-meta">Khi khách nhắn tin Messenger, hội thoại sẽ xuất hiện tại đây.</p>
+      <p className="t-label">{t.conversations.emptyTitle}</p>
+      <p className="t-meta">{t.conversations.emptyDesc}</p>
     </div>
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
-          <span className="t-overline text-primary">Quản lý Chatbot</span>
-          <h1 className="t-page">Danh sách hội thoại</h1>
+          <span className="t-overline text-primary">{t.conversations.overline}</span>
+          <h1 className="t-page">{t.conversations.title}</h1>
         </div>
         <p className="t-meta tabular">
           {conversations.length === 0
-            ? "Không có dữ liệu"
-            : `Hiển thị ${conversations.length} hội thoại`}
+            ? t.conversations.noData
+            : fmt(t.conversations.countLabel, { n: conversations.length })}
         </p>
       </div>
 
@@ -99,11 +108,11 @@ export default async function ConversationsPage({
             <table className="w-full border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50 t-overline">
-                  <th className="p-3">Khách hàng</th>
-                  <th className="p-3">Tin nhắn cuối</th>
-                  <th className="p-3">Số tin</th>
-                  <th className="p-3">Trạng thái</th>
-                  <th className="p-3 text-right">Thời gian</th>
+                  <th className="p-3">{t.conversations.thCustomer}</th>
+                  <th className="p-3">{t.conversations.thLastMessage}</th>
+                  <th className="p-3">{t.conversations.thMessageCount}</th>
+                  <th className="p-3">{t.conversations.thStatus}</th>
+                  <th className="p-3 text-right">{t.conversations.thTime}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -136,15 +145,11 @@ export default async function ConversationsPage({
                               : "success"
                         }
                       >
-                        {conv.status === "attention"
-                          ? "Cần chú ý"
-                          : conv.status === "active"
-                            ? "Chưa trả lời"
-                            : "Đã trả lời"}
+                        {statusLabel(conv.status)}
                       </Badge>
                     </td>
                     <td className="t-meta p-3 text-right tabular">
-                      {formatDateTime(conv.lastMessageAtMs)}
+                      {formatDateTime(conv.lastMessageAtMs, dl)}
                     </td>
                   </tr>
                 ))}
@@ -165,7 +170,7 @@ export default async function ConversationsPage({
                       {conv.customerName || conv.customerId}
                     </span>
                     <span className="shrink-0 text-2xs tabular text-muted-foreground">
-                      {formatDateTime(conv.lastMessageAtMs)}
+                      {formatDateTime(conv.lastMessageAtMs, dl)}
                     </span>
                   </span>
                   <span className="t-meta mt-0.5 block truncate text-foreground">
@@ -181,13 +186,11 @@ export default async function ConversationsPage({
                             : "success"
                       }
                     >
-                      {conv.status === "attention"
-                        ? "Cần chú ý"
-                        : conv.status === "active"
-                          ? "Chưa trả lời"
-                          : "Đã trả lời"}
+                      {statusLabel(conv.status)}
                     </Badge>
-                    <span className="t-meta tabular">{conv.messageCount} tin</span>
+                    <span className="t-meta tabular">
+                      {fmt(t.conversations.messageUnit, { n: conv.messageCount })}
+                    </span>
                   </span>
                 </Link>
               </li>
@@ -196,5 +199,5 @@ export default async function ConversationsPage({
         </>
       )}
     </div>
-    );
+  );
 }

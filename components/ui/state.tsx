@@ -1,12 +1,18 @@
+"use client";
+
 import * as React from "react";
 import { AlertTriangle, Inbox, SearchX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/components/i18n-provider";
 
 /**
  * Trạng thái màn hình — §13 / nguyên tắc 6:
  * Đang tải (Skeleton) ≠ Lỗi ≠ Chưa có (empty) ≠ Không khớp bộ lọc (no-results).
  * Lỗi KHÔNG BAO GIỜ hiển thị như "chưa có dữ liệu" và KHÔNG hiện KPI = 0.
+ *
+ * Chuỗi mặc định lấy theo locale hiện tại; mọi trang đều có thể ghi đè
+ * bằng props `title`/`description`.
  */
 
 function StateShell({
@@ -49,7 +55,7 @@ function StateShell({
 
 /** Chưa có dữ liệu (không áp bộ lọc). */
 function EmptyState({
-  title = "Chưa có dữ liệu",
+  title,
   description,
   action,
 }: {
@@ -57,14 +63,20 @@ function EmptyState({
   description?: React.ReactNode;
   action?: React.ReactNode;
 }) {
+  const { t } = useI18n();
   return (
-    <StateShell icon={<Inbox className="size-5" />} title={title} description={description} action={action} />
+    <StateShell
+      icon={<Inbox className="size-5" />}
+      title={title ?? t.states.emptyTitle}
+      description={description}
+      action={action}
+    />
   );
 }
 
 /** Không khớp bộ lọc / tìm kiếm. */
 function NoResultsState({
-  title = "Không có kết quả nào khớp bộ lọc",
+  title,
   description,
   action,
 }: {
@@ -72,10 +84,11 @@ function NoResultsState({
   description?: React.ReactNode;
   action?: React.ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <StateShell
       icon={<SearchX className="size-5" />}
-      title={title}
+      title={title ?? t.states.noResultsTitle}
       description={description}
       action={action}
     />
@@ -84,7 +97,7 @@ function NoResultsState({
 
 /** Lỗi tải — luôn kèm nút Thử lại. */
 function ErrorState({
-  title = "Không tải được dữ liệu",
+  title,
   description,
   onRetry,
   digest,
@@ -94,23 +107,24 @@ function ErrorState({
   onRetry?: () => void;
   digest?: string;
 }) {
+  const { t } = useI18n();
   return (
     <StateShell
       variant="destructive"
       icon={<AlertTriangle className="size-5" />}
-      title={title}
+      title={title ?? t.states.errorTitle}
       description={description}
       action={
         onRetry || digest ? (
           <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
             {onRetry ? (
               <Button variant="outline" size="sm" onClick={onRetry}>
-                Thử lại
+                {t.common.retry}
               </Button>
             ) : null}
             {digest ? (
               <span className="t-meta tabular" aria-hidden="true">
-                Mã: {digest}
+                {t.states.errorCode} {digest}
               </span>
             ) : null}
           </div>

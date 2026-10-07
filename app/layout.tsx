@@ -3,8 +3,10 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { getServerSession } from "next-auth";
 import { AppShellClient } from "@/components/app-shell-client";
+import { I18nProvider } from "@/components/i18n-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { authOptions } from "@/lib/auth";
+import { getDict, getLocale } from "@/lib/i18n-server";
 import { rpc, isMockMode } from "@/lib/senzu-api";
 
 // Inter có subset tiếng Việt; fallback chữ Nhật khai báo trong tailwind.config (§5).
@@ -14,11 +16,15 @@ const inter = Inter({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Senzu Chatbot Dashboard",
-  description: "Dashboard quản lý tin nhắn, khách hàng và hiệu suất AI Chatbot Senzu Messenger",
-  icons: { icon: "/logo.png" },
-};
+/** Tiêu đề/mô tả trang theo ngôn ngữ hiện tại (cookie `senzu-locale`). */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = getDict();
+  return {
+    title: { default: t.meta.title, template: `%s · ${t.meta.title}` },
+    description: t.meta.description,
+    icons: { icon: "/logo.png" },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#ffffff",
@@ -53,20 +59,25 @@ export default async function RootLayout({
     })(),
   ]);
 
+  const locale = getLocale();
+  const t = getDict();
+
   return (
-    <html lang="vi" className={inter.variable} suppressHydrationWarning>
+    <html lang={t.htmlLang} className={inter.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
       <body className="font-sans antialiased">
-        <AppShellClient
-          openAttentionCount={openAttentionCount ?? undefined}
-          botStatusIsStale={botStatusIsStale}
-          user={session?.user ?? null}
-          mockMode={isMockMode()}
-        >
-          {children}
-        </AppShellClient>
+        <I18nProvider locale={locale} t={t}>
+          <AppShellClient
+            openAttentionCount={openAttentionCount ?? undefined}
+            botStatusIsStale={botStatusIsStale}
+            user={session?.user ?? null}
+            mockMode={isMockMode()}
+          >
+            {children}
+          </AppShellClient>
+        </I18nProvider>
         {/* MỘT instance Toaster duy nhất (§16) */}
         <Toaster />
       </body>

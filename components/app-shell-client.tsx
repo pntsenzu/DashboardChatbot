@@ -18,6 +18,8 @@ import {
 import { cn } from "@/lib/utils";
 import { NAV_GROUPS, MOBILE_PRIMARY, activeHref, type NavItem } from "@/lib/modules";
 import { Badge } from "@/components/ui/badge";
+import { useI18n } from "@/components/i18n-provider";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 
 interface ShellUser {
   name?: string | null;
@@ -45,20 +47,21 @@ function initials(user?: ShellUser | null): string {
  * Trạng thái bot — mỗi màu đúng một nghĩa (§4), luôn kèm chữ (§15)   *
  * ------------------------------------------------------------------ */
 function BotStatusBadge({ stale }: { stale: boolean | null }) {
+  const { t } = useI18n();
   // Badge dùng chung primitive (§9): mỗi tone một nghĩa, luôn kèm chữ (§15).
   if (stale === null) {
-    return <Badge variant="default">Không rõ trạng thái</Badge>;
+    return <Badge variant="default">{t.shell.botUnknown}</Badge>;
   }
   if (stale) {
     return (
       <Badge variant="destructive">
-        <AlertTriangle aria-hidden="true" /> Bot dừng
+        <AlertTriangle aria-hidden="true" /> {t.shell.botStopped}
       </Badge>
     );
   }
   return (
     <Badge variant="success">
-      <CheckCircle2 aria-hidden="true" /> Trực tuyến
+      <CheckCircle2 aria-hidden="true" /> {t.shell.botOnline}
     </Badge>
   );
 }
@@ -75,7 +78,9 @@ function NavLink({
   active: boolean;
   count?: number;
 }) {
+  const { t } = useI18n();
   const Icon = item.icon;
+  const label = t.nav[item.id];
   return (
     <Link
       href={item.href}
@@ -93,7 +98,7 @@ function NavLink({
         className={cn("size-[18px] shrink-0", active ? "text-primary" : "text-muted-foreground")}
         aria-hidden="true"
       />
-      <span className="hidden min-w-0 flex-1 truncate lg:block">{item.label}</span>
+      <span className="hidden min-w-0 flex-1 truncate lg:block">{label}</span>
       {count ? (
         <Badge variant="warning" className="hidden tabular lg:inline-flex">
           {count}
@@ -104,7 +109,7 @@ function NavLink({
         role="tooltip"
         className="pointer-events-none absolute left-full top-1/2 z-40 ml-2 hidden max-w-[220px] -translate-y-1/2 truncate rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md md:group-hover:block lg:hidden"
       >
-        {item.label}
+        {label}
       </span>
     </Link>
   );
@@ -125,6 +130,7 @@ function AccountMenu({
 }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!open) return;
@@ -148,7 +154,7 @@ function AccountMenu({
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label="Tài khoản"
+        aria-label={t.shell.account}
         onClick={() => setOpen((v) => !v)}
         className={cn(
           "flex h-9 w-full items-center gap-2 rounded-md px-1.5 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring coarse:h-11",
@@ -164,7 +170,7 @@ function AccountMenu({
         {!compact && (
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-medium text-sidebar-foreground">
-              {user?.name || "Người dùng"}
+              {user?.name || t.shell.userFallback}
             </span>
             <span className="block truncate t-meta">{user?.email}</span>
           </span>
@@ -178,7 +184,7 @@ function AccountMenu({
           className="absolute bottom-full z-40 mb-1 min-w-[200px] rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
         >
           <div className="border-b border-border px-2.5 py-2">
-            <p className="truncate text-sm font-medium">{user?.name || "Người dùng"}</p>
+            <p className="truncate text-sm font-medium">{user?.name || t.shell.userFallback}</p>
             <p className="truncate t-meta">{user?.email}</p>
           </div>
           <button
@@ -187,7 +193,7 @@ function AccountMenu({
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="mt-1 flex h-9 w-full items-center gap-2 rounded-sm px-2.5 text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring coarse:h-11"
           >
-            <LogOut className="size-4" aria-hidden="true" /> Đăng xuất
+            <LogOut className="size-4" aria-hidden="true" /> {t.shell.signOut}
           </button>
         </div>
       )}
@@ -216,6 +222,7 @@ function MoreSheet({
   user?: ShellUser | null;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     const node = ref.current;
@@ -234,25 +241,25 @@ function MoreSheet({
     <dialog
       ref={ref}
       onClose={onClose}
-      aria-label="Điều hướng khác"
+      aria-label={t.shell.navOther}
       className="m-auto mt-auto w-full max-w-full rounded-t-xl border border-border bg-card p-0 shadow-lg [&::backdrop]:bg-black/50"
     >
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <span className="t-section">Điều hướng</span>
+        <span className="t-section">{t.shell.nav}</span>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Đóng"
+          aria-label={t.shell.close}
           className="grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <X className="size-4" aria-hidden="true" />
         </button>
       </div>
 
-      <nav aria-label="Điều hướng khác" className="max-h-[60vh] overflow-y-auto p-2">
+      <nav aria-label={t.shell.navOther} className="max-h-[60vh] overflow-y-auto p-2">
         {NAV_GROUPS.map((group) => (
           <div key={group.name} className="mt-3 first:mt-0">
-            <p className="t-overline px-2.5 py-1">{group.name}</p>
+            <p className="t-overline px-2.5 py-1">{t.navGroup[group.name]}</p>
             {group.items.map((item) => {
               const Icon = item.icon;
               const isActive = active === item.href;
@@ -270,7 +277,7 @@ function MoreSheet({
                   )}
                 >
                   <Icon className="size-[18px] text-muted-foreground" aria-hidden="true" />
-                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                  <span className="min-w-0 flex-1 truncate">{t.nav[item.id]}</span>
                   {item.href === "/conversations" && attentionCount > 0 ? (
                     <Badge variant="warning" className="tabular">
                       {attentionCount}
@@ -284,8 +291,9 @@ function MoreSheet({
       </nav>
 
       <div className="border-t border-border p-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
-        <div className="mb-2 flex items-center gap-2 px-1">
+        <div className="mb-2 flex items-center justify-between gap-2 px-1">
           <BotStatusBadge stale={stale} />
+          <LocaleSwitcher />
         </div>
         <AccountMenu user={user} />
       </div>
@@ -304,6 +312,7 @@ export function AppShellClient({
   mockMode = false,
 }: AppShellProps) {
   const pathname = usePathname();
+  const { t } = useI18n();
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -334,7 +343,7 @@ export function AppShellClient({
         href="#main"
         className="sr-only rounded-md bg-card px-3 py-2 text-sm shadow-md focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:outline-none focus:ring-2 focus:ring-ring"
       >
-        Bỏ qua điều hướng
+        {t.shell.skipLink}
       </a>
 
       {/* Sidebar: rail 64px ở md (768–1023), đầy đủ 240px ở lg (≥1024) */}
@@ -358,7 +367,7 @@ export function AppShellClient({
 
         {/* Điều hướng */}
         <nav
-          aria-label="Điều hướng chính"
+          aria-label={t.shell.navMain}
           className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-2"
         >
           {NAV_GROUPS.map((group) => (
@@ -366,7 +375,7 @@ export function AppShellClient({
               key={group.name}
               className="mt-5 border-t border-sidebar-border pt-3 first:mt-0 first:border-t-0 first:pt-0 lg:mt-5 lg:border-t-0 lg:pt-0"
             >
-              <p className="t-overline hidden px-2.5 pb-1 lg:block">{group.name}</p>
+              <p className="t-overline hidden px-2.5 pb-1 lg:block">{t.navGroup[group.name]}</p>
               <div className="flex flex-col items-center gap-1 lg:items-stretch">
                 {group.items.map((item) => (
                   <NavLink
@@ -406,8 +415,11 @@ export function AppShellClient({
           >
             <AlertTriangle className="size-3.5 flex-shrink-0" aria-hidden="true" />
             <span className="min-w-0">
-              Đang hiển thị <b>dữ liệu mẫu</b> — chưa cấu hình <code>DATA_API_TOKEN</code>. Số liệu
-              không phải dữ liệu thật.
+              {t.shell.mockA}
+              <b>{t.shell.mockStrong}</b>
+              {t.shell.mockB}
+              <code>DATA_API_TOKEN</code>
+              {t.shell.mockC}
             </span>
           </div>
         )}
@@ -426,18 +438,17 @@ export function AppShellClient({
             <p className="truncate text-base font-semibold text-foreground sm:text-lg">
               Senzu Sale Hub Chatbot
             </p>
-            <p className="t-meta hidden truncate sm:block">
-              Quản lý tin nhắn Messenger & hiệu suất AI
-            </p>
+            <p className="t-meta hidden truncate sm:block">{t.shell.subtitle}</p>
           </div>
 
           <BotStatusBadge stale={botStatusIsStale} />
 
           <div className="flex items-center gap-2">
+            <LocaleSwitcher className="hidden sm:inline-flex" />
             <button
               type="button"
               onClick={toggleTheme}
-              aria-label={theme === "light" ? "Chuyển sang giao diện tối" : "Chuyển sang giao diện sáng"}
+              aria-label={theme === "light" ? t.shell.themeToDark : t.shell.themeToLight}
               className="flex h-8 items-center gap-1.5 rounded-md border border-input bg-card px-2.5 text-xs font-medium text-foreground shadow-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring coarse:h-11"
             >
               {theme === "light" ? (
@@ -445,7 +456,9 @@ export function AppShellClient({
               ) : (
                 <Sun className="size-3.5" aria-hidden="true" />
               )}
-              <span className="hidden sm:inline">{theme === "light" ? "Tối" : "Sáng"}</span>
+              <span className="hidden sm:inline">
+                {theme === "light" ? t.shell.themeDark : t.shell.themeLight}
+              </span>
             </button>
 
             {/* Tài khoản: compact trên top bar (mobile không có sidebar) */}
@@ -461,14 +474,14 @@ export function AppShellClient({
           tabIndex={-1}
           className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none"
         >
-          <div className="mx-auto w-full max-w-[1400px] px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+          <div className="mx-auto w-full max-w-[1400px] px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
             {children}
           </div>
         </main>
 
         {/* Thanh điều hướng đáy mobile (§7) */}
         <nav
-          aria-label="Điều hướng nhanh"
+          aria-label={t.shell.navQuick}
           className="flex flex-shrink-0 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
         >
           {MOBILE_PRIMARY.map((item) => {
@@ -488,7 +501,7 @@ export function AppShellClient({
                   <span className="absolute inset-x-0 top-0 h-0.5 bg-primary" aria-hidden="true" />
                 )}
                 <Icon className="size-5" aria-hidden="true" />
-                <span className="truncate px-1">{item.label}</span>
+                <span className="truncate px-1">{t.nav[item.id]}</span>
                 {item.href === "/conversations" && openAttentionCount > 0 ? (
                   <span className="absolute right-[22%] top-1.5 min-w-4 rounded-full bg-warning-subtle px-1 text-2xs font-semibold tabular text-warning ring-1 ring-warning-border">
                     {openAttentionCount}
@@ -504,7 +517,7 @@ export function AppShellClient({
             className="relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-2xs text-muted-foreground transition-colors"
           >
             <Menu className="size-5" aria-hidden="true" />
-            <span>Khác</span>
+            <span>{t.shell.more}</span>
           </button>
         </nav>
       </div>

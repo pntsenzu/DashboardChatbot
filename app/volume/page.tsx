@@ -1,106 +1,164 @@
 import React from "react";
 import { rpc } from "@/lib/senzu-api";
-import { formatMs, formatDateTime } from "@/lib/utils";
+import { fmt } from "@/lib/i18n";
+import { getDict } from "@/lib/i18n-server";
+import { formatMs, formatDateTime, formatNumber } from "@/lib/utils";
+import { resolveRange, toISODateVN } from "@/lib/date-range";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetricGrid, Metric } from "@/components/ui/metric";
 import { Section, Card, CardContent } from "@/components/ui/card";
 import { TrendChart } from "@/components/ui/trend-chart";
 import { Heatmap } from "@/components/ui/heatmap";
+import { DateRangeFilter } from "@/components/date-range-filter";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
-export const revalidate = 30;
+// Số liệu phân tích lấy theo bộ lọc trên URL -> dynamic (cookie locale + query).
+export const dynamic = "force-dynamic";
 
-export default async function VolumePage() {
-  const DAY = 86_400_000;
+interface SearchParams {
+  range?: string;
+  from?: string;
+  to?: string;
+}
+
+export default async function VolumePage({ searchParams }: { searchParams: SearchParams }) {
   const now = Date.now();
+  const t = getDict();
+  const dl = t.dateLocale;
+  const range = resolveRange(searchParams, now);
+  const { sinceMs, untilMs, groupBy, preset } = range;
 
   const [volume, latency, topCustomers, heatmap] = await Promise.all([
-    rpc("getVolume", now - 7 * DAY, "day"),
-    rpc("getResponseLatency", now - 7 * DAY),
-    rpc("getTopCustomers", now - 7 * DAY, 10),
-    rpc("getHeatmap", now - 7 * DAY),
+    rpc("getVolume", sinceMs, groupBy, untilMs),
+    rpc("getResponseLatency", sinceMs),
+    rpc("getTopCustomers", sinceMs, 10),
+    rpc("getHeatmap", sinceMs),
   ]);
 
-  // "YYYY-MM-DD" -> "DD/MM" cho trục X gọn hơn.
-  const shortDate = (bucket: string) => bucket.slice(8, 10) + "/" + bucket.slice(5, 7);
-  const categories = volume.map((v) => shortDate(v.bucket));
+  /** Ngày theo giờ VN, vd "01/10/2026". */
+  const fmtDate = (ms: number) =>
+    new Date(ms).toLocaleDateString(dl, {
+      timeZone: "Asia/Ho_Chi_Minh",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+
+  const isHour = groupBy === "hour";
+
+  /** Bucket "YYYY-MM-DD" (ngày) hoặc "YYYY-MM-DDTHH" (giờ) -> nhãn trục X. */
+  const bucketLabel = (bucket: string) => {
+    const day = `${bucket.slice(8, 10)}/${bucket.slice(5, 7)}`;
+    if (!isHour) return day;
+    const hour = bucket.match(/[T ](\d{2})/);
+    return hour ? `${day} ${hour[1]}` : day;
+  };
+
+  // Kỳ đã kết thúc (Hôm qua / Tháng trước / Tùy chọn quá khứ): API tổng hợp
+  // (độ trễ, heatmap, top khách) chỉ nhận mốc bắt đầu -> ghi rõ, không im lặng.
+  const endedInPast = untilMs < now - 60_000;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
-        overline="Phân tích hiệu suất"
-        title="Lưu lượng tin nhắn & Độ trễ phản hồi"
-        description="7 ngày gần nhất · giờ Việt Nam (UTC+7)"
+        overline={t.volume.overline}
+        title={t.volume.title}
+        description={fmt(t.volume.description, { from: fmtDate(sinceMs), to: fmtDate(untilMs) })}
       />
 
+      {/* Bộ lọc ngày — trạng thái nằm trên URL (?range=&from=&to=) */}
+      <DateRangeFilter
+        preset={preset}
+        from={preset === "custom" ? (searchParams.from ?? "") : toISODateVN(sinceMs)}
+        to={
+          preset === "custom"
+            ? (searchParams.to ?? toISODateVN(untilMs - 1))
+            : toISODateVN(untilMs - 1)
+        }
+      />
+      {range.fallback ? (
+        <p className="t-meta text-warning" role="status">
+          {t.range.invalid}
+        </p>
+      ) : null}
+      {endedInPast ? (
+        <p className="t-meta" role="note">
+          {fmt(t.volume.aggregateNote, { from: fmtDate(sinceMs) })}
+        </p>
+      ) : null}
+
       {/* KPI độ trễ — một khung hairline, không tách mỗi con số ra một Card (§11) */}
-      <MetricGrid className="sm:grid-cols-3" aria-label="Độ trễ phản hồi">
+      <MetricGrid className="sm:grid-cols-3" aria-label={t.volume.latencyGridAria}>
         <Metric
-          label="Độ trễ trung bình"
+          label={t.volume.latencyAvg}
           value={formatMs(latency.avgMs)}
           valueClassName={latency.avgMs == null ? "text-muted-foreground" : undefined}
           meta={
             latency.matchedCount > 0
-              ? `${latency.matchedCount}/${latency.incomingCount} cặp tin khớp`
-              : "Chưa đủ cặp tin để đo"
+              ? fmt(t.volume.latencyAvgMetaMatched, {
+                  matched: formatNumber(latency.matchedCount, dl),
+                  total: formatNumber(latency.incomingCount, dl),
+                })
+              : t.volume.latencyAvgMetaEmpty
           }
         />
         <Metric
-          label="Độ trễ trung vị (P50)"
+          label={t.volume.latencyMedian}
           value={formatMs(latency.medianMs)}
           valueClassName="text-info"
-          meta="50% số tin trả lời nhanh hơn mức này"
+          meta={t.volume.latencyMedianMeta}
         />
         <Metric
-          label="Độ trễ P90"
+          label={t.volume.latencyP90}
           value={formatMs(latency.p90Ms)}
           valueClassName={latency.p90Ms == null ? "text-muted-foreground" : "text-warning"}
-          meta="10% số tin chậm hơn mức này"
+          meta={t.volume.latencyP90Meta}
         />
       </MetricGrid>
 
       <Section
         titleId="volume-trend"
-        title="Lưu lượng tin nhắn theo ngày"
-        description="Tin khách gửi vào so với tin bot/nhân viên gửi ra (UTC+7)"
+        title={isHour ? t.volume.trendTitleHour : t.volume.trendTitle}
+        description={t.volume.trendDesc}
       >
         <Card>
           <CardContent className="space-y-4">
             {volume.length === 0 ? (
               <p className="t-meta" role="status">
-                Chưa có lưu lượng tin nhắn trong 7 ngày qua.
+                {t.volume.volumeEmpty}
               </p>
             ) : (
               <>
                 <TrendChart
-                  title="Tin theo ngày"
-                  categories={categories}
+                  title={isHour ? t.volume.chartTitleHour : t.volume.chartTitle}
+                  categories={volume.map((v) => bucketLabel(v.bucket))}
                   unit=""
                   series={[
                     {
                       key: "incoming",
-                      label: "Tin vào (khách)",
+                      label: t.volume.seriesIncoming,
                       tone: "info",
                       values: volume.map((v) => v.incoming),
                     },
                     {
                       key: "outgoing",
-                      label: "Tin ra (bot / nhân viên)",
+                      label: t.volume.seriesOutgoing,
                       tone: "primary",
                       values: volume.map((v) => v.outgoing),
                     },
                   ]}
                 />
 
-                {/* Bảng số liệu — cách đọc chính xác từng ngày (đồng thời là "bảng số liệu thay thế" của biểu đồ). */}
+                {/* Bảng số liệu — cách đọc chính xác từng bucket (đồng thời là
+                    "bảng số liệu thay thế" của biểu đồ). Bảng chỉ ≥640px (§11). */}
                 <div className="hidden sm:block">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Ngày</TableHead>
-                        <TableHead className="text-right">Tin vào (khách)</TableHead>
-                        <TableHead className="text-right">Tin ra (bot / NV)</TableHead>
+                        <TableHead>{isHour ? t.volume.thHour : t.volume.thDay}</TableHead>
+                        <TableHead className="text-right">{t.volume.thIncoming}</TableHead>
+                        <TableHead className="text-right">{t.volume.thOutgoing}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -108,10 +166,10 @@ export default async function VolumePage() {
                         <TableRow key={v.bucket}>
                           <TableCell className="font-medium">{v.bucket}</TableCell>
                           <TableCell className="text-right tabular text-info">
-                            {v.incoming.toLocaleString()}
+                            {formatNumber(v.incoming, dl)}
                           </TableCell>
                           <TableCell className="text-right tabular text-primary">
-                            {v.outgoing.toLocaleString()}
+                            {formatNumber(v.outgoing, dl)}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -125,8 +183,12 @@ export default async function VolumePage() {
                     <li key={v.bucket} className="flex items-center justify-between gap-3 px-3 py-2.5">
                       <span className="t-label tabular">{v.bucket}</span>
                       <span className="flex items-center gap-3 text-2xs tabular">
-                        <span className="text-info">vào {v.incoming.toLocaleString()}</span>
-                        <span className="text-primary">ra {v.outgoing.toLocaleString()}</span>
+                        <span className="text-info">
+                          {t.volume.listInto} {formatNumber(v.incoming, dl)}
+                        </span>
+                        <span className="text-primary">
+                          {t.volume.listOut} {formatNumber(v.outgoing, dl)}
+                        </span>
                       </span>
                     </li>
                   ))}
@@ -139,15 +201,15 @@ export default async function VolumePage() {
 
       <Section
         titleId="volume-heatmap"
-        title="Giờ cao điểm (thứ × giờ)"
-        description="Số tin khách gửi theo khung giờ trong 7 ngày qua"
+        title={t.volume.heatmapSectionTitle}
+        description={t.volume.heatmapSectionDesc}
       >
         <Card>
           <CardContent>
             <Heatmap
               cells={heatmap}
-              title="Ma trận thứ × giờ"
-              description="Ô càng đậm càng nhiều tin; rê chuột lên ô để xem số chính xác"
+              title={t.volume.heatmapTitle}
+              description={t.volume.heatmapDesc}
             />
           </CardContent>
         </Card>
@@ -155,14 +217,14 @@ export default async function VolumePage() {
 
       <Section
         titleId="volume-top-customers"
-        title="Khách hàng nhắn tin nhiều nhất"
-        description="Tính theo tổng số tin trong 7 ngày qua"
+        title={t.volume.topTitle}
+        description={t.volume.topDesc}
       >
         <Card>
           {topCustomers.length === 0 ? (
             <CardContent>
               <p className="t-meta" role="status">
-                Chưa có dữ liệu khách hàng trong kỳ.
+                {t.volume.topEmpty}
               </p>
             </CardContent>
           ) : (
@@ -171,9 +233,9 @@ export default async function VolumePage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Khách hàng</TableHead>
-                      <TableHead className="text-right">Số tin</TableHead>
-                      <TableHead className="text-right">Tin nhắn cuối</TableHead>
+                      <TableHead>{t.volume.thCustomer}</TableHead>
+                      <TableHead className="text-right">{t.volume.thCount}</TableHead>
+                      <TableHead className="text-right">{t.volume.thLastMessage}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -183,15 +245,15 @@ export default async function VolumePage() {
                           <span className="t-label">{c.senderName || c.senderId}</span>
                           {c.isNew ? (
                             <Badge variant="success" className="ml-2 align-middle">
-                              Khách mới
+                              {t.volume.badgeNew}
                             </Badge>
                           ) : null}
                         </TableCell>
                         <TableCell className="text-right tabular">
-                          {c.msgCount.toLocaleString()}
+                          {formatNumber(c.msgCount, dl)}
                         </TableCell>
                         <TableCell className="text-right tabular text-muted-foreground">
-                          {formatDateTime(c.lastTs)}
+                          {formatDateTime(c.lastTs, dl)}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -205,11 +267,13 @@ export default async function VolumePage() {
                   <li key={c.senderId} className="flex items-center justify-between gap-3 px-3 py-2.5">
                     <span className="min-w-0">
                       <span className="t-label block truncate">{c.senderName || c.senderId}</span>
-                      <span className="t-meta block truncate">{formatDateTime(c.lastTs)}</span>
+                      <span className="t-meta block truncate">{formatDateTime(c.lastTs, dl)}</span>
                     </span>
                     <span className="flex shrink-0 items-center gap-2">
-                      {c.isNew ? <Badge variant="success">Mới</Badge> : null}
-                      <span className="text-2xs tabular">{c.msgCount.toLocaleString()} tin</span>
+                      {c.isNew ? <Badge variant="success">{t.volume.badgeNewShort}</Badge> : null}
+                      <span className="text-2xs tabular">
+                        {fmt(t.volume.countUnit, { n: formatNumber(c.msgCount, dl) })}
+                      </span>
                     </span>
                   </li>
                 ))}

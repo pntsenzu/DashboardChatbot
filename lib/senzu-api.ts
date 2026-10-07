@@ -568,12 +568,31 @@ function getMockData<T>(fn: RpcFn, args: readonly unknown[]): T {
       return { humanRequestCount: 14, productGapCount: 6 } as unknown as T;
 
     case "getCustomersPerBucket":
-    case "getVolume":
-      return Array.from({ length: 7 }, (_, i) => ({
-        bucket: new Date(now - (6 - i) * DAY).toISOString().slice(0, 10),
-        incoming: Math.floor(40 + Math.random() * 50),
-        outgoing: Math.floor(38 + Math.random() * 48),
-      })) as unknown as T;
+    case "getVolume": {
+      // Tôn trọng since/until/groupBy (data-api §6) để bộ lọc ngày có ý nghĩa.
+      const VN = 7 * 3_600_000;
+      const sinceMs = typeof args[0] === "number" ? args[0] : now - 7 * DAY;
+      const groupBy: GroupBy = args[1] === "hour" ? "hour" : "day";
+      const untilMs = typeof args[2] === "number" ? args[2] : now;
+      const step = groupBy === "hour" ? 3_600_000 : DAY;
+      const start =
+        Math.floor((sinceMs + VN) / step) * step - VN;
+      const points: Array<{ bucket: string; incoming: number; outgoing: number }> = [];
+      for (let ms = start; ms < untilMs && points.length < 400; ms += step) {
+        const vnDate = new Date(ms + VN);
+        const pad = (n: number) => String(n).padStart(2, "0");
+        const bucket =
+          groupBy === "hour"
+            ? `${vnDate.getUTCFullYear()}-${pad(vnDate.getUTCMonth() + 1)}-${pad(vnDate.getUTCDate())}T${pad(vnDate.getUTCHours())}`
+            : vnDate.toISOString().slice(0, 10);
+        points.push({
+          bucket,
+          incoming: Math.floor(4 + Math.random() * (groupBy === "hour" ? 8 : 60)),
+          outgoing: Math.floor(4 + Math.random() * (groupBy === "hour" ? 8 : 58)),
+        });
+      }
+      return points as unknown as T;
+    }
 
     case "getAttentionItems":
     case "getOpenAttentionItems":
