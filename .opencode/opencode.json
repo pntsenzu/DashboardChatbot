@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/schema/opencode.json",
+  "name": "Senzu Dashboard Chatbot Agent Workspace",
+  "version": "1.0.0",
+  "description": "OpenCode configuration for building Senzu Chatbot UI Dashboard based on Senzu Data API and UI Design Specs.",
+  "defaultAgent": "dashboard-coder",
+  "skillsPath": "./.opencode/skills",
+  "agentsPath": "./.opencode/agents",
+  "mcpConfig": "./.opencode/mcp.json",
+  "environment": {
+    "DATA_API_URL": "https://api-bot.senzu-base.vn",
+    "NODE_ENV": "development"
+  }
+}

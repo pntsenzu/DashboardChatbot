@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 220 20% 97.5%;
+  --foreground: 222 25% 11%;
+  --card: 0 0% 100%;
+  --popover: 0 0% 100%;
+  --primary: 137 70% 29%;
+  --primary-hover: 137 72% 25%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 14% 94%;
+  --secondary-foreground: 222 20% 18%;
+  --muted: 220 16% 96%;
+  --muted-foreground: 220 9% 42%;
+  --accent: 137 38% 95%;
+  --accent-foreground: 137 70% 22%;
+  --destructive: 0 72% 42%;
+  --destructive-subtle: 0 80% 97%;
+  --destructive-border: 0 60% 88%;
+  --warning: 36 92% 30%;
+  --warning-subtle: 42 90% 95%;
+  --warning-border: 40 70% 82%;
+  --success: 158 64% 28%;
+  --success-subtle: 155 45% 95%;
+  --success-border: 155 35% 82%;
+  --info: 214 72% 42%;
+  --info-subtle: 214 90% 97%;
+  --info-border: 214 60% 87%;
+  --priority: 20 85% 40%;
+  --priority-subtle: 24 100% 96%;
+  --priority-border: 24 80% 85%;
+  --border: 220 14% 90%;
+  --input: 220 13% 62%;
+  --ring: 137 70% 34%;
+  --sidebar: 220 18% 96.5%;
+  --sidebar-foreground: 222 20% 22%;
+  --sidebar-border: 220 14% 90%;
+  --brand-from: 138 72% 34%;
+  --brand-to: 136 53% 28%;
+  --radius: .5rem;
+  --sh-xs: 0 1px 2px 0 hsl(222 25% 11%/.05);
+  --sh-md: 0 4px 12px -2px hsl(222 25% 11%/.10), 0 2px 6px -2px hsl(222 25% 11%/.06);
+  --sh-lg: 0 16px 40px -12px hsl(222 25% 11%/.22);
+}
+
+* { box-sizing: border-box; border-color: hsl(var(--border)); }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-size: 14px;
+  line-height: 20px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Fixed Typography Scale Classes */
+.t-page { font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.015em; margin: 0; }
+.t-section { font-size: 14px; font-weight: 600; line-height: 20px; margin: 0; }
+.t-card { font-size: 14px; font-weight: 600; line-height: 20px; margin: 0; }
+.t-label { font-size: 14px; font-weight: 500; line-height: 20px; }
+.t-meta { font-size: 12px; line-height: 20px; color: hsl(var(--muted-foreground)); }
+.t-overline { font-size: 11px; line-height: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: hsl(var(--muted-foreground)); }
+.t-metric { font-size: 28px; line-height: 32px; letter-spacing: -.02em; font-weight: 600; }
+.tabular { font-variant-numeric: tabular-nums; }
