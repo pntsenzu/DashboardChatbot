@@ -684,7 +684,8 @@ function getMockData<T>(fn: RpcFn, args: readonly unknown[]): T {
     case "getHeatmap":
       // Chỉ trả ô có dữ liệu (data-api §5) — mô phỏng giờ cao điểm 9–11 và 20–22.
       return Array.from({ length: 30 }, (_, i) => {
-        const weekday = (i % 7) + 1;
+        // weekday theo data-api §5: 0=CN … 6=T7 (mock trước đây sinh 1..7 -> sai).
+        const weekday = i % 7;
         const hour = i % 2 === 0 ? 9 + (i % 3) : 20 + (i % 3);
         return { weekday, hour, count: 4 + ((i * 7) % 23) };
       }) as unknown as T;

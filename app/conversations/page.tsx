@@ -88,41 +88,90 @@ export default async function ConversationsPage({
 
       <ConversationsToolbar search={search} status={status} limit={limit} />
 
-      <div className="rounded-lg border border-border bg-card shadow-xs overflow-hidden">
-        {conversations.length === 0 ? (
-          emptyState
-        ) : (
-          <table className="w-full text-left text-sm border-collapse">
-            <thead>
-              <tr className="bg-muted/50 border-b border-border t-overline">
-                <th className="p-3">Khách hàng</th>
-                <th className="p-3">Tin nhắn cuối</th>
-                <th className="p-3">Số tin</th>
-                <th className="p-3">Trạng thái</th>
-                <th className="p-3 text-right">Thời gian</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {conversations.map((conv) => (
-                <tr key={conv.conversationId} className="hover:bg-muted/40 transition-colors">
-                  <td className="p-3">
-                    <Link
-                      href={`/conversations/${conv.conversationId}`}
-                      className="font-semibold text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-                    >
+      {conversations.length === 0 ? (
+        <div className="overflow-hidden rounded-lg border border-border bg-card shadow-xs">
+          {emptyState}
+        </div>
+      ) : (
+        <>
+          {/* Bảng chỉ từ ≥640px (§11) */}
+          <div className="hidden overflow-hidden rounded-lg border border-border bg-card shadow-xs sm:block">
+            <table className="w-full border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50 t-overline">
+                  <th className="p-3">Khách hàng</th>
+                  <th className="p-3">Tin nhắn cuối</th>
+                  <th className="p-3">Số tin</th>
+                  <th className="p-3">Trạng thái</th>
+                  <th className="p-3 text-right">Thời gian</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {conversations.map((conv) => (
+                  <tr key={conv.conversationId} className="transition-colors hover:bg-muted/40">
+                    <td className="p-3">
+                      <Link
+                        href={`/conversations/${conv.conversationId}`}
+                        className="rounded font-semibold text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        {conv.customerName || conv.customerId}
+                      </Link>
+                    </td>
+                    <td className="p-3">
+                      <Link
+                        href={`/conversations/${conv.conversationId}`}
+                        className="t-meta line-clamp-1 text-foreground hover:text-primary"
+                      >
+                        {conv.lastMessageText}
+                      </Link>
+                    </td>
+                    <td className="t-meta p-3 font-mono tabular">{conv.messageCount}</td>
+                    <td className="p-3">
+                      <Badge
+                        variant={
+                          conv.status === "attention"
+                            ? "warning"
+                            : conv.status === "active"
+                              ? "priority"
+                              : "success"
+                        }
+                      >
+                        {conv.status === "attention"
+                          ? "Cần chú ý"
+                          : conv.status === "active"
+                            ? "Chưa trả lời"
+                            : "Đã trả lời"}
+                      </Badge>
+                    </td>
+                    <td className="t-meta p-3 text-right tabular">
+                      {formatDateTime(conv.lastMessageAtMs)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Dưới 640px: danh sách xếp chồng — mẫu "Dòng hội thoại" (§14) */}
+          <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card shadow-xs sm:hidden">
+            {conversations.map((conv) => (
+              <li key={conv.conversationId}>
+                <Link
+                  href={`/conversations/${conv.conversationId}`}
+                  className="block min-h-14 p-4 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="t-label min-w-0 truncate">
                       {conv.customerName || conv.customerId}
-                    </Link>
-                  </td>
-                  <td className="p-3">
-                    <Link
-                      href={`/conversations/${conv.conversationId}`}
-                      className="t-meta text-foreground line-clamp-1 hover:text-primary"
-                    >
-                      {conv.lastMessageText}
-                    </Link>
-                  </td>
-                  <td className="p-3 tabular font-mono t-meta">{conv.messageCount}</td>
-                  <td className="p-3">
+                    </span>
+                    <span className="shrink-0 text-2xs tabular text-muted-foreground">
+                      {formatDateTime(conv.lastMessageAtMs)}
+                    </span>
+                  </span>
+                  <span className="t-meta mt-0.5 block truncate text-foreground">
+                    {conv.lastMessageText}
+                  </span>
+                  <span className="mt-1.5 flex flex-wrap items-center gap-2">
                     <Badge
                       variant={
                         conv.status === "attention"
@@ -138,16 +187,14 @@ export default async function ConversationsPage({
                           ? "Chưa trả lời"
                           : "Đã trả lời"}
                     </Badge>
-                  </td>
-                  <td className="p-3 text-right tabular t-meta">
-                    {formatDateTime(conv.lastMessageAtMs)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+                    <span className="t-meta tabular">{conv.messageCount} tin</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
-  );
+    );
 }

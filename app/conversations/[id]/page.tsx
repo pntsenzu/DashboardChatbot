@@ -2,7 +2,10 @@ import React from "react";
 import Link from "next/link";
 import { rpc } from "@/lib/senzu-api";
 import { formatDateTime } from "@/lib/utils";
-import { ArrowLeft, Bot, User, Cpu, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Bot, User, Cpu } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
+import { Section, Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/state";
 
 // Hội thoại là dữ liệu trực tiếp từ bot -> KHÔNG cache (data-api §9).
 export const dynamic = "force-dynamic";
@@ -22,72 +25,97 @@ export default async function ConversationDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3 border-b border-border pb-4">
-        <Link href="/conversations">
-          <button className="h-8 w-8 rounded-md border border-input bg-card grid place-items-center hover:bg-muted">
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-        </Link>
-        <div>
-          <span className="t-overline text-primary">Chi tiết hội thoại</span>
-          <h1 className="t-page">Thread: {conversationId}</h1>
+      {/* Màn chi tiết: tiêu đề trang = link quay lại (§7) */}
+      <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <Link
+            href="/conversations"
+            className="hit-area inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            Quay lại danh sách hội thoại
+          </Link>
+          <h1 className="t-page mt-1 truncate">Thread: {conversationId}</h1>
+          <p className="t-meta tabular">
+            {messages.length} tin nhắn · {processing.length} lượt xử lý AI
+          </p>
         </div>
       </div>
 
       {attention.length > 0 && (
-        <div className="p-4 rounded-lg border border-warning-border bg-warning-subtle space-y-2">
-          <div className="t-section text-warning flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" /> Cảnh báo cần chú ý
-          </div>
-          {attention.map((a) => (
-            <div key={a.id} className="t-meta text-foreground">
-              <b>{a.type}</b>: {a.messagePreview || a.detail}
-            </div>
-          ))}
-        </div>
+        <Alert variant="warning" title="Cảnh báo cần chú ý">
+          <ul className="mt-1 space-y-1">
+            {attention.map((a) => (
+              <li key={a.id} className="t-meta text-foreground">
+                <b className="text-foreground">{a.type}</b>: {a.messagePreview || a.detail}
+              </li>
+            ))}
+          </ul>
+        </Alert>
       )}
 
-      <div className="p-4 rounded-lg border border-border bg-card shadow-xs space-y-4 min-h-[400px]">
-        <div className="t-overline border-b border-border pb-2">Lịch sử tin nhắn</div>
-        
-        <div className="space-y-3">
-          {messages.map((msg) => {
-            const isBot = msg.direction === "outgoing";
-            const proc = processing.find((p) => p.incomingMessageId === msg.id);
+      <Section
+        titleId="message-history"
+        title="Lịch sử tin nhắn"
+        description="Bên trái: khách gửi · Bên phải: bot / nhân viên trả lời"
+      >
+        <Card>
+          <CardContent className="min-h-[400px] space-y-4">
+            {messages.length === 0 ? (
+              <EmptyState
+                title="Chưa có tin nhắn nào"
+                description="Hội thoại này chưa ghi nhận tin nhắn."
+              />
+            ) : (
+              <ul className="space-y-3">
+                {messages.map((msg) => {
+                  const isBot = msg.direction === "outgoing";
+                  const proc = processing.find((p) => p.incomingMessageId === msg.id);
 
-            return (
-              <div
-                key={msg.id}
-                className={`flex flex-col max-w-[80%] ${isBot ? "ml-auto items-end" : "mr-auto items-start"}`}
-              >
-                <div className="flex items-center gap-1.5 text-2xs t-meta mb-1">
-                  {isBot ? <Bot className="w-3 h-3 text-primary" /> : <User className="w-3 h-3 text-muted-foreground" />}
-                  <span>{msg.senderName || (isBot ? "Bot AI" : "Khách")}</span>
-                  <span className="tabular">{formatDateTime(msg.timestampMs)}</span>
-                </div>
+                  return (
+                    <li
+                      key={msg.id}
+                      className={`flex max-w-[85%] flex-col sm:max-w-[75%] ${
+                        isBot ? "ml-auto items-end" : "mr-auto items-start"
+                      }`}
+                    >
+                      <span className="t-meta mb-1 flex items-center gap-1.5">
+                        {isBot ? (
+                          <Bot className="size-3 text-primary" aria-hidden="true" />
+                        ) : (
+                          <User className="size-3 text-muted-foreground" aria-hidden="true" />
+                        )}
+                        <span>{msg.senderName || (isBot ? "Bot AI" : "Khách")}</span>
+                        <span className="tabular text-2xs">{formatDateTime(msg.timestampMs)}</span>
+                      </span>
 
-                <div
-                  className={`p-3 rounded-lg text-sm leading-relaxed border shadow-xs ${
-                    isBot
-                      ? "bg-accent border-accent-foreground/20 text-accent-foreground rounded-br-none"
-                      : "bg-card border-border text-foreground rounded-bl-none"
-                  }`}
-                >
-                  {msg.text}
-                </div>
+                      {/* Bong bóng tin nhắn (§14) — có tiền tố sr-only cho screen reader */}
+                      <div
+                        className={`rounded-lg border px-3 py-2 text-sm leading-6 shadow-xs ${
+                          isBot
+                            ? "rounded-br-sm border-primary/15 bg-accent text-accent-foreground"
+                            : "rounded-bl-sm border-border bg-card text-foreground"
+                        }`}
+                      >
+                        <span className="sr-only">{isBot ? "Bạn gửi: " : "Khách gửi: "}</span>
+                        {msg.text}
+                      </div>
 
-                {proc && (
-                  <div className="mt-1 text-2xs t-meta flex items-center gap-2 bg-muted/60 px-2 py-0.5 rounded border border-border">
-                    <Cpu className="w-3 h-3" />
-                    <span>Model: {proc.aiModel}</span>
-                    <span>Knowledge: {proc.knowledgePath}</span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                      {proc ? (
+                        <span className="mt-1 flex items-center gap-2 rounded border border-border bg-muted/60 px-2 py-0.5 text-2xs">
+                          <Cpu className="size-3" aria-hidden="true" />
+                          <span className="tabular">Model: {proc.aiModel}</span>
+                          <span className="truncate">Knowledge: {proc.knowledgePath}</span>
+                        </span>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </Section>
     </div>
   );
 }
