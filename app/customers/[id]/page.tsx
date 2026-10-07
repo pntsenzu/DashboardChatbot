@@ -1,15 +1,17 @@
 import React from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { rpc } from "@/lib/senzu-api";
-import { CustomerDetail, CustomerInterest, CustomerNote } from "@/lib/types";
+import { CustomerDetail, CustomerInterest, CustomerNote, ConversationListItem } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShoppingBag, FileText, Send } from "lucide-react";
+import { ArrowLeft, MessageSquare, ShoppingBag, FileText, Send } from "lucide-react";
 
-export const revalidate = 5;
+// Hồ sơ khách gồm cả hội thoại -> KHÔNG cache (data-api §9).
+export const dynamic = "force-dynamic";
 
 // Server Action for adding note
 async function addNoteAction(formData: FormData) {
@@ -39,32 +41,28 @@ export default async function CustomerDetailPage({
 }) {
   const customerId = params.id;
 
-  // Ghi chú: getCustomerConversations chưa render (sẽ thêm UI ở Phase 2),
-  // hiện không gọi để tránh 1 round-trip thừa tới Data API.
-  const [detail, interests, notes] = await Promise.all([
+  // getCustomerConversations: danh sách hội thoại của khách (data-api §6).
+  const [detail, interests, notes, conversations] = await Promise.all([
     rpc<CustomerDetail | null>("getCustomerDetail", customerId),
     rpc<CustomerInterest[]>("getCustomerInterests", customerId),
     rpc<CustomerNote[]>("getCustomerNotes", customerId),
+    rpc<ConversationListItem[]>("getCustomerConversations", customerId, 10),
   ]);
 
   if (!detail) {
-    return (
-      <div className="p-8 text-center">
-        <h1 className="t-page">404 - Khách hàng không tồn tại</h1>
-        <Link href="/customers" className="t-meta text-primary hover:underline mt-2 inline-block">
-          Quay lại danh sách
-        </Link>
-      </div>
-    );
+    // Trả status 404 thật (không phải trang 404 giả status 200).
+    notFound();
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 border-b border-border pb-4">
-        <Link href="/customers">
-          <button className="h-8 w-8 rounded-md border border-input bg-card grid place-items-center hover:bg-muted">
-            <ArrowLeft className="w-4 h-4" />
-          </button>
+        <Link
+          href="/customers"
+          aria-label="Quay lại danh sách khách hàng"
+          className="h-8 w-8 rounded-md border border-input bg-card grid place-items-center hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <ArrowLeft className="w-4 h-4" aria-hidden="true" />
         </Link>
         <div>
           <span className="t-overline text-primary">Hồ sơ khách hàng</span>
@@ -112,6 +110,41 @@ export default async function CustomerDetailPage({
             ))
           )}
         </div>
+      </div>
+
+      {/* Conversations của khách */}
+      <div className="p-4 rounded-lg border border-border bg-card shadow-xs space-y-3">
+        <h3 className="t-card flex items-center gap-2">
+          <MessageSquare className="w-4 h-4 text-primary" /> Hội thoại gần đây
+        </h3>
+        {conversations.length === 0 ? (
+          <p className="t-meta">Chưa có hội thoại nào được ghi nhận.</p>
+        ) : (
+          <div className="divide-y divide-border">
+            {conversations.map((conv) => (
+              <Link
+                key={conv.conversationId}
+                href={`/conversations/${conv.conversationId}`}
+                className="flex items-center justify-between gap-4 py-3 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded px-2 -mx-2"
+              >
+                <div className="min-w-0">
+                  <div className="text-sm font-medium truncate">{conv.lastMessageText}</div>
+                  <div className="t-meta">
+                    {conv.status === "attention"
+                      ? "Cần chú ý"
+                      : conv.status === "active"
+                        ? "Chưa trả lời"
+                        : "Đã trả lời"}{" "}
+                    · {conv.messageCount} tin
+                  </div>
+                </div>
+                <div className="t-meta tabular whitespace-nowrap">
+                  {formatDateTime(conv.lastMessageAtMs)}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Notes Section (Staff Notes) */}

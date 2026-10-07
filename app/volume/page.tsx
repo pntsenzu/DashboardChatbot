@@ -43,6 +43,9 @@ export default async function VolumePage() {
       {/* Volume Table */}
       <div className="p-4 rounded-lg border border-border bg-card shadow-xs space-y-3">
         <h3 className="t-card">Lưu lượng tin nhắn theo ngày (UTC+7)</h3>
+        {volume.length === 0 ? (
+          <p className="t-meta" role="status">Chưa có lưu lượng tin nhắn trong 7 ngày qua.</p>
+        ) : (
         <table className="w-full text-left text-sm border-collapse">
           <thead>
             <tr className="bg-muted/50 border-b border-border text-xs uppercase t-overline">
@@ -61,11 +64,15 @@ export default async function VolumePage() {
             ))}
           </tbody>
         </table>
+        )}
       </div>
 
       {/* Top Active Customers */}
       <div className="p-4 rounded-lg border border-border bg-card shadow-xs space-y-3">
         <h3 className="t-card">Top khách hàng nhắn tin nhiều nhất</h3>
+        {topCustomers.length === 0 ? (
+          <p className="t-meta" role="status">Chưa có dữ liệu khách hàng trong kỳ.</p>
+        ) : (
         <div className="space-y-2">
           {topCustomers.map((c) => (
             <div key={c.senderId} className="p-3 rounded border border-border bg-muted/30 flex items-center justify-between">
@@ -77,6 +84,7 @@ export default async function VolumePage() {
             </div>
           ))}
         </div>
+        )}
       </div>
     </div>
   );

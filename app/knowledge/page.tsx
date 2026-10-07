@@ -5,7 +5,8 @@ import { formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Cpu, CheckCircle2, XCircle } from "lucide-react";
 
-export const revalidate = 10;
+// Trạng thái bot là heartbeat -> KHÔNG cache (data-api §9).
+export const dynamic = "force-dynamic";
 
 export default async function KnowledgePage() {
   const status = await rpc<SystemStatus>("getSystemStatus");

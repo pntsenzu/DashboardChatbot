@@ -48,6 +48,9 @@ export default async function ProductsPage() {
         {/* Top Products */}
         <div className="p-4 rounded-lg border border-border bg-card shadow-xs space-y-3">
           <h3 className="t-card">Top sản phẩm được hỏi nhiều nhất</h3>
+          {topProducts.length === 0 ? (
+            <p className="t-meta" role="status">Chưa có lượt hỏi sản phẩm nào trong 7 ngày qua.</p>
+          ) : (
           <div className="space-y-2">
             {topProducts.map((p) => (
               <div key={p.productId} className="p-3 rounded border border-border bg-muted/40 flex items-center justify-between">
@@ -59,11 +62,15 @@ export default async function ProductsPage() {
               </div>
             ))}
           </div>
+          )}
         </div>
 
         {/* Question Type Breakdown */}
         <div className="p-4 rounded-lg border border-border bg-card shadow-xs space-y-3">
           <h3 className="t-card">Phân bổ loại câu hỏi</h3>
+          {questionTypes.length === 0 ? (
+            <p className="t-meta" role="status">Chưa có dữ liệu phân bổ câu hỏi.</p>
+          ) : (
           <div className="space-y-2">
             {questionTypes.map((q) => (
               <div key={q.questionType} className="p-3 rounded border border-border bg-card flex items-center justify-between">
@@ -77,12 +84,18 @@ export default async function ProductsPage() {
               </div>
             ))}
           </div>
+          )}
         </div>
       </div>
 
       {/* Unknown Products (Missing Catalog Gaps) */}
       <div className="p-4 rounded-lg border border-warning-border bg-warning-subtle space-y-3">
         <h3 className="t-card text-warning">Sản phẩm khách hỏi nhưng CHƯA CÓ trong Catalog</h3>
+        {unknownProducts.length === 0 ? (
+          <p className="t-meta text-warning/90" role="status">
+            Không có câu hỏi nào bị lệch catalog trong 7 ngày qua — tốt lắm!
+          </p>
+        ) : (
         <div className="space-y-2">
           {unknownProducts.map((u, i) => (
             <div key={i} className="p-3 rounded border border-warning-border/60 bg-card flex flex-col gap-1">
@@ -94,6 +107,7 @@ export default async function ProductsPage() {
             </div>
           ))}
         </div>
+        )}
       </div>
     </div>
   );

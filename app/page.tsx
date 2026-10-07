@@ -29,13 +29,22 @@ export default async function OverviewPage() {
     rpc<AiInsightCounts>("getAiInsightCounts", now - 7 * DAY, now),
   ]);
 
-  const calcDiff = (curr: number, prev: number) => {
-    if (!prev) return 0;
+  const calcDiff = (curr: number, prev: number): number | null => {
+    // Không đủ dữ liệu so sánh -> null để UI hiện "—", tránh bịa ra +0%.
+    if (!prev) return null;
     return Math.round(((curr - prev) / prev) * 100);
   };
 
   const incomingDiff = calcDiff(currentStats.incomingCount, prevStats.incomingCount);
   const customersDiff = calcDiff(currentStats.distinctCustomers, prevStats.distinctCustomers);
+
+  const diffLabel = (d: number | null) =>
+    d == null ? "—" : d >= 0 ? `+${d}%` : `${d}%`;
+
+  const repliedPercent =
+    currentStats.repliedRatio != null
+      ? `${(currentStats.repliedRatio * 100).toFixed(1)}%`
+      : "—";
 
   return (
     <div className="space-y-6">
@@ -84,8 +93,8 @@ export default async function OverviewPage() {
         <div className="p-4 rounded-lg border border-border bg-card shadow-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="t-meta">Tin nhắn đến</span>
-            <span className={incomingDiff >= 0 ? "text-xs font-semibold text-success" : "text-xs font-semibold text-destructive"}>
-              {incomingDiff >= 0 ? `+${incomingDiff}%` : `${incomingDiff}%`}
+            <span className={incomingDiff == null ? "text-xs font-medium text-muted-foreground" : incomingDiff >= 0 ? "text-xs font-semibold text-success" : "text-xs font-semibold text-destructive"}>
+              {diffLabel(incomingDiff)}
             </span>
           </div>
           <div className="t-metric tabular">{currentStats.incomingCount.toLocaleString()}</div>
@@ -95,8 +104,8 @@ export default async function OverviewPage() {
         <div className="p-4 rounded-lg border border-border bg-card shadow-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="t-meta">Khách hàng riêng biệt</span>
-            <span className={customersDiff >= 0 ? "text-xs font-semibold text-success" : "text-xs font-semibold text-destructive"}>
-              {customersDiff >= 0 ? `+${customersDiff}%` : `${customersDiff}%`}
+            <span className={customersDiff == null ? "text-xs font-medium text-muted-foreground" : customersDiff >= 0 ? "text-xs font-semibold text-success" : "text-xs font-semibold text-destructive"}>
+              {diffLabel(customersDiff)}
             </span>
           </div>
           <div className="t-metric tabular">{currentStats.distinctCustomers.toLocaleString()}</div>
@@ -115,11 +124,15 @@ export default async function OverviewPage() {
         <div className="p-4 rounded-lg border border-border bg-card shadow-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="t-meta">Tỉ lệ trả lời</span>
-            <Badge variant="success">96%</Badge>
+            {currentStats.repliedRatio != null ? (
+              <Badge variant={currentStats.repliedRatio >= 0.9 ? "success" : "warning"}>
+                {repliedPercent}
+              </Badge>
+            ) : (
+              <Badge variant="default">Chưa rõ</Badge>
+            )}
           </div>
-          <div className="t-metric tabular">
-            {currentStats.repliedRatio != null ? `${(currentStats.repliedRatio * 100).toFixed(1)}%` : "—"}
-          </div>
+          <div className="t-metric tabular">{repliedPercent}</div>
           <div className="t-meta text-[11px]">Tỉ lệ phản hồi thành công</div>
         </div>
       </div>
@@ -186,7 +199,12 @@ export default async function OverviewPage() {
           </div>
 
           <div className="space-y-2">
-            {recentConvs.map((conv) => (
+            {recentConvs.length === 0 ? (
+              <p className="t-meta py-4 text-center" role="status">
+                Chưa có hội thoại nào hoạt động trong thời gian gần đây.
+              </p>
+            ) : (
+              recentConvs.map((conv) => (
               <Link
                 key={conv.threadId}
                 href={`/conversations/${conv.threadId}`}
@@ -201,7 +219,8 @@ export default async function OverviewPage() {
                 <p className="t-meta text-foreground line-clamp-1">{conv.lastMessageText}</p>
                 <div className="t-meta text-[11px] mt-1 tabular">{formatDateTime(conv.lastMessageAtMs)}</div>
               </Link>
-            ))}
+            ))
+            )}
           </div>
         </div>
       </div>

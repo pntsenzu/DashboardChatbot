@@ -43,6 +43,12 @@ export default async function CustomersPage() {
 
       {/* Customers Table */}
       <div className="rounded-lg border border-border bg-card shadow-xs overflow-hidden">
+        {customers.length === 0 ? (
+          <div className="p-10 text-center space-y-2" role="status">
+            <p className="t-label">Chưa có khách hàng nào trong kỳ</p>
+            <p className="t-meta">Khi khách nhắn tin Messenger, hồ sơ sẽ tự động được tạo tại đây.</p>
+          </div>
+        ) : (
         <table className="w-full text-left text-sm border-collapse">
           <thead>
             <tr className="bg-muted/50 border-b border-border text-xs uppercase t-overline">
@@ -79,6 +85,7 @@ export default async function CustomersPage() {
             ))}
           </tbody>
         </table>
+        )}
       </div>
     </div>
   );

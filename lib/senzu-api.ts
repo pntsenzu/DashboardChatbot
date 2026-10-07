@@ -160,14 +160,62 @@ function getMockData<T>(fn: string, args: unknown[]): T {
         isStale: false,
       } as unknown as T;
 
-    case "getConversations":
-      return [
+    case "getConversations": {
+      // Tôn trọng options { search, status, limit } để UI test được đúng (data-api §6).
+      const opts = (args[0] ?? {}) as { search?: string; status?: string; limit?: number };
+      const q = (opts.search || "").toLowerCase();
+      const rows = [
         { conversationId: "thread_1001", customerId: "cus_fb_901", customerName: "Nguyễn Văn An", lastMessageText: "Cho mình gặp tư vấn viên trực tiếp với!", lastMessageAtMs: now - 1200_000, messageCount: 12, status: "attention" },
         { conversationId: "thread_1002", customerId: "cus_fb_902", customerName: "Trần Thị Mai", lastMessageText: "Dạ vâng mình cám ơn bot nhiều nha", lastMessageAtMs: now - 3600_000, messageCount: 8, status: "answered" },
         { conversationId: "thread_1003", customerId: "cus_fb_903", customerName: "Lê Hoàng Nam", lastMessageText: "Mẫu này còn size L không shop?", lastMessageAtMs: now - 7200_000, messageCount: 5, status: "active" },
         { conversationId: "thread_1004", customerId: "cus_fb_904", customerName: "Phạm Thu Thảo", lastMessageText: "Shop ship về Hà Nội mất bao lâu?", lastMessageAtMs: now - 10800_000, messageCount: 14, status: "answered" },
         { conversationId: "thread_1005", customerId: "cus_fb_905", customerName: "Đặng Hoàng Việt", lastMessageText: "Cho mình đặt 2 cái màu xanh lá", lastMessageAtMs: now - 14400_000, messageCount: 9, status: "answered" },
+      ] as Array<Record<string, unknown>>;
+      const filtered = rows
+        .filter((r) => (opts.status ? r.status === opts.status : true))
+        .filter((r) =>
+          q
+            ? String(r.customerName).toLowerCase().includes(q) ||
+              String(r.customerId).toLowerCase().includes(q) ||
+              String(r.lastMessageText).toLowerCase().includes(q)
+            : true
+        )
+        .sort((a, b) => Number(b.lastMessageAtMs) - Number(a.lastMessageAtMs))
+        .slice(0, opts.limit ?? 50);
+      return filtered as unknown as T;
+    }
+
+    case "getTopCustomers":
+      return [
+        { senderId: "cus_fb_904", senderName: "Phạm Thu Thảo", msgCount: 46, lastTs: now - 10800_000, isNew: false },
+        { senderId: "cus_fb_901", senderName: "Nguyễn Văn An", msgCount: 38, lastTs: now - 1200_000, isNew: false },
+        { senderId: "cus_fb_905", senderName: "Đặng Hoàng Việt", msgCount: 27, lastTs: now - 14400_000, isNew: false },
+        { senderId: "cus_fb_906", senderName: "Hoàng Thị Lan", msgCount: 19, lastTs: now - 7200_000, isNew: true },
+        { senderId: "cus_fb_903", senderName: "Lê Hoàng Nam", msgCount: 12, lastTs: now - 7200_000, isNew: false },
       ] as unknown as T;
+
+    case "getHeatmap":
+      // Chỉ trả ô có dữ liệu (data-api §5) — mô phỏng giờ cao điểm 9–11 và 20–22.
+      return Array.from({ length: 30 }, (_, i) => {
+        const weekday = (i % 7) + 1;
+        const hour = i % 2 === 0 ? 9 + (i % 3) : 20 + (i % 3);
+        return { weekday, hour, count: 4 + ((i * 7) % 23) };
+      }) as unknown as T;
+
+    case "getRecentMessages":
+      return [
+        { id: "msg_r1", threadId: "thread_1001", senderId: "cus_fb_901", senderName: "Nguyễn Văn An", text: "Cho mình gặp tư vấn viên trực tiếp với!", direction: "incoming", timestampMs: now - 1200_000 },
+        { id: "msg_r2", threadId: "thread_1003", senderId: "cus_fb_903", senderName: "Lê Hoàng Nam", text: "Mẫu này còn size L không shop?", direction: "incoming", timestampMs: now - 7200_000 },
+        { id: "msg_r3", threadId: "thread_1002", senderId: "bot", senderName: "Senzu Bot", text: "Dạ shop cảm ơn chị đã ủng hộ ạ.", direction: "outgoing", timestampMs: now - 3600_000 },
+      ] as unknown as T;
+
+    case "getCustomerConversations": {
+      const cid = String(args[0] ?? "");
+      return [
+        { conversationId: "thread_1001", customerId: cid, customerName: "Nguyễn Văn An", lastMessageText: "Cho mình gặp tư vấn viên trực tiếp với!", lastMessageAtMs: now - 1200_000, messageCount: 12, status: "attention" },
+        { conversationId: "thread_1007", customerId: cid, customerName: "Nguyễn Văn An", lastMessageText: "Serum này dùng bao lâu thì thấy hiệu quả ạ?", lastMessageAtMs: now - 259_200_000, messageCount: 6, status: "answered" },
+      ] as unknown as T;
+    }
 
     case "getConversationMessages":
       return [
@@ -202,15 +250,27 @@ function getMockData<T>(fn: string, args: unknown[]): T {
         { customerId: "cus_fb_905", customerName: "Đặng Hoàng Việt", totalMessages: 9, totalConversations: 1, lastInteractionMs: now - 14400_000, primaryProductName: "Senzu Green Tea Serum", otherProductsCount: 0, interest: { status: "purchase_intent", reasons: ["Đã gửi cú pháp mua hàng"] } },
       ] as unknown as T;
 
-    case "getCustomerDetail":
+    case "getCustomerDetail": {
+      const known: Record<string, { customerName: string; totalMessages: number; totalConversations: number; lastAgo: number }> = {
+        cus_fb_901: { customerName: "Nguyễn Văn An", totalMessages: 12, totalConversations: 2, lastAgo: 1200_000 },
+        cus_fb_902: { customerName: "Trần Thị Mai", totalMessages: 8, totalConversations: 1, lastAgo: 3600_000 },
+        cus_fb_903: { customerName: "Lê Hoàng Nam", totalMessages: 5, totalConversations: 1, lastAgo: 7200_000 },
+        cus_fb_904: { customerName: "Phạm Thu Thảo", totalMessages: 14, totalConversations: 3, lastAgo: 10800_000 },
+        cus_fb_905: { customerName: "Đặng Hoàng Việt", totalMessages: 9, totalConversations: 1, lastAgo: 14400_000 },
+      };
+      const id = String(args[0] ?? "");
+      const hit = known[id];
+      // ID không tồn tại -> null để UI trả 404 thật (khá với dữ liệu thật).
+      if (!hit) return null as unknown as T;
       return {
-        customerId: (args[0] as string) || "cus_fb_901",
-        customerName: "Nguyễn Văn An",
-        totalMessages: 12,
-        totalConversations: 2,
+        customerId: id,
+        customerName: hit.customerName,
+        totalMessages: hit.totalMessages,
+        totalConversations: hit.totalConversations,
         firstInteractionMs: now - 30 * DAY,
-        lastInteractionMs: now - 1200_000,
+        lastInteractionMs: now - hit.lastAgo,
       } as unknown as T;
+    }
 
     case "getCustomerInterests":
       return [
@@ -271,7 +331,43 @@ function getMockData<T>(fn: string, args: unknown[]): T {
     case "insertCustomerNote":
       return null as unknown as T;
 
+    case "getAllCustomers":
+      return [
+        { customerId: "cus_fb_901", customerName: "Nguyễn Văn An", totalMessages: 12, totalConversations: 2, lastInteractionMs: now - 1200_000 },
+        { customerId: "cus_fb_902", customerName: "Trần Thị Mai", totalMessages: 8, totalConversations: 1, lastInteractionMs: now - 3600_000 },
+        { customerId: "cus_fb_903", customerName: "Lê Hoàng Nam", totalMessages: 5, totalConversations: 1, lastInteractionMs: now - 7200_000 },
+      ] as unknown as T;
+
+    case "getCustomerActivityTrend":
+      return Array.from({ length: 7 }, (_, i) => ({
+        date: new Date(now - (6 - i) * DAY).toISOString().slice(0, 10),
+        activeCustomers: 18 + Math.floor(Math.random() * 14),
+        newCustomers: 3 + Math.floor(Math.random() * 6),
+        returningCustomers: 12 + Math.floor(Math.random() * 10),
+      })) as unknown as T;
+
+    case "getConversationVolumeTrend":
+      return Array.from({ length: 7 }, (_, i) => ({
+        date: new Date(now - (6 - i) * DAY).toISOString().slice(0, 10),
+        customerMessages: 40 + Math.floor(Math.random() * 50),
+        aiReplies: 36 + Math.floor(Math.random() * 48),
+        otherOutgoing: Math.floor(Math.random() * 6),
+      })) as unknown as T;
+
+    case "getInterestSignalsTrend":
+      return Array.from({ length: 7 }, (_, i) => ({
+        date: new Date(now - (6 - i) * DAY).toISOString().slice(0, 10),
+        productMentions: 12 + Math.floor(Math.random() * 18),
+        priceQuestions: 5 + Math.floor(Math.random() * 10),
+        informationQuestions: 4 + Math.floor(Math.random() * 8),
+        orderSignals: 1 + Math.floor(Math.random() * 5),
+      })) as unknown as T;
+
     default:
-      return [] as unknown as T;
+      // Không bao giờ trả [] im lặng: hàm chưa có mock sẽ làm UI hiểu nhầm là "rỗng".
+      console.warn(
+        `[senzu-api] Chưa có mock cho "${fn}" — trả về null. Bổ sung vào getMockData().`
+      );
+      return null as unknown as T;
   }
 }

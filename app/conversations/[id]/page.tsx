@@ -5,7 +5,8 @@ import { ConversationMessage, MessageProcessing, AttentionItem } from "@/lib/typ
 import { formatDateTime } from "@/lib/utils";
 import { ArrowLeft, Bot, User, Cpu, AlertTriangle } from "lucide-react";
 
-export const revalidate = 5;
+// Hội thoại là dữ liệu trực tiếp từ bot -> KHÔNG cache (data-api §9).
+export const dynamic = "force-dynamic";
 
 export default async function ConversationDetailPage({
   params,
