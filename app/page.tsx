@@ -80,7 +80,7 @@ export default async function OverviewPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-4 text-xs t-meta border-l border-border pl-4">
+        <div className="flex items-center gap-4 t-meta border-l border-border pl-4">
           <div>
             <div>Tick cuối: <span className="font-mono text-foreground tabular">{formatDateTime(systemStatus.lastTickAtMs)}</span></div>
             <div>Reply cuối: <span className="font-mono text-foreground tabular">{formatDateTime(systemStatus.lastReplyAtMs)}</span></div>
@@ -92,23 +92,23 @@ export default async function OverviewPage() {
         <div className="p-4 rounded-lg border border-border bg-card shadow-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="t-meta">Tin nhắn đến</span>
-            <span className={incomingDiff == null ? "text-xs font-medium text-muted-foreground" : incomingDiff >= 0 ? "text-xs font-semibold text-success" : "text-xs font-semibold text-destructive"}>
+            <span className={incomingDiff == null ? "t-meta font-medium text-muted-foreground" : incomingDiff >= 0 ? "t-meta font-semibold text-success" : "t-meta font-semibold text-destructive"}>
               {diffLabel(incomingDiff)}
             </span>
           </div>
           <div className="t-metric tabular">{currentStats.incomingCount.toLocaleString()}</div>
-          <div className="t-meta text-[11px]">So với 7 ngày trước ({prevStats.incomingCount.toLocaleString()})</div>
+          <div className="t-meta text-2xs">So với 7 ngày trước ({prevStats.incomingCount.toLocaleString()})</div>
         </div>
 
         <div className="p-4 rounded-lg border border-border bg-card shadow-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="t-meta">Khách hàng riêng biệt</span>
-            <span className={customersDiff == null ? "text-xs font-medium text-muted-foreground" : customersDiff >= 0 ? "text-xs font-semibold text-success" : "text-xs font-semibold text-destructive"}>
+            <span className={customersDiff == null ? "t-meta font-medium text-muted-foreground" : customersDiff >= 0 ? "t-meta font-semibold text-success" : "t-meta font-semibold text-destructive"}>
               {diffLabel(customersDiff)}
             </span>
           </div>
           <div className="t-metric tabular">{currentStats.distinctCustomers.toLocaleString()}</div>
-          <div className="t-meta text-[11px]">So với 7 ngày trước ({prevStats.distinctCustomers.toLocaleString()})</div>
+          <div className="t-meta text-2xs">So với 7 ngày trước ({prevStats.distinctCustomers.toLocaleString()})</div>
         </div>
 
         <div className="p-4 rounded-lg border border-border bg-card shadow-xs space-y-1">
@@ -117,7 +117,7 @@ export default async function OverviewPage() {
             <Clock className="w-4 h-4 text-muted-foreground" />
           </div>
           <div className="t-metric tabular">{formatMs(currentStats.avgLatencyMs)}</div>
-          <div className="t-meta text-[11px]">Ước lượng thời gian ghép tin</div>
+          <div className="t-meta text-2xs">Ước lượng thời gian ghép tin</div>
         </div>
 
         <div className="p-4 rounded-lg border border-border bg-card shadow-xs space-y-1">
@@ -132,7 +132,7 @@ export default async function OverviewPage() {
             )}
           </div>
           <div className="t-metric tabular">{repliedPercent}</div>
-          <div className="t-meta text-[11px]">Tỉ lệ phản hồi thành công</div>
+          <div className="t-meta text-2xs">Tỉ lệ phản hồi thành công</div>
         </div>
       </div>
 
@@ -174,13 +174,13 @@ export default async function OverviewPage() {
               attentionItems.map((item) => (
                 <div key={item.id} className="p-3 rounded border border-border bg-muted/40 hover:bg-muted/70 transition-colors">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="t-label text-xs font-semibold">{item.customerName || item.customerId}</span>
+                    <span className="t-label font-semibold">{item.customerName || item.customerId}</span>
                     <Badge variant={item.severity === "error" ? "destructive" : item.severity === "warning" ? "warning" : "info"}>
                       {item.type}
                     </Badge>
                   </div>
                   <p className="t-meta text-foreground line-clamp-1">{item.messagePreview || item.detail}</p>
-                  <div className="t-meta text-[11px] mt-1 tabular">{formatDateTime(item.createdAtMs)}</div>
+                  <div className="t-meta text-2xs mt-1 tabular">{formatDateTime(item.createdAtMs)}</div>
                 </div>
               ))
             )}
@@ -210,13 +210,13 @@ export default async function OverviewPage() {
                 className="block p-3 rounded border border-border bg-card hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="t-label text-xs font-semibold">{conv.customerName || conv.threadId}</span>
+                  <span className="t-label font-semibold">{conv.customerName || conv.threadId}</span>
                   <Badge variant={conv.status === "needs_attention" ? "warning" : "success"}>
                     {conv.status === "needs_attention" ? "Cần chú ý" : "Đã trả lời"}
                   </Badge>
                 </div>
                 <p className="t-meta text-foreground line-clamp-1">{conv.lastMessageText}</p>
-                <div className="t-meta text-[11px] mt-1 tabular">{formatDateTime(conv.lastMessageAtMs)}</div>
+                <div className="t-meta text-2xs mt-1 tabular">{formatDateTime(conv.lastMessageAtMs)}</div>
               </Link>
             ))
             )}

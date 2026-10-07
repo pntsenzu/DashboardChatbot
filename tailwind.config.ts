@@ -1,24 +1,56 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
+
+/*
+ * Nguồn sự thật: ui-design-spec.html mục 17 (Phụ lục mã nguồn).
+ * Mỗi tone có 4 biến: DEFAULT / foreground / subtle / border.
+ */
+const tone = (name: string) => ({
+  DEFAULT: `hsl(var(--${name}))`,
+  foreground: `hsl(var(--${name}-foreground))`,
+  subtle: `hsl(var(--${name}-subtle))`,
+  border: `hsl(var(--${name}-border))`,
+});
 
 const config: Config = {
   darkMode: ["class"],
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
   ],
   theme: {
+    container: { center: true, padding: "1.5rem" },
     extend: {
+      fontFamily: {
+        sans: [
+          "var(--font-sans)",
+          '"Hiragino Sans"',
+          '"Hiragino Kaku Gothic ProN"',
+          '"Yu Gothic UI"',
+          "Meiryo",
+          '"Noto Sans JP"',
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
+        mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
+      },
+      fontSize: {
+        // Chỉ thêm 2 cỡ ngoài thang Tailwind (§5).
+        "2xs": ["11px", { lineHeight: "16px" }],
+        metric: ["28px", { lineHeight: "32px", letterSpacing: "-0.02em" }],
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
           DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--foreground))",
+          foreground: "hsl(var(--card-foreground))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--foreground))",
+          foreground: "hsl(var(--popover-foreground))",
         },
         primary: {
           DEFAULT: "hsl(var(--primary))",
@@ -37,32 +69,11 @@ const config: Config = {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          subtle: "hsl(var(--destructive-subtle))",
-          border: "hsl(var(--destructive-border))",
-          foreground: "#ffffff",
-        },
-        warning: {
-          DEFAULT: "hsl(var(--warning))",
-          subtle: "hsl(var(--warning-subtle))",
-          border: "hsl(var(--warning-border))",
-        },
-        success: {
-          DEFAULT: "hsl(var(--success))",
-          subtle: "hsl(var(--success-subtle))",
-          border: "hsl(var(--success-border))",
-        },
-        info: {
-          DEFAULT: "hsl(var(--info))",
-          subtle: "hsl(var(--info-subtle))",
-          border: "hsl(var(--info-border))",
-        },
-        priority: {
-          DEFAULT: "hsl(var(--priority))",
-          subtle: "hsl(var(--priority-subtle))",
-          border: "hsl(var(--priority-border))",
-        },
+        destructive: tone("destructive"),
+        warning: tone("warning"),
+        success: tone("success"),
+        info: tone("info"),
+        priority: tone("priority"),
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -78,16 +89,19 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        xs: "var(--sh-xs)",
-        md: "var(--sh-md)",
-        lg: "var(--sh-lg)",
+        xs: "0 1px 2px 0 hsl(222 25% 11% / 0.05)",
+        md: "0 4px 12px -2px hsl(222 25% 11% / 0.10), 0 2px 6px -2px hsl(222 25% 11% / 0.06)",
+        lg: "0 16px 40px -12px hsl(222 25% 11% / 0.22)",
       },
-      fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
-      },
+      transitionDuration: { DEFAULT: "150ms" },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(({ addVariant }) => {
+      // §15: vùng chạm ≥44px trên thiết bị cảm ứng.
+      addVariant("coarse", "@media (pointer: coarse)");
+      addVariant("fine", "@media (pointer: fine)");
+    }),
+  ],
 };
 export default config;

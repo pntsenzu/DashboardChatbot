@@ -38,7 +38,7 @@ export default function Error({
         </div>
 
         {error.digest && (
-          <p className="t-meta text-[11px] tabular">
+          <p className="t-meta text-2xs tabular">
             Mã sự cố: <code className="font-mono">{error.digest}</code>
           </p>
         )}

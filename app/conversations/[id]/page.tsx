@@ -40,7 +40,7 @@ export default async function ConversationDetailPage({
             <AlertTriangle className="w-4 h-4" /> Cảnh báo cần chú ý
           </div>
           {attention.map((a) => (
-            <div key={a.id} className="text-xs text-foreground">
+            <div key={a.id} className="t-meta text-foreground">
               <b>{a.type}</b>: {a.messagePreview || a.detail}
             </div>
           ))}
@@ -60,7 +60,7 @@ export default async function ConversationDetailPage({
                 key={msg.id}
                 className={`flex flex-col max-w-[80%] ${isBot ? "ml-auto items-end" : "mr-auto items-start"}`}
               >
-                <div className="flex items-center gap-1.5 text-[11px] t-meta mb-1">
+                <div className="flex items-center gap-1.5 text-2xs t-meta mb-1">
                   {isBot ? <Bot className="w-3 h-3 text-primary" /> : <User className="w-3 h-3 text-muted-foreground" />}
                   <span>{msg.senderName || (isBot ? "Bot AI" : "Khách")}</span>
                   <span className="tabular">{formatDateTime(msg.timestampMs)}</span>
@@ -77,7 +77,7 @@ export default async function ConversationDetailPage({
                 </div>
 
                 {proc && (
-                  <div className="mt-1 text-[10px] t-meta flex items-center gap-2 bg-muted/60 px-2 py-0.5 rounded border border-border">
+                  <div className="mt-1 text-2xs t-meta flex items-center gap-2 bg-muted/60 px-2 py-0.5 rounded border border-border">
                     <Cpu className="w-3 h-3" />
                     <span>Model: {proc.aiModel}</span>
                     <span>Knowledge: {proc.knowledgePath}</span>

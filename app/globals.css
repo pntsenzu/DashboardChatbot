@@ -2,67 +2,177 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: 220 20% 97.5%;
-  --foreground: 222 25% 11%;
-  --card: 0 0% 100%;
-  --popover: 0 0% 100%;
-  --primary: 137 70% 29%;
-  --primary-hover: 137 72% 25%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 220 14% 94%;
-  --secondary-foreground: 222 20% 18%;
-  --muted: 220 16% 96%;
-  --muted-foreground: 220 9% 42%;
-  --accent: 137 38% 95%;
-  --accent-foreground: 137 70% 22%;
-  --destructive: 0 72% 42%;
-  --destructive-subtle: 0 80% 97%;
-  --destructive-border: 0 60% 88%;
-  --warning: 36 92% 30%;
-  --warning-subtle: 42 90% 95%;
-  --warning-border: 40 70% 82%;
-  --success: 158 64% 28%;
-  --success-subtle: 155 45% 95%;
-  --success-border: 155 35% 82%;
-  --info: 214 72% 42%;
-  --info-subtle: 214 90% 97%;
-  --info-border: 214 60% 87%;
-  --priority: 20 85% 40%;
-  --priority-subtle: 24 100% 96%;
-  --priority-border: 24 80% 85%;
-  --border: 220 14% 90%;
-  --input: 220 13% 62%;
-  --ring: 137 70% 34%;
-  --sidebar: 220 18% 96.5%;
-  --sidebar-foreground: 222 20% 22%;
-  --sidebar-border: 220 14% 90%;
-  --brand-from: 138 72% 34%;
-  --brand-to: 136 53% 28%;
-  --radius: .5rem;
-  --sh-xs: 0 1px 2px 0 hsl(222 25% 11%/.05);
-  --sh-md: 0 4px 12px -2px hsl(222 25% 11%/.10), 0 2px 6px -2px hsl(222 25% 11%/.06);
-  --sh-lg: 0 16px 40px -12px hsl(222 25% 11%/.22);
+/*
+ * Nguồn sự thật: ui-design-spec.html mục 17 (Phụ lục mã nguồn).
+ * Light ở `:root`, dark ở `.dark` (bật bằng class trên <html>, darkMode: ["class"]).
+ */
+@layer base {
+  :root {
+    --background: 220 20% 97.5%;
+    --foreground: 222 25% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 25% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 25% 11%;
+    --primary: 137 70% 29%; /* chỉ cho hành động */
+    --primary-hover: 137 72% 25%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 94%;
+    --secondary-foreground: 222 20% 18%;
+    --muted: 220 16% 96%;
+    --muted-foreground: 220 9% 42%;
+    --accent: 137 38% 95%;
+    --accent-foreground: 137 70% 22%;
+    --destructive: 0 72% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-subtle: 0 80% 97%;
+    --destructive-border: 0 60% 88%;
+    --warning: 36 92% 30%;
+    --warning-foreground: 0 0% 100%;
+    --warning-subtle: 42 90% 95%;
+    --warning-border: 40 70% 82%;
+    --success: 158 64% 28%;
+    --success-foreground: 0 0% 100%;
+    --success-subtle: 155 45% 95%;
+    --success-border: 155 35% 82%;
+    --info: 214 72% 42%;
+    --info-foreground: 0 0% 100%;
+    --info-subtle: 214 90% 97%;
+    --info-border: 214 60% 87%;
+    --priority: 20 85% 40%;
+    --priority-foreground: 0 0% 100%;
+    --priority-subtle: 24 100% 96%;
+    --priority-border: 24 80% 85%;
+    --border: 220 14% 90%;
+    --input: 220 13% 62%;
+    --ring: 137 70% 34%;
+    --sidebar: 220 18% 96.5%;
+    --sidebar-foreground: 222 20% 22%;
+    --sidebar-border: 220 14% 90%;
+    --brand-from: 138 72% 34%; /* #18943b — chỉ logo */
+    --brand-to: 136 53% 28%; /* #216d36 */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222 24% 8%;
+    --foreground: 210 18% 94%;
+    --card: 222 22% 11%;
+    --card-foreground: 210 18% 94%;
+    --popover: 222 22% 11%;
+    --popover-foreground: 210 18% 94%;
+    --primary: 137 55% 44%;
+    --primary-hover: 137 55% 50%;
+    --primary-foreground: 222 30% 8%;
+    --secondary: 222 16% 18%;
+    --secondary-foreground: 210 16% 90%;
+    --muted: 222 16% 16%;
+    --muted-foreground: 218 11% 64%;
+    --accent: 137 30% 18%;
+    --accent-foreground: 137 50% 80%;
+    --destructive: 0 75% 64%;
+    --destructive-foreground: 0 60% 12%;
+    --destructive-subtle: 0 40% 15%;
+    --destructive-border: 0 40% 34%;
+    --warning: 38 70% 56%;
+    --warning-foreground: 222 30% 8%;
+    --warning-subtle: 38 40% 14%;
+    --warning-border: 38 35% 30%;
+    --success: 158 50% 50%;
+    --success-foreground: 222 30% 8%;
+    --success-subtle: 158 35% 14%;
+    --success-border: 158 30% 28%;
+    --info: 214 80% 66%;
+    --info-foreground: 222 30% 8%;
+    --info-subtle: 214 40% 16%;
+    --info-border: 214 35% 32%;
+    --priority: 24 90% 62%;
+    --priority-foreground: 222 30% 8%;
+    --priority-subtle: 24 45% 15%;
+    --priority-border: 24 40% 32%;
+    --border: 222 14% 20%;
+    --input: 222 12% 42%;
+    --ring: 137 50% 46%;
+    --sidebar: 222 22% 10%;
+    --sidebar-foreground: 210 16% 88%;
+    --sidebar-border: 222 14% 18%;
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    /* Cỡ chữ thân bài 14px (§5) */
+    font-size: 14px;
+    line-height: 20px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
-* { box-sizing: border-box; border-color: hsl(var(--border)); }
-html { scroll-behavior: smooth; }
-body {
-  margin: 0;
-  font-family: Inter, system-ui, sans-serif;
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  font-size: 14px;
-  line-height: 20px;
-  -webkit-font-smoothing: antialiased;
-}
+@layer components {
+  /* Thang chữ cố định — đúng 7 cấp (§5). Không thêm cỡ chữ trong component. */
+  .t-page {
+    @apply text-xl font-semibold leading-7 tracking-[-0.015em];
+    margin: 0;
+  }
+  .t-section {
+    @apply text-sm font-semibold leading-5 text-foreground;
+    margin: 0;
+  }
+  .t-card {
+    @apply text-sm font-semibold leading-5;
+    margin: 0;
+  }
+  .t-label {
+    @apply text-sm font-medium leading-5;
+  }
+  .t-meta {
+    @apply text-xs leading-5 text-muted-foreground;
+  }
+  .t-overline {
+    @apply text-2xs font-semibold uppercase tracking-[0.06em] text-muted-foreground;
+  }
+  .t-metric {
+    @apply text-metric font-semibold;
+  }
 
-/* Fixed Typography Scale Classes */
-.t-page { font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.015em; margin: 0; }
-.t-section { font-size: 14px; font-weight: 600; line-height: 20px; margin: 0; }
-.t-card { font-size: 14px; font-weight: 600; line-height: 20px; margin: 0; }
-.t-label { font-size: 14px; font-weight: 500; line-height: 20px; }
-.t-meta { font-size: 12px; line-height: 20px; color: hsl(var(--muted-foreground)); }
-.t-overline { font-size: 11px; line-height: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: hsl(var(--muted-foreground)); }
-.t-metric { font-size: 28px; line-height: 32px; letter-spacing: -.02em; font-weight: 600; }
-.tabular { font-variant-numeric: tabular-nums; }
+  /* Màu nhận diện #18943b → #216d36 — CHỈ dùng cho logo (§4). */
+  .bg-brand-gradient {
+    background-image: linear-gradient(135deg, hsl(var(--brand-from)), hsl(var(--brand-to)));
+  }
+
+  /* Mở rộng vùng chạm trên thiết bị cảm ứng mà không làm dòng cao thêm (§15). */
+  .hit-area {
+    @apply relative;
+  }
+  @media (pointer: coarse) {
+    .hit-area::after {
+      content: "";
+      position: absolute;
+      inset: -15px -6px;
+    }
+  }
+  .hit-area-lg {
+    @apply relative;
+  }
+  @media (pointer: coarse) {
+    .hit-area-lg::after {
+      content: "";
+      position: absolute;
+      inset: -8px;
+    }
+  }
+}

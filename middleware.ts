@@ -10,6 +10,9 @@ const authConfigured = Boolean(
   process.env.GOOGLE_CLIENT_ID?.trim() && process.env.GOOGLE_CLIENT_SECRET?.trim()
 );
 
+/** Phần mở rộng file tĩnh được phép truy cập không cần đăng nhập. */
+const STATIC_FILE_RE = /\.(png|jpe?g|gif|svg|webp|ico|avif|txt|xml|json|css|js|map|webmanifest|woff2?|ttf)$/i;
+
 /**
  * Chỉ nhận callbackUrl cùng origin, chặn open redirect.
  * Nhẹ hơn safeCallbackUrl() của lib/utils vì middleware chạy ở edge.
@@ -37,6 +40,11 @@ function safeCallback(raw: string | null): string {
 
 export default async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
+
+  // File tĩnh trong /public (logo, favicon, robots, font…) -> Next phục vụ trực tiếp,
+  // KHÔNG đi qua kiểm tra đăng nhập. Nếu redirect thì next/image optimizer
+  // (nó fetch /logo.png nội bộ) sẽ nhận HTML thay vì ảnh và trả 400.
+  if (STATIC_FILE_RE.test(pathname)) return NextResponse.next();
 
   const token = await getToken({
     req,

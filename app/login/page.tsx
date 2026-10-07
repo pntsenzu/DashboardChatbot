@@ -1,6 +1,8 @@
 import React from "react";
+import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { ShieldCheck } from "lucide-react";
 import { authOptions, isGoogleConfigured, ALLOWED_EMAIL_DOMAIN } from "@/lib/auth";
 import { safeCallbackUrl } from "@/lib/utils";
 import { LoginClient } from "./login-client";
@@ -46,27 +48,25 @@ export default async function LoginPage({
           null
         : null;
 
+  // Khuôn trang F (§8): Logo h-12 → h1 + mô tả → Card rounded-xl p-6 → chân trang.
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <div className="w-full max-w-[380px] space-y-6">
-        {/* Brand */}
-        <div className="flex items-center justify-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-from to-brand-to text-white font-bold text-base grid place-items-center shadow-xs">
-            S
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-4 py-10">
+      <div className="w-full max-w-sm space-y-5">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <Image src="/logo.png" alt="" width={48} height={48} priority className="size-12" />
+          <div className="space-y-1">
+            <h1 className="t-page">Đăng nhập Dashboard</h1>
+            <p className="t-meta">
+              Theo dõi tin nhắn, khách hàng và hiệu suất Chatbot Messenger
+            </p>
           </div>
-          <span className="t-page tracking-tight">SENZU · Chatbot</span>
         </div>
 
-        <div className="p-6 rounded-lg border border-border bg-card shadow-xs space-y-5">
-          <div className="space-y-1 text-center">
-            <h1 className="t-page">Đăng nhập Dashboard</h1>
-            <p className="t-meta">Theo dõi tin nhắn, khách hàng và hiệu suất Chatbot Messenger</p>
-          </div>
-
+        <div className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-xs">
           {message && (
             <div
               role="alert"
-              className="p-3 rounded-md border border-destructive-border bg-destructive-subtle text-destructive text-sm"
+              className="rounded-md border border-destructive-border bg-destructive-subtle p-3 text-sm text-destructive"
             >
               {message}
             </div>
@@ -74,13 +74,16 @@ export default async function LoginPage({
 
           <LoginClient configured={isGoogleConfigured} callbackUrl={callbackUrl} />
 
-          <p className="t-meta text-center text-[11px] leading-4">
-            Chỉ chấp nhận email <b className="text-foreground">{ALLOWED_EMAIL_DOMAIN}</b> đã xác minh
-            bởi Google.
+          <p className="t-meta flex items-start justify-center gap-1.5 text-center">
+            <ShieldCheck className="mt-0.5 size-3.5 flex-shrink-0" aria-hidden="true" />
+            <span>
+              Chỉ chấp nhận email <b className="text-foreground">{ALLOWED_EMAIL_DOMAIN}</b> đã xác
+              minh bởi Google.
+            </span>
           </p>
         </div>
 
-        <p className="t-meta text-center text-[11px]">Senzu Sale Hub · v1.0</p>
+        <p className="text-center text-2xs text-muted-foreground">Senzu Sale Hub · v1.0</p>
       </div>
     </div>
   );

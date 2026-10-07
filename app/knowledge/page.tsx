@@ -25,7 +25,7 @@ export default async function KnowledgePage() {
             <Cpu className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="t-section text-lg font-bold">Bot Messenger Heartbeat</h2>
+            <h2 className="t-section">Bot Messenger Heartbeat</h2>
             <p className="t-meta">Giám sát các tiến trình tự động hóa và đồng bộ dữ liệu</p>
           </div>
         </div>
@@ -60,7 +60,7 @@ export default async function KnowledgePage() {
           </div>
         </div>
 
-        <div className="border-t border-border pt-4 space-y-2 text-sm t-meta">
+        <div className="border-t border-border pt-4 space-y-2 t-meta">
           <div className="flex justify-between">
             <span>Nạp tri thức lần cuối:</span>
             <span className="font-mono text-foreground tabular">{formatDateTime(status.knowledgeLoadedAtMs)}</span>

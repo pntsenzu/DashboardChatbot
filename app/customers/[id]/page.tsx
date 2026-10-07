@@ -175,7 +175,7 @@ export default async function CustomerDetailPage({
           ) : (
             notes.map((n) => (
               <div key={n.id} className="p-3 rounded border border-border bg-accent/40 space-y-1">
-                <div className="flex items-center justify-between text-xs t-meta">
+                <div className="flex items-center justify-between t-meta">
                   <span className="font-semibold text-foreground">{n.authorName || n.authorEmail}</span>
                   <span className="tabular">{formatDateTime(n.createdAtMs)}</span>
                 </div>

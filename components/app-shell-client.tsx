@@ -1,23 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { 
-  LayoutDashboard, 
-  MessageSquare, 
-  Users, 
-  BarChart2, 
-  ShoppingBag, 
-  Cpu, 
-  Sun, 
-  Moon, 
-  CheckCircle2,
+import {
   AlertTriangle,
-  LogOut
+  CheckCircle2,
+  ChevronsUpDown,
+  LogOut,
+  Menu,
+  Moon,
+  Sun,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NAV_GROUPS, MOBILE_PRIMARY, activeHref, type NavItem } from "@/lib/modules";
+import { Badge } from "@/components/ui/badge";
 
 interface ShellUser {
   name?: string | null;
@@ -41,6 +41,261 @@ function initials(user?: ShellUser | null): string {
   return (parts[0]?.[0] ?? "S").toUpperCase() + (parts[1]?.[0] ?? "").toUpperCase();
 }
 
+/* ------------------------------------------------------------------ *
+ * Trạng thái bot — mỗi màu đúng một nghĩa (§4), luôn kèm chữ (§15)   *
+ * ------------------------------------------------------------------ */
+function BotStatusBadge({ stale }: { stale: boolean | null }) {
+  // Badge dùng chung primitive (§9): mỗi tone một nghĩa, luôn kèm chữ (§15).
+  if (stale === null) {
+    return <Badge variant="default">Không rõ trạng thái</Badge>;
+  }
+  if (stale) {
+    return (
+      <Badge variant="destructive">
+        <AlertTriangle aria-hidden="true" /> Bot dừng
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="success">
+      <CheckCircle2 aria-hidden="true" /> Trực tuyến
+    </Badge>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Mục điều hướng — dùng cho cả sidebar, rail, thanh đáy và sheet     *
+ * ------------------------------------------------------------------ */
+function NavLink({
+  item,
+  active,
+  count,
+}: {
+  item: NavItem;
+  active: boolean;
+  count?: number;
+}) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "group relative flex h-9 items-center justify-center rounded-md text-sm font-medium transition-colors coarse:h-11",
+        // rail (768–1023): icon 44px; desktop (≥1024): đầy đủ
+        "md:w-11 md:px-0 lg:w-full lg:justify-start lg:gap-2.5 lg:px-2.5",
+        active
+          ? "bg-card text-foreground shadow-xs ring-1 ring-border"
+          : "text-sidebar-foreground/80 hover:bg-card/70 hover:text-foreground"
+      )}
+    >
+      <Icon
+        className={cn("size-[18px] shrink-0", active ? "text-primary" : "text-muted-foreground")}
+        aria-hidden="true"
+      />
+      <span className="hidden min-w-0 flex-1 truncate lg:block">{item.label}</span>
+      {count ? (
+        <Badge variant="warning" className="hidden tabular lg:inline-flex">
+          {count}
+        </Badge>
+      ) : null}
+      {/* Tooltip chỉ cần khi ở dạng rail 64px (§7) */}
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute left-full top-1/2 z-40 ml-2 hidden max-w-[220px] -translate-y-1/2 truncate rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md md:group-hover:block lg:hidden"
+      >
+        {item.label}
+      </span>
+    </Link>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Tài khoản — avatar + menu đăng xuất (§7)                            *
+ * ------------------------------------------------------------------ */
+function AccountMenu({
+  user,
+  compact = false,
+  className,
+}: {
+  user?: ShellUser | null;
+  /** true: chỉ avatar (rail / top bar); false: avatar + tên + email + chevron. */
+  compact?: boolean;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (event: MouseEvent) => {
+      if (!wrapRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} className={cn("relative", className)}>
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Tài khoản"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "flex h-9 w-full items-center gap-2 rounded-md px-1.5 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring coarse:h-11",
+          compact && "w-9 justify-center px-0"
+        )}
+      >
+        <span
+          className="grid size-8 flex-shrink-0 place-items-center rounded-full border border-border bg-accent text-xs font-semibold text-accent-foreground"
+          aria-hidden="true"
+        >
+          {initials(user)}
+        </span>
+        {!compact && (
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium text-sidebar-foreground">
+              {user?.name || "Người dùng"}
+            </span>
+            <span className="block truncate t-meta">{user?.email}</span>
+          </span>
+        )}
+        {!compact && <ChevronsUpDown className="size-4 text-muted-foreground" aria-hidden="true" />}
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute bottom-full z-40 mb-1 min-w-[200px] rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
+        >
+          <div className="border-b border-border px-2.5 py-2">
+            <p className="truncate text-sm font-medium">{user?.name || "Người dùng"}</p>
+            <p className="truncate t-meta">{user?.email}</p>
+          </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="mt-1 flex h-9 w-full items-center gap-2 rounded-sm px-2.5 text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring coarse:h-11"
+          >
+            <LogOut className="size-4" aria-hidden="true" /> Đăng xuất
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Sheet "Khác" — bottom sheet cho mobile (§7)                          *
+ * ------------------------------------------------------------------ */
+function MoreSheet({
+  open,
+  onClose,
+  pathname,
+  active,
+  attentionCount,
+  stale,
+  user,
+}: {
+  open: boolean;
+  onClose: () => void;
+  pathname: string;
+  active: string;
+  attentionCount: number;
+  stale: boolean | null;
+  user?: ShellUser | null;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    if (open && !node.open) node.showModal();
+    if (!open && node.open) node.close();
+  }, [open]);
+
+  // Đóng sheet khi đổi trang.
+  useEffect(() => {
+    if (open) onClose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  return (
+    <dialog
+      ref={ref}
+      onClose={onClose}
+      aria-label="Điều hướng khác"
+      className="m-auto mt-auto w-full max-w-full rounded-t-xl border border-border bg-card p-0 shadow-lg [&::backdrop]:bg-black/50"
+    >
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <span className="t-section">Điều hướng</span>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Đóng"
+          className="grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <X className="size-4" aria-hidden="true" />
+        </button>
+      </div>
+
+      <nav aria-label="Điều hướng khác" className="max-h-[60vh] overflow-y-auto p-2">
+        {NAV_GROUPS.map((group) => (
+          <div key={group.name} className="mt-3 first:mt-0">
+            <p className="t-overline px-2.5 py-1">{group.name}</p>
+            {group.items.map((item) => {
+              const Icon = item.icon;
+              const isActive = active === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={isActive ? "page" : undefined}
+                  onClick={onClose}
+                  className={cn(
+                    "flex min-h-11 items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-accent text-accent-foreground"
+                      : "text-foreground hover:bg-muted"
+                  )}
+                >
+                  <Icon className="size-[18px] text-muted-foreground" aria-hidden="true" />
+                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                  {item.href === "/conversations" && attentionCount > 0 ? (
+                    <Badge variant="warning" className="tabular">
+                      {attentionCount}
+                    </Badge>
+                  ) : null}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+
+      <div className="border-t border-border p-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+        <div className="mb-2 flex items-center gap-2 px-1">
+          <BotStatusBadge stale={stale} />
+        </div>
+        <AccountMenu user={user} />
+      </div>
+    </dialog>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Khung ứng dụng                                                     *
+ * ------------------------------------------------------------------ */
 export function AppShellClient({
   children,
   openAttentionCount = 0,
@@ -50,169 +305,219 @@ export function AppShellClient({
 }: AppShellProps) {
   const pathname = usePathname();
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  useEffect(() => {
+    setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
+  }, []);
 
   // Trang đăng nhập có layout riêng, không bọc sidebar/header.
   if (pathname === "/login") return <>{children}</>;
 
+  const active = activeHref(pathname);
 
   const toggleTheme = () => {
-    const next = theme === "light" ? "dark" : "light";
-    setTheme(next);
-    if (next === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
+    const next = theme === "dark" ? "light" : "dark";
+    document.documentElement.classList.toggle("dark", next === "dark");
+    try {
+      localStorage.setItem("senzu-theme", next);
+    } catch {
+      /* localStorage bị chặn -> bỏ qua, theme vẫn áp cho phiên này */
     }
+    setTheme(next);
   };
 
-  const navItems = [
-    { label: "Tổng quan", href: "/", icon: LayoutDashboard },
-    { label: "Hội thoại", href: "/conversations", icon: MessageSquare },
-    { label: "Khách hàng", href: "/customers", icon: Users },
-    { label: "Lưu lượng & Hiệu suất", href: "/volume", icon: BarChart2 },
-    { label: "Sản phẩm", href: "/products", icon: ShoppingBag },
-    { label: "Hệ thống & Tri thức", href: "/knowledge", icon: Cpu },
-  ];
-
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
-      {/* Sidebar */}
-      <aside className="sticky top-0 h-screen w-60 flex-shrink-0 flex flex-col bg-sidebar border-r border-sidebar-border z-30 hidden md:flex">
-        {/* Brand */}
-        <div className="h-14 flex items-center gap-2.5 px-4 flex-shrink-0 border-b border-sidebar-border">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[hsl(138,72%,34%)] to-[hsl(136,53%,28%)] text-white font-bold text-sm grid place-items-center shadow-xs">
-            S
-          </div>
-          <span className="t-section text-foreground tracking-tight">SENZU · Chatbot</span>
+    <div className="flex h-dvh overflow-hidden bg-background text-foreground">
+      {/* Skip link — hiện khi focus, trỏ tới #main (§7) */}
+      <a
+        href="#main"
+        className="sr-only rounded-md bg-card px-3 py-2 text-sm shadow-md focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        Bỏ qua điều hướng
+      </a>
+
+      {/* Sidebar: rail 64px ở md (768–1023), đầy đủ 240px ở lg (≥1024) */}
+      <aside className="hidden h-full flex-shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex md:w-16 lg:w-60">
+        {/* Brand: logo cao 56px (§7) */}
+        <div className="flex h-14 flex-shrink-0 items-center justify-center gap-2.5 border-b border-sidebar-border px-3 lg:justify-start lg:px-4">
+          <Image
+            src="/logo.png"
+            alt=""
+            width={32}
+            height={32}
+            priority
+            className="size-8 rounded"
+            aria-hidden="true"
+          />
+          <span className="hidden h-5 w-px bg-sidebar-border lg:block" aria-hidden="true" />
+          <span className="hidden truncate text-sm font-semibold text-foreground lg:block">
+            Senzu Chatbot
+          </span>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          <div className="t-overline px-2.5 pt-2 pb-1">Điều hướng</div>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-2.5 h-9 px-2.5 rounded-md text-sidebar-foreground/80 hover:bg-card/70 hover:text-foreground text-sm font-medium transition-colors",
-                  isActive && "bg-card text-foreground font-semibold shadow-xs border border-border"
-                )}
-              >
-                <Icon className={cn("w-4 h-4 text-muted-foreground", isActive && "text-primary")} />
-                <span className="flex-1">{item.label}</span>
-                {item.href === "/conversations" && openAttentionCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-warning-subtle text-warning border border-warning-border">
-                    {openAttentionCount}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+        {/* Điều hướng */}
+        <nav
+          aria-label="Điều hướng chính"
+          className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-2"
+        >
+          {NAV_GROUPS.map((group) => (
+            <div
+              key={group.name}
+              className="mt-5 border-t border-sidebar-border pt-3 first:mt-0 first:border-t-0 first:pt-0 lg:mt-5 lg:border-t-0 lg:pt-0"
+            >
+              <p className="t-overline hidden px-2.5 pb-1 lg:block">{group.name}</p>
+              <div className="flex flex-col items-center gap-1 lg:items-stretch">
+                {group.items.map((item) => (
+                  <NavLink
+                    key={item.href}
+                    item={item}
+                    active={active === item.href}
+                    count={item.href === "/conversations" ? openAttentionCount : undefined}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </nav>
 
-        {/* Footer info */}
-        <div className="border-t border-sidebar-border p-3 space-y-2">
-          <div className="flex items-center justify-between px-1 text-xs">
-            <span className="t-meta flex items-center gap-1.5">
-              {botStatusIsStale === null ? (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-muted-foreground" />
-                  Không rõ trạng thái
-                </>
-              ) : botStatusIsStale ? (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-                  Bot ngắt kết nối
-                </>
-              ) : (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-success" />
-                  Bot đang chạy
-                </>
-              )}
-            </span>
+        {/* Tài khoản ở đáy sidebar */}
+        <div className="flex-shrink-0 border-t border-sidebar-border p-3">
+          <div className="mb-2 hidden px-1 lg:flex lg:items-center lg:justify-between">
+            <BotStatusBadge stale={botStatusIsStale} />
             <span className="t-meta">v1.0</span>
           </div>
-          <div className="t-meta text-[11px] px-1">
-            Chỉ chấp nhận email @senzu.co.jp
+          <div className="hidden lg:block">
+            <AccountMenu user={user} />
+          </div>
+          <div className="flex justify-center lg:hidden">
+            <AccountMenu user={user} compact />
           </div>
         </div>
       </aside>
 
-      {/* Main column */}
-      <div className="flex-1 min-w-0 flex flex-col">
+      {/* Cột chính */}
+      <div className="flex min-w-0 flex-1 flex-col">
         {/* Dữ liệu mẫu (chỉ hiện khi chưa cấu hình DATA_API_TOKEN) */}
         {mockMode && (
           <div
             role="status"
-            className="px-4 sm:px-8 py-2 bg-warning-subtle border-b border-warning-border text-xs font-medium text-warning flex items-center gap-2"
+            className="flex items-center gap-2 border-b border-warning-border bg-warning-subtle px-4 py-2 text-xs font-medium text-warning sm:px-6 lg:px-8"
           >
-            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" />
-            <span>
+            <AlertTriangle className="size-3.5 flex-shrink-0" aria-hidden="true" />
+            <span className="min-w-0">
               Đang hiển thị <b>dữ liệu mẫu</b> — chưa cấu hình <code>DATA_API_TOKEN</code>. Số liệu
               không phải dữ liệu thật.
             </span>
           </div>
         )}
-        {/* Top Header */}
-        <header className="sticky top-0 z-20 h-14 flex items-center gap-4 px-4 sm:px-8 bg-card border-b border-border shadow-xs">
-          <div className="flex-1 flex items-center gap-3">
-            <h1 className="t-page text-lg font-semibold tracking-tight">Senzu Sale Hub Chatbot</h1>
-            {botStatusIsStale === null ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
-                Không rõ trạng thái
-              </span>
-            ) : botStatusIsStale ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-destructive-subtle text-destructive border border-destructive-border">
-                <AlertTriangle className="w-3.5 h-3.5" /> Bot dừng
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-success-subtle text-success border border-success-border">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Trực tuyến
-              </span>
-            )}
+
+        {/* Thanh trên (§7) */}
+        <header className="z-20 flex h-14 flex-shrink-0 items-center gap-3 border-b border-border bg-card px-4 shadow-xs sm:px-6 lg:px-8">
+          <Image
+            src="/logo.png"
+            alt=""
+            width={28}
+            height={28}
+            className="size-7 rounded md:hidden"
+            aria-hidden="true"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-base font-semibold text-foreground sm:text-lg">
+              Senzu Sale Hub Chatbot
+            </p>
+            <p className="t-meta hidden truncate sm:block">
+              Quản lý tin nhắn Messenger & hiệu suất AI
+            </p>
           </div>
+
+          <BotStatusBadge stale={botStatusIsStale} />
 
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={toggleTheme}
               aria-label={theme === "light" ? "Chuyển sang giao diện tối" : "Chuyển sang giao diện sáng"}
-              className="h-8 px-2.5 rounded-md border border-input bg-card text-foreground hover:bg-muted text-xs font-medium flex items-center gap-1.5 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex h-8 items-center gap-1.5 rounded-md border border-input bg-card px-2.5 text-xs font-medium text-foreground shadow-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring coarse:h-11"
             >
-              {theme === "light" ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
-              <span>{theme === "light" ? "Tối" : "Sáng"}</span>
+              {theme === "light" ? (
+                <Moon className="size-3.5" aria-hidden="true" />
+              ) : (
+                <Sun className="size-3.5" aria-hidden="true" />
+              )}
+              <span className="hidden sm:inline">{theme === "light" ? "Tối" : "Sáng"}</span>
             </button>
-            {user?.email ? (
-              <span className="hidden sm:inline t-meta max-w-[200px] truncate" title={user.email}>
-                {user.name || user.email}
-              </span>
-            ) : null}
-            <div
-              className="w-8 h-8 rounded-full bg-accent text-accent-foreground font-semibold text-xs grid place-items-center border border-border"
-              aria-hidden="true"
-            >
-              {initials(user)}
+
+            {/* Tài khoản: compact trên top bar (mobile không có sidebar) */}
+            <div className="md:hidden">
+              <AccountMenu user={user} compact />
             </div>
-            <button
-              type="button"
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="h-8 px-2.5 rounded-md border border-input bg-card text-foreground hover:bg-muted text-xs font-medium flex items-center gap-1.5 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Đăng xuất</span>
-            </button>
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="max-w-[1240px] w-full mx-auto px-4 sm:px-8 py-6 pb-20">
-          {children}
+        {/* Vùng nội dung: CHỈ main cuộn (§7) */}
+        <main
+          id="main"
+          tabIndex={-1}
+          className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none"
+        >
+          <div className="mx-auto w-full max-w-[1400px] px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+            {children}
+          </div>
         </main>
+
+        {/* Thanh điều hướng đáy mobile (§7) */}
+        <nav
+          aria-label="Điều hướng nhanh"
+          className="flex flex-shrink-0 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+        >
+          {MOBILE_PRIMARY.map((item) => {
+            const Icon = item.icon;
+            const isActive = active === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-2xs transition-colors",
+                  isActive ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                {isActive && (
+                  <span className="absolute inset-x-0 top-0 h-0.5 bg-primary" aria-hidden="true" />
+                )}
+                <Icon className="size-5" aria-hidden="true" />
+                <span className="truncate px-1">{item.label}</span>
+                {item.href === "/conversations" && openAttentionCount > 0 ? (
+                  <span className="absolute right-[22%] top-1.5 min-w-4 rounded-full bg-warning-subtle px-1 text-2xs font-semibold tabular text-warning ring-1 ring-warning-border">
+                    {openAttentionCount}
+                  </span>
+                ) : null}
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setSheetOpen(true)}
+            aria-haspopup="dialog"
+            className="relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-2xs text-muted-foreground transition-colors"
+          >
+            <Menu className="size-5" aria-hidden="true" />
+            <span>Khác</span>
+          </button>
+        </nav>
       </div>
+
+      <MoreSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        pathname={pathname}
+        active={active}
+        attentionCount={openAttentionCount}
+        stale={botStatusIsStale}
+        user={user}
+      />
     </div>
   );
 }

@@ -60,7 +60,7 @@ export default async function ConversationsPage({
       </p>
       <Link
         href="/conversations"
-        className="inline-block h-8 px-3 rounded-md border border-input bg-card text-xs font-medium leading-8 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="inline-flex h-8 items-center rounded-md border border-input bg-card px-3 text-sm font-medium shadow-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring coarse:h-11"
       >
         Xoá bộ lọc
       </Link>
@@ -94,7 +94,7 @@ export default async function ConversationsPage({
         ) : (
           <table className="w-full text-left text-sm border-collapse">
             <thead>
-              <tr className="bg-muted/50 border-b border-border text-xs uppercase t-overline">
+              <tr className="bg-muted/50 border-b border-border t-overline">
                 <th className="p-3">Khách hàng</th>
                 <th className="p-3">Tin nhắn cuối</th>
                 <th className="p-3">Số tin</th>
@@ -121,7 +121,7 @@ export default async function ConversationsPage({
                       {conv.lastMessageText}
                     </Link>
                   </td>
-                  <td className="p-3 tabular font-mono text-xs">{conv.messageCount}</td>
+                  <td className="p-3 tabular font-mono t-meta">{conv.messageCount}</td>
                   <td className="p-3">
                     <Badge
                       variant={
@@ -139,7 +139,7 @@ export default async function ConversationsPage({
                           : "Đã trả lời"}
                     </Badge>
                   </td>
-                  <td className="p-3 text-right tabular text-xs t-meta">
+                  <td className="p-3 text-right tabular t-meta">
                     {formatDateTime(conv.lastMessageAtMs)}
                   </td>
                 </tr>

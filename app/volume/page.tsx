@@ -47,7 +47,7 @@ export default async function VolumePage() {
         ) : (
         <table className="w-full text-left text-sm border-collapse">
           <thead>
-            <tr className="bg-muted/50 border-b border-border text-xs uppercase t-overline">
+            <tr className="bg-muted/50 border-b border-border t-overline">
               <th className="p-3">Ngày</th>
               <th className="p-3 text-right">Tin vào (Khách)</th>
               <th className="p-3 text-right">Tin ra (Bot / NV)</th>
@@ -77,7 +77,7 @@ export default async function VolumePage() {
             <div key={c.senderId} className="p-3 rounded border border-border bg-muted/30 flex items-center justify-between">
               <div>
                 <span className="t-label font-semibold">{c.senderName || c.senderId}</span>
-                {c.isNew && <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-success-subtle text-success border border-success-border font-medium">Khách mới</span>}
+                {c.isNew && <span className="ml-2 text-2xs px-1.5 py-0.5 rounded bg-success-subtle text-success border border-success-border font-medium">Khách mới</span>}
               </div>
               <div className="t-meta tabular font-mono font-semibold">{c.msgCount} tin nhắn</div>
             </div>

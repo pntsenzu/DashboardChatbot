@@ -50,7 +50,7 @@ export default async function CustomersPage() {
         ) : (
         <table className="w-full text-left text-sm border-collapse">
           <thead>
-            <tr className="bg-muted/50 border-b border-border text-xs uppercase t-overline">
+            <tr className="bg-muted/50 border-b border-border t-overline">
               <th className="p-3">Tên / ID Khách</th>
               <th className="p-3">Sản phẩm quan tâm</th>
               <th className="p-3">Mức độ quan tâm</th>
@@ -74,10 +74,10 @@ export default async function CustomersPage() {
                     {c.interest.status === "purchase_intent" ? "Ý định mua" : c.interest.status === "considering" ? "Đang cân nhắc" : c.interest.status === "new" ? "Mới quan tâm" : "Không hoạt động"}
                   </Badge>
                 </td>
-                <td className="p-3 text-xs t-meta">
+                <td className="p-3 t-meta">
                   {c.interest.reasons.join(" · ")}
                 </td>
-                <td className="p-3 text-right tabular text-xs t-meta">
+                <td className="p-3 text-right tabular t-meta">
                   {formatDateTime(c.lastInteractionMs)}
                 </td>
               </tr>

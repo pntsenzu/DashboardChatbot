@@ -41,7 +41,7 @@ export function LoginClient({ configured, callbackUrl }: LoginClientProps) {
         Tiếp tục với Google
       </Button>
       {callbackUrl !== "/" && (
-        <p className="t-meta text-center text-[11px]">
+        <p className="text-center text-2xs text-muted-foreground">
           Sau khi đăng nhập bạn sẽ quay lại trang đã yêu cầu.
         </p>
       )}

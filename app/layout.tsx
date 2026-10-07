@@ -1,14 +1,32 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { getServerSession } from "next-auth";
 import { AppShellClient } from "@/components/app-shell-client";
+import { Toaster } from "@/components/ui/sonner";
 import { authOptions } from "@/lib/auth";
 import { rpc, isMockMode } from "@/lib/senzu-api";
+
+// Inter có subset tiếng Việt; fallback chữ Nhật khai báo trong tailwind.config (§5).
+const inter = Inter({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Senzu Chatbot Dashboard",
   description: "Dashboard quản lý tin nhắn, khách hàng và hiệu suất AI Chatbot Senzu Messenger",
+  icons: { icon: "/logo.png" },
 };
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
+  viewportFit: "cover",
+};
+
+/** Khôi phục theme trước khi paint để tránh chớp màu khi tải lại trang. */
+const themeInit = `(function(){try{var t=localStorage.getItem("senzu-theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches)){document.documentElement.classList.add("dark")}}catch(e){}})();`;
 
 export default async function RootLayout({
   children,
@@ -36,8 +54,11 @@ export default async function RootLayout({
   ]);
 
   return (
-    <html lang="vi">
-      <body>
+    <html lang="vi" className={inter.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
+      </head>
+      <body className="font-sans antialiased">
         <AppShellClient
           openAttentionCount={openAttentionCount ?? undefined}
           botStatusIsStale={botStatusIsStale}
@@ -46,6 +67,8 @@ export default async function RootLayout({
         >
           {children}
         </AppShellClient>
+        {/* MỘT instance Toaster duy nhất (§16) */}
+        <Toaster />
       </body>
     </html>
   );

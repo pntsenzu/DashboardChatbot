@@ -57,7 +57,7 @@ export default async function ProductsPage() {
                   <div className="t-label font-semibold">{p.productName || p.productId}</div>
                   <div className="t-meta">{p.uniqueCustomers} khách hàng quan tâm</div>
                 </div>
-                <div className="t-metric text-base font-bold tabular">{p.mentionCount} lượt</div>
+                <div className="t-metric tabular">{p.mentionCount} lượt</div>
               </div>
             ))}
           </div>
@@ -100,7 +100,7 @@ export default async function ProductsPage() {
             <div key={i} className="p-3 rounded border border-warning-border/60 bg-card flex flex-col gap-1">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-sm capitalize">{u.normalizedName}</span>
-                <span className="text-xs font-bold text-warning tabular">{u.count} lượt nhắc</span>
+                <span className="t-meta font-semibold text-warning tabular">{u.count} lượt nhắc</span>
               </div>
               <p className="t-meta italic">Ví dụ tin nhắn: &ldquo;{u.example}&rdquo;</p>
             </div>

@@ -2,8 +2,10 @@
 
 import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SearchInput } from "@/components/ui/input";
+import { Tabs, Tab } from "@/components/ui/tabs";
 
 const STATUS_TABS = [
   { key: "", label: "Tất cả" },
@@ -21,21 +23,25 @@ interface ToolbarProps {
 /**
  * Toolbar lọc hội thoại. Toàn bộ trạng thái nằm trên URL (?search=&status=&limit=)
  * để link, refresh và nút Back của trình duyệt đều hoạt động đúng.
+ * Tabs là <Link> thật tới URL, không phải state cục bộ (§7: URL là nguồn sự thật).
  */
 export function ConversationsToolbar({ search, status = "", limit }: ToolbarProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState(search);
 
-  const go = (patch: Record<string, string | number | undefined>) => {
-    const params = new URLSearchParams();
+  /** Xây URL cho một tổ hợp bộ lọc — dùng cho cả <Link href> lẫn router.push. */
+  const hrefFor = (patch: Record<string, string | number | undefined>) => {
     const next = { search, status, limit, ...patch };
+    const params = new URLSearchParams();
     if (next.search) params.set("search", String(next.search));
     if (next.status) params.set("status", String(next.status));
     if (next.limit && Number(next.limit) !== 50) params.set("limit", String(next.limit));
     const qs = params.toString();
-    router.push(qs ? `/conversations?${qs}` : "/conversations");
+    return qs ? `/conversations?${qs}` : "/conversations";
   };
+
+  const go = (patch: Record<string, string | number | undefined>) => router.push(hrefFor(patch));
 
   const hasFilter = Boolean(search || status);
 
@@ -51,67 +57,44 @@ export function ConversationsToolbar({ search, status = "", limit }: ToolbarProp
           go({ search: draft.trim() });
         }}
       >
-        <div className="relative flex-1 max-w-sm">
-          <Search
-            className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-            aria-hidden="true"
-          />
-          <input
-            ref={inputRef}
-            type="search"
-            name="search"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Tìm theo tên khách hoặc nội dung tin…"
-            aria-label="Tìm kiếm hội thoại"
-            className="h-9 w-full pl-9 pr-3 rounded-md border border-input bg-card text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-        </div>
+        <SearchInput
+          ref={inputRef}
+          name="search"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Tìm theo tên khách hoặc nội dung tin…"
+          aria-label="Tìm kiếm hội thoại"
+          className="flex-1 max-w-sm"
+        />
         <input type="hidden" name="status" value={status} />
-        <button
-          type="submit"
-          className="h-9 px-3.5 rounded-md bg-primary text-primary-foreground hover:bg-primary-hover text-sm font-medium shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          Tìm
-        </button>
+        <Button type="submit">Tìm</Button>
         {hasFilter && (
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => {
               setDraft("");
               router.push("/conversations");
             }}
-            className="h-9 px-3 rounded-md border border-input bg-card text-sm hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <X className="w-3.5 h-3.5" aria-hidden="true" /> Xoá bộ lọc
-          </button>
+            <X aria-hidden="true" /> Xoá bộ lọc
+          </Button>
         )}
       </form>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Tabs trạng thái — giữ nguyên ?search= đang có */}
-        <div role="tablist" aria-label="Lọc theo trạng thái" className="flex flex-wrap gap-2">
-          {STATUS_TABS.map((tab) => {
-            const active = status === tab.key;
-            return (
-              <button
-                key={tab.key || "all"}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => go({ status: tab.key })}
-                className={cn(
-                  "px-3 py-1.5 rounded-md text-xs font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  active
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-card text-foreground border-border hover:bg-muted"
-                )}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+        <Tabs label="Lọc theo trạng thái">
+          {STATUS_TABS.map((tab) => (
+            <Tab
+              key={tab.key || "all"}
+              href={hrefFor({ status: tab.key })}
+              active={status === tab.key}
+            >
+              {tab.label}
+            </Tab>
+          ))}
+        </Tabs>
 
         {/* Số dòng — API không có offset nên đây là giới hạn tải về, không phải trang */}
         <label className="flex items-center gap-2 t-meta">
@@ -120,7 +103,7 @@ export function ConversationsToolbar({ search, status = "", limit }: ToolbarProp
             value={limit}
             onChange={(e) => go({ limit: Number(e.target.value) })}
             aria-label="Số hội thoại hiển thị"
-            className="h-8 px-2 rounded-md border border-input bg-card text-xs text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-8 rounded-md border border-input bg-card px-2 text-sm text-foreground shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-ring coarse:h-11"
           >
             {[20, 50, 100, 200].map((n) => (
               <option key={n} value={n}>
