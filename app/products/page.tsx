@@ -90,7 +90,7 @@ export default async function ProductsPage() {
                 <span className="font-semibold text-sm capitalize">{u.normalizedName}</span>
                 <span className="text-xs font-bold text-warning tabular">{u.count} lượt nhắc</span>
               </div>
-              <p className="t-meta italic">Ví dụ tin nhắn: "{u.example}"</p>
+              <p className="t-meta italic">Ví dụ tin nhắn: &ldquo;{u.example}&rdquo;</p>
             </div>
           ))}
         </div>

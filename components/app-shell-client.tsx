@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { 
   LayoutDashboard, 
   MessageSquare, 
@@ -10,24 +11,49 @@ import {
   BarChart2, 
   ShoppingBag, 
   Cpu, 
-  Bell, 
   Sun, 
   Moon, 
-  Search,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface ShellUser {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+}
 
 interface AppShellProps {
   children: React.ReactNode;
   openAttentionCount?: number;
-  botStatusIsStale?: boolean;
+  /** null = không tải được trạng thái -> hiển thị "không rõ", không giả vờ khoẻ. */
+  botStatusIsStale?: boolean | null;
+  user?: ShellUser | null;
+  /** true = chưa cấu hình DATA_API_TOKEN, toàn bộ số liệu là dữ liệu mẫu. */
+  mockMode?: boolean;
 }
 
-export function AppShellClient({ children, openAttentionCount = 0, botStatusIsStale = false }: AppShellProps) {
+function initials(user?: ShellUser | null): string {
+  const source = user?.name || user?.email || "SV";
+  const parts = source.split(/[\s@._-]+/).filter(Boolean);
+  return (parts[0]?.[0] ?? "S").toUpperCase() + (parts[1]?.[0] ?? "").toUpperCase();
+}
+
+export function AppShellClient({
+  children,
+  openAttentionCount = 0,
+  botStatusIsStale = null,
+  user = null,
+  mockMode = false,
+}: AppShellProps) {
   const pathname = usePathname();
   const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  // Trang đăng nhập có layout riêng, không bọc sidebar/header.
+  if (pathname === "/login") return <>{children}</>;
+
 
   const toggleTheme = () => {
     const next = theme === "light" ? "dark" : "light";
@@ -91,7 +117,12 @@ export function AppShellClient({ children, openAttentionCount = 0, botStatusIsSt
         <div className="border-t border-sidebar-border p-3 space-y-2">
           <div className="flex items-center justify-between px-1 text-xs">
             <span className="t-meta flex items-center gap-1.5">
-              {botStatusIsStale ? (
+              {botStatusIsStale === null ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-muted-foreground" />
+                  Không rõ trạng thái
+                </>
+              ) : botStatusIsStale ? (
                 <>
                   <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
                   Bot ngắt kết nối
@@ -113,11 +144,28 @@ export function AppShellClient({ children, openAttentionCount = 0, botStatusIsSt
 
       {/* Main column */}
       <div className="flex-1 min-w-0 flex flex-col">
+        {/* Dữ liệu mẫu (chỉ hiện khi chưa cấu hình DATA_API_TOKEN) */}
+        {mockMode && (
+          <div
+            role="status"
+            className="px-4 sm:px-8 py-2 bg-warning-subtle border-b border-warning-border text-xs font-medium text-warning flex items-center gap-2"
+          >
+            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" />
+            <span>
+              Đang hiển thị <b>dữ liệu mẫu</b> — chưa cấu hình <code>DATA_API_TOKEN</code>. Số liệu
+              không phải dữ liệu thật.
+            </span>
+          </div>
+        )}
         {/* Top Header */}
         <header className="sticky top-0 z-20 h-14 flex items-center gap-4 px-4 sm:px-8 bg-card border-b border-border shadow-xs">
           <div className="flex-1 flex items-center gap-3">
             <h1 className="t-page text-lg font-semibold tracking-tight">Senzu Sale Hub Chatbot</h1>
-            {botStatusIsStale ? (
+            {botStatusIsStale === null ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
+                Không rõ trạng thái
+              </span>
+            ) : botStatusIsStale ? (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-destructive-subtle text-destructive border border-destructive-border">
                 <AlertTriangle className="w-3.5 h-3.5" /> Bot dừng
               </span>
@@ -130,15 +178,33 @@ export function AppShellClient({ children, openAttentionCount = 0, botStatusIsSt
 
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={toggleTheme}
-              className="h-8 px-2.5 rounded-md border border-input bg-card text-foreground hover:bg-muted text-xs font-medium flex items-center gap-1.5 shadow-xs"
+              aria-label={theme === "light" ? "Chuyển sang giao diện tối" : "Chuyển sang giao diện sáng"}
+              className="h-8 px-2.5 rounded-md border border-input bg-card text-foreground hover:bg-muted text-xs font-medium flex items-center gap-1.5 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {theme === "light" ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
               <span>{theme === "light" ? "Tối" : "Sáng"}</span>
             </button>
-            <div className="w-8 h-8 rounded-full bg-accent text-accent-foreground font-semibold text-xs grid place-items-center border border-border">
-              ST
+            {user?.email ? (
+              <span className="hidden sm:inline t-meta max-w-[200px] truncate" title={user.email}>
+                {user.name || user.email}
+              </span>
+            ) : null}
+            <div
+              className="w-8 h-8 rounded-full bg-accent text-accent-foreground font-semibold text-xs grid place-items-center border border-border"
+              aria-hidden="true"
+            >
+              {initials(user)}
             </div>
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="h-8 px-2.5 rounded-md border border-input bg-card text-foreground hover:bg-muted text-xs font-medium flex items-center gap-1.5 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Đăng xuất</span>
+            </button>
           </div>
         </header>
 

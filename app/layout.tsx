@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { getServerSession } from "next-auth";
 import { AppShellClient } from "@/components/app-shell-client";
-import { rpc } from "@/lib/senzu-api";
+import { authOptions } from "@/lib/auth";
+import { rpc, isMockMode } from "@/lib/senzu-api";
 import { SystemStatus } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -14,24 +16,35 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  let openAttentionCount = 0;
-  let botStatusIsStale = false;
+  let openAttentionCount: number | null = null;
+  let botStatusIsStale: boolean | null = null;
 
-  try {
-    const [count, status] = await Promise.all([
-      rpc<number>("getOpenAttentionCount"),
-      rpc<SystemStatus>("getSystemStatus"),
-    ]);
-    openAttentionCount = count || 0;
-    botStatusIsStale = status?.isStale ?? false;
-  } catch (e) {
-    console.error("Failed to load header stats", e);
-  }
+  const [session] = await Promise.all([
+    getServerSession(authOptions),
+    (async () => {
+      try {
+        const [count, status] = await Promise.all([
+          rpc<number>("getOpenAttentionCount"),
+          rpc<SystemStatus>("getSystemStatus"),
+        ]);
+        openAttentionCount = typeof count === "number" ? count : 0;
+        botStatusIsStale = status?.isStale ?? null;
+      } catch (e) {
+        // Giữ nguyên null -> UI hiển thị "không rõ", KHÔNG giả vờ bot đang chạy.
+        console.error("Failed to load header stats", e);
+      }
+    })(),
+  ]);
 
   return (
     <html lang="vi">
       <body>
-        <AppShellClient openAttentionCount={openAttentionCount} botStatusIsStale={botStatusIsStale}>
+        <AppShellClient
+          openAttentionCount={openAttentionCount ?? undefined}
+          botStatusIsStale={botStatusIsStale}
+          user={session?.user ?? null}
+          mockMode={isMockMode()}
+        >
           {children}
         </AppShellClient>
       </body>

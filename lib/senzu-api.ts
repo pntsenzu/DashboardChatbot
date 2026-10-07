@@ -1,40 +1,59 @@
 import "server-only";
-import {
-  PeriodStats, DailyPerformancePoint, AiInsightCounts, VolumePoint, AttentionItem,
-  RecentConversation, SystemStatus, HeatmapCell, CustomerRow, CustomerSummary,
-  LatencyStats, RecentMessage, ConversationListItem, ConversationMessage, MessageProcessing,
-  CustomerListRow, CustomerDetail, CustomerInterest, CustomerPurchaseSignal, CustomerActivityStats,
-  CustomerActivityPoint, ConversationVolumePoint, InterestSignalPoint, CustomerNote,
-  TopProductRow, QuestionTypeCount, ProductMentionSummary, UnknownProductMention
-} from "./types";
 
+/**
+ * true khi mọi dữ liệu đang là dữ liệu mẫu (không có DATA_API_TOKEN).
+ * Dùng để UI gắn cờ "Dữ liệu mẫu" — không bao giờ để người dùng tưởng là số thật.
+ */
+export function isMockMode(): boolean {
+  return !hasRealToken();
+}
+
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+
+function hasRealToken(): boolean {
+  return Boolean(process.env.DATA_API_TOKEN?.trim());
+}
+
+/**
+ * Gọi một hàm của Senzu Data API.
+ *
+ * Quy tắc (data-api §9):
+ * - Có token -> PHẢI gọi thật; HTTP != 200 hoặc lỗi mạng -> ném lỗi (không rơi về mock).
+ * - Không token -> chỉ được dùng mock ở development / lúc build;
+ *   ở production runtime phải ném lỗi cấu hình thay vì trả dữ liệu giả.
+ */
 export async function rpc<T>(fn: string, ...args: unknown[]): Promise<T> {
   const url = process.env.DATA_API_URL || "https://api-bot.senzu-base.vn";
-  const token = process.env.DATA_API_TOKEN;
+  const token = process.env.DATA_API_TOKEN?.trim();
 
-  if (token && token.trim().length > 0) {
-    try {
-      const res = await fetch(`${url}/rpc`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ fn, args }),
-        cache: "no-store",
-        signal: AbortSignal.timeout(10_000),
-      });
-      if (res.ok) {
-        const json = (await res.json()) as { result: T };
-        return json.result;
-      }
-    } catch (err) {
-      console.warn(`Data API fetch failed for ${fn}, falling back to mock data.`, err);
+  if (!token) {
+    if (process.env.NODE_ENV === "production" && !isBuildPhase) {
+      throw new Error(
+        `Cấu hình thiếu DATA_API_TOKEN: không thể gọi ${fn} và không được dùng dữ liệu mẫu ở production.`
+      );
     }
+    console.warn(`[senzu-api] DATA_API_TOKEN trống -> dùng dữ liệu MẪU cho ${fn}.`);
+    return getMockData<T>(fn, args);
   }
 
-  // Smart Mock Generator Fallback
-  return getMockData<T>(fn, args);
+  const res = await fetch(`${url}/rpc`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ fn, args }),
+    cache: "no-store",
+    signal: AbortSignal.timeout(10_000),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "");
+    throw new Error(`Data API ${fn} HTTP ${res.status}: ${errorText.slice(0, 300)}`);
+  }
+
+  const json = (await res.json()) as { result: T };
+  return json.result;
 }
 
 function getMockData<T>(fn: string, args: unknown[]): T {

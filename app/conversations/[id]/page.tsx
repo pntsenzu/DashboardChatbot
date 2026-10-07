@@ -3,7 +3,6 @@ import Link from "next/link";
 import { rpc } from "@/lib/senzu-api";
 import { ConversationMessage, MessageProcessing, AttentionItem } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Bot, User, Cpu, AlertTriangle } from "lucide-react";
 
 export const revalidate = 5;

@@ -1,7 +1,7 @@
 import React from "react";
 import { rpc } from "@/lib/senzu-api";
 import { VolumePoint, LatencyStats, CustomerRow } from "@/lib/types";
-import { formatMs, formatDateTime } from "@/lib/utils";
+import { formatMs } from "@/lib/utils";
 
 export const revalidate = 30;
 

@@ -1,12 +1,13 @@
 import React from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { rpc } from "@/lib/senzu-api";
-import { CustomerDetail, CustomerInterest, CustomerNote, ConversationListItem } from "@/lib/types";
+import { CustomerDetail, CustomerInterest, CustomerNote } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, User, ShoppingBag, FileText, Send } from "lucide-react";
+import { ArrowLeft, ShoppingBag, FileText, Send } from "lucide-react";
 
 export const revalidate = 5;
 
@@ -17,9 +18,15 @@ async function addNoteAction(formData: FormData) {
   const text = String(formData.get("text") || "").trim();
   if (!text || !customerId) return;
 
-  // Mock session user
-  const authorEmail = "phan_nam_thanh@senzu.co.jp";
-  const authorName = "Nam Thanh";
+  // data-api §9: insertCustomerNote tin tưởng tác giả do bên gọi gửi lên,
+  // nên BẮT BUỘC lấy từ session — không bao giờ hardcode.
+  const session = await getServerSession(authOptions);
+  const authorEmail = session?.user?.email;
+  if (!session || !authorEmail) {
+    console.warn("insertCustomerNote bị từ chối: không có session hợp lệ.");
+    return;
+  }
+  const authorName = session.user?.name || authorEmail.split("@")[0];
 
   await rpc("insertCustomerNote", customerId, authorEmail, authorName, text);
   revalidatePath(`/customers/${customerId}`);
@@ -32,11 +39,12 @@ export default async function CustomerDetailPage({
 }) {
   const customerId = params.id;
 
-  const [detail, interests, notes, conversations] = await Promise.all([
+  // Ghi chú: getCustomerConversations chưa render (sẽ thêm UI ở Phase 2),
+  // hiện không gọi để tránh 1 round-trip thừa tới Data API.
+  const [detail, interests, notes] = await Promise.all([
     rpc<CustomerDetail | null>("getCustomerDetail", customerId),
     rpc<CustomerInterest[]>("getCustomerInterests", customerId),
     rpc<CustomerNote[]>("getCustomerNotes", customerId),
-    rpc<ConversationListItem[]>("getCustomerConversations", customerId, 10),
   ]);
 
   if (!detail) {
