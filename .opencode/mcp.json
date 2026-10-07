@@ -22,8 +22,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "D:\\DashboardChatbot",
-        "d:\\senzubase\\DashboardChatbot_agent"
+        "d:\\senzubase\\DashboardChatbot"
       ]
     }
   }

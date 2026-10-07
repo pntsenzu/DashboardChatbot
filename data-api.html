@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Senzu Data API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1a10;
+  --surface: #162417;
+  --surface-2: #1d301e;
+  --border: #2a412b;
+  --text: #e8efe8;
+  --text-2: #a9bba9;
+  --accent: #3fbf63;
+  --accent-strong: #18943b;
+  --accent-grad: linear-gradient(135deg, #18943b, #216d36);
+  --code-bg: #0b140c;
+  --warn: #e0b04a;
+  --danger: #e2705f;
+  --write: #d98a3c;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f6f8f5; --surface: #ffffff; --surface-2: #eef4ee; --border: #d6e2d6;
+    --text: #1d301e; --text-2: #4d634e; --accent: #18943b; --accent-strong: #18943b;
+    --code-bg: #f1f5f0; --warn: #9a6a00; --danger: #b23a2a; --write: #a85a12;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f6f8f5; --surface: #ffffff; --surface-2: #eef4ee; --border: #d6e2d6;
+  --text: #1d301e; --text-2: #4d634e; --accent: #18943b; --accent-strong: #18943b;
+  --code-bg: #f1f5f0; --warn: #9a6a00; --danger: #b23a2a; --write: #a85a12;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.65 "Be Vietnam Pro", system-ui, sans-serif;
+}
+code, pre { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13px; }
+:not(pre) > code { background: var(--surface-2); padding: 1px 6px; border-radius: 4px; }
+pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; overflow-x: auto; line-height: 1.55; margin: 12px 0; }
+a { color: var(--accent); }
+.layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); max-width: 1180px; margin: 0 auto; }
+nav.toc { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; padding: 32px 16px 32px 24px; border-right: 1px solid var(--border); }
+nav.toc .brand { font-weight: 700; font-size: 14px; letter-spacing: .04em; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+nav.toc .brand::before { content: ""; width: 14px; height: 14px; border-radius: 4px; background: var(--accent-grad); }
+nav.toc a { display: block; color: var(--text-2); text-decoration: none; font-size: 13.5px; padding: 4px 0; }
+nav.toc a:hover { color: var(--text); }
+nav.toc a.sub { padding-left: 12px; font-size: 13px; }
+main { padding: 40px 48px 96px; min-width: 0; }
+header.hero { border-bottom: 1px solid var(--border); padding-bottom: 28px; margin-bottom: 8px; }
+.eyebrow { color: var(--accent); font-size: 12.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+h1 { font-size: 34px; line-height: 1.2; margin: 8px 0 12px; }
+h2 { font-size: 22px; margin: 48px 0 12px; padding-top: 8px; }
+h3 { font-size: 17px; margin: 28px 0 8px; }
+.lead { color: var(--text-2); font-size: 16px; max-width: 720px; margin: 0; }
+.meta { color: var(--text-2); font-size: 13px; margin-top: 14px; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--text-2); font-weight: 600; font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; }
+.table-wrap { overflow-x: auto; }
+.callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+.callout.warn { border-color: var(--warn); }
+.callout.danger { border-color: var(--danger); }
+.callout strong:first-child { display: block; margin-bottom: 2px; }
+.arch { display: flex; align-items: stretch; gap: 0; margin: 20px 0; flex-wrap: wrap; }
+.arch .node { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; flex: 1 1 150px; min-width: 150px; }
+.arch .node.hl { border-color: var(--accent-strong); background: var(--surface-2); }
+.arch .node b { display: block; font-size: 14px; }
+.arch .node span { color: var(--text-2); font-size: 12.5px; }
+.arch .arrow { align-self: center; color: var(--text-2); padding: 0 8px; font-size: 18px; }
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 16px 0 8px; position: sticky; top: 0; background: var(--bg); padding: 10px 0; z-index: 2; }
+.toolbar input { flex: 1 1 260px; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 9px 12px; font: inherit; font-size: 14px; }
+.toolbar .count { color: var(--text-2); font-size: 13px; }
+.group-title { font-size: 13px; color: var(--accent); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 28px 0 8px; }
+.fn { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin: 10px 0; }
+.fn summary { list-style: none; cursor: pointer; padding: 12px 16px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.fn summary::-webkit-details-marker { display: none; }
+.fn summary::before { content: "▸"; color: var(--text-2); font-size: 12px; transition: transform .15s; }
+.fn[open] summary::before { transform: rotate(90deg); }
+.fn .name { font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 14px; }
+.fn .desc { color: var(--text-2); font-size: 13.5px; flex: 1 1 260px; }
+.fn .body { padding: 0 16px 14px 40px; }
+.fn .body table { font-size: 13.5px; }
+.tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--border); color: var(--text-2); white-space: nowrap; }
+.tag.write { color: var(--write); border-color: var(--write); }
+.tag.unused { color: var(--warn); border-color: var(--warn); }
+.kv { color: var(--text-2); font-size: 13px; margin: 6px 0; }
+.kv b { color: var(--text); font-weight: 500; }
+.theme-btn { position: fixed; right: 16px; bottom: 16px; background: var(--surface); border: 1px solid var(--border); color: var(--text-2); border-radius: 99px; padding: 6px 12px; font: inherit; font-size: 12.5px; cursor: pointer; }
+@media (max-width: 860px) {
+  .layout { display: block; }
+  nav.toc { display: none; }
+  main { padding: 24px 16px 80px; }
+  h1 { font-size: 26px; }
+  .fn .body { padding-left: 16px; }
+  .arch .arrow { transform: rotate(90deg); width: 100%; text-align: center; padding: 4px 0; }
+}
+@media print { nav.toc, .toolbar, .theme-btn { display: none; } .layout { display: block; } .fn { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="toc">
+  <div class="brand">SENZU · Data API</div>
+  <a href="#overview">1. Tổng quan</a>
+  <a href="#auth">2. Xác thực</a>
+  <a class="sub" href="#auth-user">Đăng nhập người dùng</a>
+  <a class="sub" href="#auth-token">Token Data API</a>
+  <a class="sub" href="#auth-env">Biến môi trường</a>
+  <a href="#protocol">3. Giao thức</a>
+  <a href="#conventions">4. Quy ước dữ liệu</a>
+  <a href="#functions">5. Danh mục hàm</a>
+  <a class="sub" href="#g-overview">Tổng quan & hệ thống</a>
+  <a class="sub" href="#g-volume">Lưu lượng & hiệu suất</a>
+  <a class="sub" href="#g-conversations">Hội thoại</a>
+  <a class="sub" href="#g-customers">Khách hàng</a>
+  <a class="sub" href="#g-products">Sản phẩm</a>
+  <a href="#types">6. Kiểu dữ liệu</a>
+  <a href="#enums">7. Enum & quy tắc</a>
+  <a href="#examples">8. Ví dụ gọi API</a>
+  <a href="#notes">9. Lưu ý cho team UI</a>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Tài liệu nội bộ · Backend Chatbot Messenger</div>
+  <h1>Senzu Data API — tài liệu cho team UI</h1>
+  <p class="lead">Mọi dữ liệu dashboard (tin nhắn, hội thoại, khách hàng, sản phẩm, trạng thái bot) đều lấy qua <strong>một endpoint duy nhất <code>POST /rpc</code></strong>. Mỗi request chỉ định tên hàm và danh sách tham số. Phải có Bearer token và chỉ được gọi từ phía server.</p>
+  <div class="meta">Cập nhật: 06/10/2026 · Nguồn: <code>dashboard/server/data-api.ts</code>, <code>dashboard/lib/queries.ts</code>, <code>dashboard/lib/data-functions.ts</code></div>
+</header>
+
+<h2 id="overview">1. Tổng quan</h2>
+<p>Bot ghi dữ liệu vào SQLite <code>analytics.db</code> trên server Windows tại Việt Nam. Data API chạy cùng máy với bot, đọc DB đó và trả JSON. UI chỉ cần gọi HTTPS, không cần đụng tới database.</p>
+<div class="arch" role="img" aria-label="Luồng dữ liệu: UI mới gọi Data API qua HTTPS, Data API đọc analytics.db do bot ghi">
+  <div class="node"><b>Trình duyệt</b><span>người dùng UI mới</span></div>
+  <div class="arrow">→</div>
+  <div class="node hl"><b>Backend của UI mới</b><span>giữ token; Next.js route / server action / BFF</span></div>
+  <div class="arrow">→</div>
+  <div class="node"><b>Caddy (HTTPS)</b><span>api-bot.senzu-base.vn</span></div>
+  <div class="arrow">→</div>
+  <div class="node"><b>Data API</b><span>127.0.0.1:8787, whitelist hàm</span></div>
+  <div class="arrow">→</div>
+  <div class="node"><b>analytics.db</b><span>do bot Messenger ghi liên tục</span></div>
+</div>
+<div class="table-wrap"><table>
+  <tr><th>Mục</th><th>Giá trị</th></tr>
+  <tr><td>Base URL</td><td><code>https://api-bot.senzu-base.vn</code></td></tr>
+  <tr><td>Endpoint dữ liệu</td><td><code>POST /rpc</code> (cần token)</td></tr>
+  <tr><td>Health check</td><td><code>GET /health</code> → <code>{"ok":true}</code> (không cần token)</td></tr>
+  <tr><td>Định dạng</td><td>JSON UTF-8, response luôn có <code>cache-control: no-store</code></td></tr>
+  <tr><td>Phạm vi</td><td>36 hàm đọc + 1 hàm ghi (<code>insertCustomerNote</code>, chỉ thêm ghi chú)</td></tr>
+  <tr><td>CORS</td><td><strong>Không bật.</strong> Trình duyệt gọi thẳng sẽ bị chặn, bắt buộc gọi qua backend của UI.</td></tr>
+</table></div>
+
+<h2 id="auth">2. Xác thực</h2>
+<p>Có <strong>hai lớp xác thực riêng biệt</strong>. UI mới phải làm đủ cả hai:</p>
+<div class="arch" role="img" aria-label="Hai lớp xác thực: người dùng đăng nhập vào UI bằng cookie phiên, backend UI gọi Data API bằng Bearer token">
+  <div class="node"><b>Người dùng</b><span>trình duyệt</span></div>
+  <div class="arrow">→</div>
+  <div class="node"><b>Lớp 1: đăng nhập UI</b><span>Google OAuth, cookie phiên. Do team UI tự làm</span></div>
+  <div class="arrow">→</div>
+  <div class="node hl"><b>Backend UI mới</b><span>giữ token bí mật</span></div>
+  <div class="arrow">→</div>
+  <div class="node"><b>Lớp 2: Bearer token</b><span>do Senzu cấp, cài trên server</span></div>
+  <div class="arrow">→</div>
+  <div class="node"><b>Data API</b><span>api-bot.senzu-base.vn</span></div>
+</div>
+
+<h3 id="auth-user">2.1. Lớp 1: người dùng đăng nhập vào UI (team UI tự làm)</h3>
+<p>Data API <strong>không biết người dùng cuối là ai</strong>, chỉ kiểm tra token. Vì vậy UI mới phải tự chặn người ngoài trước khi hiển thị dữ liệu. Nên làm giống dashboard hiện tại:</p>
+<ul>
+  <li>Dùng <strong>Auth.js (next-auth v5) với provider Google</strong>. Chỉ cho đăng nhập email <code>@senzu.co.jp</code> có <code>email_verified = true</code>, và từ chối ngay ở callback <code>signIn</code> (không tạo phiên cho email khác).</li>
+  <li>Chặn mọi trang khi chưa đăng nhập (proxy/middleware). <strong>Ngoài ra</strong>, mỗi server action, route API hay trang nào gọi Data API cũng phải tự kiểm tra lại <code>await auth()</code>.</li>
+  <li>Tạo <strong>OAuth Client riêng</strong> trên Google Cloud Console, với redirect URI là domain của UI mới (ví dụ <code>https://&lt;domain&gt;/api/auth/callback/google</code>). Google không chấp nhận redirect về địa chỉ IP trần.</li>
+  <li>Không dùng Next.js cũng được, miễn là có cơ chế đăng nhập chỉ cho người nội bộ Senzu vào.</li>
+</ul>
+<pre>// auth.ts — mẫu Auth.js v5 giới hạn domain công ty
+import NextAuth from "next-auth";
+import Google from "next-auth/providers/google";
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  providers: [Google({ clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET })],
+  callbacks: {
+    async signIn({ profile }) {
+      const email = profile?.email;
+      return typeof email === "string" &amp;&amp; profile?.email_verified === true
+        &amp;&amp; email.toLowerCase().endsWith("@senzu.co.jp");
+    },
+  },
+});</pre>
+
+<h3 id="auth-token">2.2. Lớp 2: backend UI gọi Data API bằng token</h3>
+<p>Mọi request tới <code>/rpc</code> phải có header:</p>
+<pre>Authorization: Bearer &lt;DATA_API_TOKEN&gt;</pre>
+<ul>
+  <li>Token dài ít nhất 32 ký tự, được so sánh theo thời gian hằng (timing-safe). Sai hoặc thiếu token sẽ nhận <code>401 {"error":"unauthorized"}</code>, và server ghi log IP nguồn.</li>
+  <li>Token chỉ nằm ở <strong>biến môi trường phía server</strong> của UI. <strong>Không bao giờ</strong> đưa token vào bundle phía client: không dùng tiền tố <code>NEXT_PUBLIC_</code> và không truyền qua props xuống client component. Trình duyệt chỉ gọi backend UI bằng cookie phiên, backend UI mới là nơi gọi tiếp sang Data API.</li>
+</ul>
+<div class="callout warn"><strong>Token KHÔNG tự tạo được</strong>Data API so token gửi lên với token đã cài trên server. Token tự nghĩ ra sẽ không khớp và luôn bị 401. Token chỉ có hiệu lực sau khi phía Senzu (người quản trị server chatbot) cài nó vào server.</div>
+<p><strong>Quy trình nhận token</strong>, chọn một trong hai cách:</p>
+<ol>
+  <li><strong>Senzu cấp:</strong> người quản trị server sinh token, cài vào server, rồi gửi cho team UI.</li>
+  <li><strong>Team UI tự sinh và gửi Senzu cài:</strong> chạy <code>openssl rand -hex 32</code> (chuỗi ngẫu nhiên, tối thiểu 32 ký tự), gửi cho người quản trị server. Chỉ dùng được sau khi Senzu xác nhận đã cài xong.</li>
+</ol>
+<p>Với cả hai cách, token phải được gửi qua <strong>kênh bảo mật</strong> (trình quản lý mật khẩu, link tự huỷ). Không dán vào Slack, email, ticket hay commit vào repo. Nếu nghi token bị lộ, báo ngay cho Senzu để thu hồi và cấp token mới.</p>
+<div class="callout danger"><strong>Vì sao phải giữ kín token</strong>Có token là đọc được toàn bộ tên khách và nội dung tin nhắn Messenger của khách hàng. Ngoài ra token còn ghi được ghi chú khách hàng.</div>
+
+<h3 id="auth-env">2.3. Biến môi trường cần có</h3>
+<div class="table-wrap"><table>
+  <tr><th>Biến</th><th>Ai cung cấp</th><th>Bí mật?</th><th>Ghi chú</th></tr>
+  <tr><td><code>DATA_API_URL</code></td><td>Senzu</td><td>Không</td><td><code>https://api-bot.senzu-base.vn</code></td></tr>
+  <tr><td><code>DATA_API_TOKEN</code></td><td><strong>Senzu cấp/cài</strong> (xem 2.2)</td><td><strong>Có</strong></td><td>Không tự tạo được. Nhận qua kênh bảo mật.</td></tr>
+  <tr><td><code>AUTH_SECRET</code></td><td>Team UI tự tạo</td><td>Có</td><td>Chạy <code>npx auth secret</code> hoặc <code>openssl rand -base64 32</code></td></tr>
+  <tr><td><code>GOOGLE_CLIENT_ID</code></td><td>Team UI tự tạo</td><td>Không</td><td>Lấy từ OAuth Client trên Google Cloud Console</td></tr>
+  <tr><td><code>GOOGLE_CLIENT_SECRET</code></td><td>Team UI tự tạo</td><td>Có</td><td>Lấy cùng OAuth Client trên</td></tr>
+</table></div>
+<p>Senzu <strong>không gửi file <code>.env</code> của dashboard hiện tại</strong>. File đó chứa bí mật đăng nhập riêng của hệ thống cũ, và UI mới không cần đến chúng. Team UI tạo <code>.env</code> của riêng mình theo mẫu:</p>
+<pre># .env — UI mới (KHÔNG commit file này)
+
+# --- Senzu cung cấp ---
+DATA_API_URL=https://api-bot.senzu-base.vn
+DATA_API_TOKEN=            # Senzu cấp qua kênh bảo mật
+
+# --- Team UI tự tạo ---
+AUTH_SECRET=               # npx auth secret
+GOOGLE_CLIENT_ID=          # Google Cloud Console → OAuth Client của UI mới
+GOOGLE_CLIENT_SECRET=</pre>
+
+<h2 id="protocol">3. Giao thức</h2>
+<h3>Request</h3>
+<pre>POST /rpc
+Content-Type: application/json
+Authorization: Bearer &lt;token&gt;
+
+{ "fn": "getPeriodStats", "args": [1759683600000, 1759770000000] }</pre>
+<ul>
+  <li><code>fn</code>: tên hàm, phải nằm trong whitelist ở mục 5.</li>
+  <li><code>args</code>: <strong>mảng tham số theo đúng thứ tự</strong> của chữ ký hàm, bắt buộc là mảng (hàm không có tham số thì gửi <code>[]</code>).</li>
+  <li>Tham số tuỳ chọn có thể bỏ khỏi cuối mảng, hoặc gửi <code>null</code>. Server tự đổi <code>null</code> thành <code>undefined</code>.</li>
+  <li>Body tối đa 64 KB.</li>
+</ul>
+<h3>Response</h3>
+<pre>200 OK
+{ "result": { "incomingCount": 42, "outgoingCount": 40, "distinctCustomers": 9, "avgLatencyMs": 8123, "repliedRatio": 0.95 } }</pre>
+<p>Dữ liệu luôn nằm trong <code>result</code>. Hàm không trả gì (như <code>insertCustomerNote</code>) có <code>result</code> là <code>null</code>.</p>
+<h3>Mã lỗi</h3>
+<div class="table-wrap"><table>
+  <tr><th>HTTP</th><th>Body</th><th>Nguyên nhân</th></tr>
+  <tr><td>400</td><td><code>{"error":"body không hợp lệ: …"}</code></td><td>JSON hỏng hoặc body quá 64 KB</td></tr>
+  <tr><td>400</td><td><code>{"error":"args phải là mảng"}</code></td><td><code>args</code> thiếu hoặc không phải mảng</td></tr>
+  <tr><td>401</td><td><code>{"error":"unauthorized"}</code></td><td>Thiếu hoặc sai token</td></tr>
+  <tr><td>404</td><td><code>{"error":"hàm không tồn tại"}</code></td><td><code>fn</code> không thuộc whitelist</td></tr>
+  <tr><td>404</td><td><code>{"error":"not found"}</code></td><td>Sai method hoặc path (chỉ có <code>POST /rpc</code> và <code>GET /health</code>)</td></tr>
+  <tr><td>500</td><td><code>{"error":"lỗi truy vấn"}</code></td><td>Lỗi khi chạy truy vấn, chi tiết chỉ ghi trong log server</td></tr>
+  <tr><td>502/504</td><td>(từ Caddy)</td><td>Data API trên server đang dừng hoặc khởi động lại</td></tr>
+</table></div>
+<div class="callout"><strong>Không có kiểm tra kiểu tham số</strong>Server chỉ kiểm tra tên hàm và việc <code>args</code> là mảng. Gửi sai kiểu (ví dụ chuỗi thay cho số ms) sẽ ra kết quả rỗng/sai hoặc lỗi 500. Hãy validate tham số ở phía UI.</div>
+
+<h2 id="conventions">4. Quy ước dữ liệu</h2>
+<div class="table-wrap"><table>
+  <tr><th>Quy ước</th><th>Chi tiết</th></tr>
+  <tr><td>Mốc thời gian</td><td>Field có hậu tố <code>Ms</code>, cùng các tham số <code>sinceMs</code>/<code>untilMs</code>, đều là <strong>Unix epoch tính bằng mili-giây</strong> (UTC).</td></tr>
+  <tr><td>Bucket ngày/giờ</td><td><code>bucket</code> và <code>date</code> là chuỗi theo <strong>giờ Việt Nam (UTC+7)</strong>: <code>"YYYY-MM-DD"</code> hoặc <code>"YYYY-MM-DD HH:00"</code>.</td></tr>
+  <tr><td>Khoảng thời gian</td><td><code>sinceMs</code> tính <em>bao gồm</em>. <code>untilMs</code> tính <em>không bao gồm</em> (<code>[since, until)</code>). Riêng <code>getVolume</code> và <code>getCustomersPerBucket</code> tính <code>untilMs</code> bao gồm (<code>&lt;=</code>).</td></tr>
+  <tr><td>Tỉ lệ</td><td><code>repliedRatio</code> và <code>unresolvedRate</code> nằm trong khoảng 0–1, nhân 100 khi hiển thị %. Là <code>null</code> khi chưa đủ dữ liệu, đừng hiển thị null thành 0%.</td></tr>
+  <tr><td>Thiếu dữ liệu</td><td>Các hàm đọc bảng phụ (attention, product_mentions, message_processing, notes) trả mảng rỗng hoặc số 0 nếu bảng chưa có, không trả lỗi.</td></tr>
+  <tr><td>ID</td><td><code>customerId</code> = <code>senderId</code> (ID Facebook của khách). <code>conversationId</code> = <code>threadId</code>. Cả hai đều là chuỗi, không phải số.</td></tr>
+  <tr><td>Độ trễ phản hồi</td><td>Là <strong>ước lượng</strong>: ghép tin khách với tin gửi đi kế tiếp trong cùng thread (bỏ cặp nào cách nhau quá 6 giờ). Không phân biệt bot hay nhân viên trả lời.</td></tr>
+  <tr><td><code>timestampMs</code> và <code>frameTsMs</code></td><td><code>timestampMs</code> do Facebook gán, lệch khoảng 65 giây so với giờ thật. <code>frameTsMs</code> là giờ bot thực nhận. Dùng <code>timestampMs</code> để sắp xếp và hiển thị.</td></tr>
+</table></div>
+
+<h2 id="functions">5. Danh mục hàm</h2>
+<p>Bấm vào từng hàm để xem tham số và kiểu trả về. Cột “Trang hiện tại” cho biết dashboard hiện tại đang dùng hàm ở đâu, để team tham khảo cách bố trí.</p>
+<div class="toolbar">
+  <input id="q" type="search" placeholder="Lọc theo tên hàm, mô tả, kiểu…" aria-label="Lọc hàm">
+  <span class="count" id="count"></span>
+</div>
+<div id="fn-list"></div>
+
+<h2 id="types">6. Kiểu dữ liệu</h2>
+<p>Định nghĩa TypeScript chép từ <code>dashboard/lib/queries.ts</code> và <code>lib/query-shared.ts</code>. Team UI có thể chép nguyên khối này vào dự án.</p>
+<pre id="types-code">// ---- Lưu lượng ----
+export interface VolumePoint { bucket: string; incoming: number; outgoing: number; }
+export interface HeatmapCell { weekday: number /* 0=CN … 6=T7 */; hour: number; count: number; }
+export interface CustomerRow { senderId: string; senderName: string | null; msgCount: number; lastTs: number; isNew: boolean; }
+export interface CustomerSummary { totalCustomers: number; newCustomers: number; returningCustomers: number; }
+export interface LatencyStats { matchedCount: number; incomingCount: number; avgMs: number | null; medianMs: number | null; p90Ms: number | null; }
+export interface DailyPerformancePoint { date: string; repliedRatio: number | null; avgLatencyMs: number | null; }
+export interface PeriodStats { incomingCount: number; outgoingCount: number; distinctCustomers: number; avgLatencyMs: number | null; repliedRatio: number | null; }
+export interface RecentMessage { id: string; threadId: string; senderId: string; senderName: string | null; text: string; direction: "incoming" | "outgoing"; timestampMs: number; }
+
+// ---- Hệ thống & cảnh báo ----
+export interface AiInsightCounts { humanRequestCount: number; productGapCount: number; }
+export interface SystemStatus {
+  chromeRunning: boolean | null; messengerConnected: boolean | null;
+  aiProvider: string | null; aiModel: string | null;
+  knowledgeLoadedAtMs: number | null; catalogSyncedAtMs: number | null; catalogCount: number | null;
+  lastTickAtMs: number | null; lastReplyAtMs: number | null; updatedAtMs: number | null;
+  isStale: boolean; // true = heartbeat cũ hơn 30s → coi như bot KHÔNG chạy
+}
+export interface AttentionItem {
+  id: number; type: AttentionEventType; severity: "info" | "warning" | "error"; source: string;
+  conversationId: string | null; customerId: string | null; customerName: string | null;
+  messagePreview: string | null; detail: string | null;
+  metadata: Record&lt;string, unknown&gt; | null; createdAtMs: number;
+}
+
+// ---- Hội thoại ----
+export interface RecentConversation { threadId: string; customerName: string | null; lastMessageText: string; lastMessageAtMs: number; status: "answered" | "needs_attention"; responseTimeMs: number | null; }
+export interface ConversationListItem { conversationId: string; customerId: string; customerName: string | null; lastMessageText: string; lastMessageAtMs: number; messageCount: number; status: ConversationStatus; }
+export interface ConversationMessage { id: string; senderId: string; senderName: string | null; text: string; direction: "incoming" | "outgoing"; timestampMs: number; frameTsMs: number | null; }
+export interface MessageProcessing {
+  incomingMessageId: string; receivedAtMs: number | null; aiStartedAtMs: number | null; aiCompletedAtMs: number | null; sentAtMs: number | null;
+  aiProvider: string | null; aiModel: string | null; knowledgePath: string | null; hasCatalog: boolean | null;
+  status: "success" | "failed"; errorDetail: string | null;
+}
+
+// ---- Khách hàng ----
+export interface CustomerListItem { customerId: string; customerName: string | null; totalMessages: number; totalConversations: number; lastInteractionMs: number; }
+export interface CustomerListRow extends CustomerListItem { primaryProductName: string | null; otherProductsCount: number; interest: InterestResult; }
+export interface CustomerDetail { customerId: string; customerName: string | null; totalMessages: number; totalConversations: number; firstInteractionMs: number; lastInteractionMs: number; }
+export interface CustomerInterest { productId: string; productName: string | null; totalMentions: number; priceCount: number; orderCount: number; lastMentionAtMs: number; }
+export interface CustomerPurchaseSignal { totalProductQuestions: number; orderMentions: number; }
+export interface CustomerActivityStats { customersWithProductInterest: number; customersWithPurchaseSignal: number; }
+export interface CustomerActivityPoint { date: string; activeCustomers: number; newCustomers: number; returningCustomers: number; }
+export interface ConversationVolumePoint { date: string; customerMessages: number; aiReplies: number; otherOutgoing: number; }
+export interface InterestSignalPoint { date: string; productMentions: number; priceQuestions: number; informationQuestions: number; orderSignals: number; }
+export interface CustomerNote { id: number; authorEmail: string; authorName: string | null; text: string; createdAtMs: number; }
+export interface InterestResult { status: InterestStatus; reasons: string[]; }
+
+// ---- Sản phẩm ----
+export interface TopProductRow { productId: string; productName: string | null; mentionCount: number; uniqueCustomers: number; }
+export interface QuestionTypeCount { questionType: ProductQuestionType; count: number; uniqueCustomers: number; }
+export interface ProductMentionSummary { total: number; resolved: number; unresolved: number; unresolvedRate: number | null; }
+export interface UnknownProductMention { normalizedName: string; count: number; example: string; }
+
+// ---- Enum ----
+export type ConversationStatus = "attention" | "active" | "answered";
+export type InterestStatus = "purchase_intent" | "considering" | "new" | "inactive" | "unknown";
+export type ProductQuestionType = "PRICE" | "FEATURE" | "AVAILABILITY" | "ORDER" | "GENERAL" | "OTHER";
+export type AttentionEventType = "SYSTEM_ERROR" | "HUMAN_REQUEST_SIGNAL" | "LOW_CONFIDENCE" | "UNKNOWN_PRODUCT" | "UNKNOWN_PRICE" | "KNOWLEDGE_GAP";</pre>
+
+<h2 id="enums">7. Enum & quy tắc nghiệp vụ</h2>
+<h3>Trạng thái hội thoại (<code>ConversationStatus</code>)</h3>
+<p>Xét theo thứ tự ưu tiên, điều kiện nào khớp trước thì lấy trạng thái đó:</p>
+<div class="table-wrap"><table>
+  <tr><th>Giá trị</th><th>Điều kiện</th><th>Gợi ý nhãn</th></tr>
+  <tr><td><code>attention</code></td><td>Hội thoại còn sự kiện “cần chú ý” chưa được giải quyết</td><td>Cần chú ý</td></tr>
+  <tr><td><code>active</code></td><td>Tin cuối cùng là tin của khách (chưa được trả lời)</td><td>Đang chờ trả lời</td></tr>
+  <tr><td><code>answered</code></td><td>Không thuộc 2 trường hợp trên</td><td>Đã trả lời</td></tr>
+</table></div>
+
+<h3>Mức độ quan tâm (<code>InterestStatus</code>)</h3>
+<p>Mức này được tính bằng quy tắc cố định, không do AI chấm và không phải điểm số. Server đã tính sẵn và trả kèm <code>reasons</code> (chuỗi tiếng Việt), UI nên hiển thị cả <code>reasons</code> để nhân viên đối chiếu. Thứ tự ưu tiên:</p>
+<div class="table-wrap"><table>
+  <tr><th>Giá trị</th><th>Điều kiện</th><th>Gợi ý nhãn</th></tr>
+  <tr><td><code>inactive</code></td><td>Không tương tác quá 14 ngày (<code>CUSTOMER_INACTIVE_DAYS</code>)</td><td>Không hoạt động</td></tr>
+  <tr><td><code>purchase_intent</code></td><td>Có ít nhất 1 lần hỏi đặt hàng (ORDER)</td><td>Có ý định mua</td></tr>
+  <tr><td><code>considering</code></td><td>Đã hỏi từ 2 sản phẩm trở lên</td><td>Đang cân nhắc</td></tr>
+  <tr><td><code>new</code></td><td>Đã hỏi đúng 1 sản phẩm</td><td>Mới quan tâm</td></tr>
+  <tr><td><code>unknown</code></td><td>Chưa hỏi sản phẩm cụ thể nào</td><td>Chưa rõ</td></tr>
+</table></div>
+<div class="callout warn"><strong>Đây là tín hiệu tham khảo</strong>Mức quan tâm dựa trên hành vi trong hội thoại, không phải dự đoán khách sẽ mua. Tương tự, <code>uniqueCustomers</code> là số khách đã hỏi, đừng viết thành “N khách muốn mua”.</div>
+
+<h3>Loại câu hỏi sản phẩm (<code>ProductQuestionType</code>)</h3>
+<div class="table-wrap"><table>
+  <tr><th>Giá trị</th><th>Nhãn dùng ở dashboard hiện tại</th></tr>
+  <tr><td><code>PRICE</code></td><td>Hỏi giá</td></tr>
+  <tr><td><code>FEATURE</code></td><td>Hỏi đặc điểm</td></tr>
+  <tr><td><code>AVAILABILITY</code></td><td>Hỏi còn hàng/size/màu</td></tr>
+  <tr><td><code>ORDER</code></td><td>Muốn đặt mua</td></tr>
+  <tr><td><code>GENERAL</code></td><td>Hỏi chung</td></tr>
+  <tr><td><code>OTHER</code></td><td>Khác</td></tr>
+</table></div>
+
+<h3>Sự kiện cần chú ý (<code>AttentionEventType</code>)</h3>
+<div class="table-wrap"><table>
+  <tr><th>Giá trị</th><th>Ý nghĩa</th></tr>
+  <tr><td><code>SYSTEM_ERROR</code></td><td>Lỗi hệ thống khi bot xử lý tin nhắn</td></tr>
+  <tr><td><code>HUMAN_REQUEST_SIGNAL</code></td><td>Khách chủ động yêu cầu gặp nhân viên</td></tr>
+  <tr><td><code>UNKNOWN_PRODUCT</code></td><td>Khách hỏi sản phẩm không có trong catalog. Tên khách nhắc tới nằm ở <code>metadata.mentioned_name</code></td></tr>
+  <tr><td><code>LOW_CONFIDENCE</code>, <code>UNKNOWN_PRICE</code>, <code>KNOWLEDGE_GAP</code></td><td>AI tự báo không chắc chắn hoặc thiếu thông tin. Có thể có <code>metadata.confidence</code> và <code>metadata.reason</code></td></tr>
+</table></div>
+<p><code>severity</code> nhận một trong 3 giá trị <code>info</code>, <code>warning</code>, <code>error</code>. <code>metadata</code> là JSON tự do, UI phải kiểm tra field trước khi dùng.</p>
+
+<h2 id="examples">8. Ví dụ gọi API</h2>
+<h3>curl</h3>
+<pre>curl -X POST https://api-bot.senzu-base.vn/rpc \
+  -H "Authorization: Bearer $DATA_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"fn":"getConversations","args":[{"status":"attention","limit":20}]}'</pre>
+
+<h3>Client TypeScript dùng phía server</h3>
+<pre>// lib/senzu-api.ts — CHỈ import ở server (route handler, server action, server component)
+import "server-only";
+
+export class DataApiError extends Error {
+  constructor(public status: number, public fn: string, body: string) {
+    super(`Data API ${fn} lỗi HTTP ${status}: ${body.slice(0, 300)}`);
+  }
+}
+
+export async function rpc&lt;T&gt;(fn: string, ...args: unknown[]): Promise&lt;T&gt; {
+  const res = await fetch(`${process.env.DATA_API_URL}/rpc`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${process.env.DATA_API_TOKEN}`,
+    },
+    body: JSON.stringify({ fn, args }),
+    cache: "no-store",
+    signal: AbortSignal.timeout(15_000), // server ở VN, đi qua internet
+  });
+  if (!res.ok) throw new DataApiError(res.status, fn, await res.text());
+  return ((await res.json()) as { result: T }).result;
+}
+
+// Ví dụ: KPI 7 ngày gần nhất so với 7 ngày trước đó
+const DAY = 86_400_000;
+const now = Date.now();
+const [current, previous] = await Promise.all([
+  rpc&lt;PeriodStats&gt;("getPeriodStats", now - 7 * DAY, now),
+  rpc&lt;PeriodStats&gt;("getPeriodStats", now - 14 * DAY, now - 7 * DAY),
+]);
+
+// Ví dụ: chi tiết 1 khách
+const customer = await rpc&lt;CustomerDetail | null&gt;("getCustomerDetail", customerId);
+if (!customer) notFound();</pre>
+
+<h3>Ghi chú khách hàng (hàm ghi duy nhất)</h3>
+<pre>// server action — lấy email/tên từ SESSION đã xác thực, KHÔNG nhận từ form
+const session = await auth();
+if (!session?.user?.email) throw new Error("Unauthorized");
+const text = String(formData.get("text") ?? "").trim();
+if (!text || text.length &gt; 2000) return;          // API không giới hạn độ dài, UI tự giới hạn
+await rpc&lt;null&gt;("insertCustomerNote", customerId, session.user.email, session.user.name ?? null, text);</pre>
+
+<h2 id="notes">9. Lưu ý cho team UI</h2>
+<ul>
+  <li><strong>Đăng nhập:</strong> Data API không biết người dùng cuối là ai, chỉ kiểm tra token. UI mới phải tự làm đăng nhập trước khi cho xem dữ liệu (xem <a href="#auth-user">mục 2.1</a>).</li>
+  <li><strong><code>insertCustomerNote</code> tin tưởng tác giả do bên gọi gửi lên.</strong> Luôn lấy <code>authorEmail</code>/<code>authorName</code> từ session. Ghi chú là append-only: không có API sửa hay xoá.</li>
+  <li><strong>Luôn truyền <code>limit</code> hợp lý</strong> (20–200). Server không tự giới hạn. Các hàm danh sách hội thoại và khách hàng quét theo từng thread, nên limit lớn sẽ chậm.</li>
+  <li><strong>Gộp request song song</strong> bằng <code>Promise.all</code> như ví dụ. Mỗi lời gọi là một round-trip từ hosting của UI sang server ở Việt Nam.</li>
+  <li><strong>Không cache dữ liệu lâu.</strong> Bot ghi liên tục. Với số liệu tổng hợp có thể cache ngắn (30–60 giây) ở phía server UI. Với hội thoại và trạng thái bot thì không nên cache.</li>
+  <li><strong>Trạng thái bot:</strong> dùng <code>getSystemStatus().isStale</code> để quyết định hiển thị “bot đang chạy” hay không, đừng chỉ dựa vào <code>chromeRunning</code>/<code>messengerConnected</code>.</li>
+  <li><strong>Thêm hàm mới</strong> phải làm ở backend: thêm truy vấn vào <code>lib/queries.ts</code>, khai báo trong whitelist <code>lib/data-functions.ts</code>, build lại <code>dist/data-api.mjs</code> và deploy lên server. Hãy gửi yêu cầu cho team backend kèm mô tả dữ liệu cần.</li>
+  <li><strong>Dữ liệu cá nhân:</strong> tên khách và nội dung tin nhắn là dữ liệu khách hàng thật. Không đưa vào log phía client, analytics bên thứ ba hay ảnh chụp demo công khai. Khi cần dữ liệu mẫu, hãy dùng dữ liệu giả.</li>
+</ul>
+</main>
+</div>
+<button class="theme-btn" id="theme" type="button">Đổi giao diện sáng/tối</button>
+
+<script>
+const G = {
+  overview: "Tổng quan & hệ thống",
+  volume: "Lưu lượng & hiệu suất",
+  conversations: "Hội thoại",
+  customers: "Khách hàng",
+  products: "Sản phẩm",
+};
+// [group, name, params[[name,type,desc]], returns, desc, pages, extra]
+const F = [
+  ["overview","getPeriodStats",[["sinceMs","number","đầu kỳ (bao gồm)"],["untilMs","number","cuối kỳ (không bao gồm)"]],"PeriodStats","Số liệu tổng của 1 kỳ: tin vào/ra, số khách, độ trễ TB, tỉ lệ trả lời. Gọi 2 lần (kỳ này/kỳ trước) để tính % thay đổi KPI.","/, /customers"],
+  ["overview","getDailyPerformanceTrend",[["sinceMs","number",""],["untilMs","number","không bao gồm"]],"DailyPerformancePoint[]","Tỉ lệ trả lời + độ trễ TB theo từng ngày (giờ VN) — cho sparkline KPI.",""],
+  ["overview","getAiInsightCounts",[["sinceMs","number",""],["untilMs","number","không bao gồm"]],"AiInsightCounts","Số lần khách đòi gặp nhân viên và số lần hỏi sản phẩm ngoài catalog trong kỳ.","/"],
+  ["overview","getCustomersPerBucket",[["sinceMs","number",""],["groupBy","\"day\" | \"hour\"",""],["untilMs?","number","bao gồm; bỏ trống = tới hiện tại"]],"VolumePoint[]","Số khách riêng biệt nhắn tới theo ngày/giờ. Giá trị nằm ở field incoming (outgoing luôn 0).","/"],
+  ["overview","getAttentionItems",[["limit","number",""]],"AttentionItem[]","Sự kiện cần chú ý mới nhất (cả đã và chưa giải quyết).","/"],
+  ["overview","getRecentConversations",[["limit","number",""]],"RecentConversation[]","Hội thoại hoạt động gần nhất, trạng thái answered/needs_attention theo tin cuối.","/"],
+  ["overview","getOpenAttentionCount",[],"number","Tổng số sự kiện cần chú ý chưa giải quyết — cho badge ở menu.","layout (sidebar)"],
+  ["overview","getSystemStatus",[],"SystemStatus","Heartbeat của bot: Chrome, kết nối Messenger, model AI, lần tick/reply cuối. isStale=true nghĩa là bot không chạy.","/knowledge"],
+
+  ["volume","getVolume",[["sinceMs","number",""],["groupBy","\"day\" | \"hour\"",""],["untilMs?","number","bao gồm"]],"VolumePoint[]","Số tin vào/ra theo ngày hoặc giờ (giờ VN).","/volume"],
+  ["volume","getHeatmap",[["sinceMs","number",""]],"HeatmapCell[]","Ma trận thứ × giờ của tin khách gửi — tìm giờ cao điểm. Chỉ trả ô có dữ liệu.","/volume"],
+  ["volume","getTopCustomers",[["sinceMs","number",""],["limit","number",""]],"CustomerRow[]","Khách nhắn nhiều nhất trong kỳ, kèm cờ isNew (lần đầu nhắn nằm trong kỳ).","/volume"],
+  ["volume","getCustomerSummary",[["sinceMs","number",""]],"CustomerSummary","Tổng khách trong kỳ, tách khách mới / quay lại.","/volume, /customers"],
+  ["volume","getResponseLatency",[["sinceMs","number",""]],"LatencyStats","Độ trễ phản hồi ước lượng: trung bình, trung vị, p90.","/performance"],
+  ["volume","getRecentMessages",[["limit","number",""],["threadId?","string","lọc theo 1 hội thoại"]],"RecentMessage[]","Tin nhắn mới nhất (giảm dần theo thời gian) — dùng cho bảng đối chiếu/debug.","/performance"],
+
+  ["conversations","getConversations",[["options","{ search?: string; status?: ConversationStatus; limit: number }","1 object duy nhất trong args"]],"ConversationListItem[]","Danh sách hội thoại, tìm theo tên khách hoặc nội dung tin, lọc theo trạng thái. Sắp theo tin cuối mới nhất.","/conversations"],
+  ["conversations","getConversationMessages",[["conversationId","string","= threadId"]],"ConversationMessage[]","Toàn bộ tin của 1 hội thoại, tăng dần theo thời gian — dùng cho khung chat.","/conversations/[id]"],
+  ["conversations","getConversationProcessing",[["conversationId","string",""]],"MessageProcessing[]","Thông tin xử lý từng tin khách: lúc nhận, AI bắt đầu/xong, lúc gửi, model, lỗi. Ghép với tin qua incomingMessageId = ConversationMessage.id.","/conversations/[id]"],
+  ["conversations","getConversationAttention",[["conversationId","string",""]],"AttentionItem[]","Sự kiện cần chú ý của riêng 1 hội thoại.","/conversations/[id]"],
+
+  ["customers","getCustomersWithInterest",[["options","{ search?: string; status?: InterestStatus; limit: number }","1 object; search khớp tên hoặc ID"]],"CustomerListRow[]","Danh sách khách kèm mức độ quan tâm và sản phẩm đang hỏi gần nhất.","/customers"],
+  ["customers","getAllCustomers",[["limit","number",""]],"CustomerListItem[]","Danh sách khách cơ bản, sắp theo tương tác gần nhất.",""],
+  ["customers","getTotalCustomersLifetime",[],"number","Tổng số khách từ trước tới nay (không theo kỳ).","/customers"],
+  ["customers","getCustomerActivityStats",[["sinceMs","number",""],["untilMs","number","không bao gồm"]],"CustomerActivityStats","Số khách có hỏi sản phẩm / có hỏi đặt hàng trong kỳ.","/customers"],
+  ["customers","getCustomerActivityTrend",[["sinceMs","number",""],["untilMs","number","không bao gồm"]],"CustomerActivityPoint[]","Khách hoạt động / mới / quay lại theo ngày. \"Mới\" = ngày nhắn lần đầu tiên.","/customers"],
+  ["customers","getConversationVolumeTrend",[["sinceMs","number",""],["untilMs","number","không bao gồm"]],"ConversationVolumePoint[]","Tin khách, tin AI trả lời, tin gửi đi khác theo ngày. otherOutgoing KHÔNG nên gọi là \"nhân viên\".","/customers"],
+  ["customers","getInterestSignalsTrend",[["sinceMs","number",""],["untilMs","number","không bao gồm"]],"InterestSignalPoint[]","Tín hiệu quan tâm sản phẩm theo ngày: hỏi giá, hỏi thông tin, muốn đặt.","/customers"],
+  ["customers","getOpenAttentionItems",[["limit","number",""]],"AttentionItem[]","Sự kiện cần chú ý CHƯA giải quyết toàn hệ thống.","/customers"],
+  ["customers","getCustomerDetail",[["customerId","string","= senderId"]],"CustomerDetail | null","Thông tin 1 khách. null nếu không tồn tại → hiển thị 404.","/customers/[id]"],
+  ["customers","getCustomerConversations",[["customerId","string",""],["limit","number",""]],"ConversationListItem[]","Các hội thoại của 1 khách.","/customers/[id]"],
+  ["customers","getCustomerInterests",[["customerId","string",""]],"CustomerInterest[]","Sản phẩm (trong catalog) khách đã hỏi, kèm số lần hỏi giá/đặt hàng.","/customers/[id]"],
+  ["customers","getCustomerPurchaseSignal",[["customerId","string",""]],"CustomerPurchaseSignal","Tổng câu hỏi sản phẩm và số lần hỏi đặt hàng của khách.","/customers/[id]"],
+  ["customers","getCustomerOpenAttention",[["customerId","string",""]],"AttentionItem[]","Sự kiện cần chú ý chưa giải quyết của 1 khách.","/customers/[id]"],
+  ["customers","getCustomerNotes",[["customerId","string",""]],"CustomerNote[]","Ghi chú nhân viên về khách, mới nhất trước.","/customers/[id]"],
+  ["customers","insertCustomerNote",[["customerId","string",""],["authorEmail","string","lấy từ session"],["authorName","string | null","lấy từ session"],["text","string","đã trim, không rỗng"]],"null","GHI 1 ghi chú nhân viên (append-only). Hàm ghi duy nhất của API.","/customers/[id] (server action)","write"],
+
+  ["products","getTopProducts",[["sinceMs","number",""],["limit","number",""]],"TopProductRow[]","Sản phẩm được hỏi nhiều nhất (chỉ tính lượt khớp được catalog).","/products, /customers"],
+  ["products","getProductQuestionBreakdown",[["sinceMs","number",""],["productId?","string","bỏ trống = mọi sản phẩm"]],"QuestionTypeCount[]","Phân bổ loại câu hỏi (giá, đặc điểm, còn hàng…).","/products, /customers"],
+  ["products","getProductMentionSummary",[["sinceMs","number",""]],"ProductMentionSummary","Tổng câu hỏi sản phẩm + tỉ lệ AI không xác định được sản phẩm cụ thể.","/products"],
+  ["products","getUnknownProductMentions",[["sinceMs","number",""],["limit","number",""]],"UnknownProductMention[]","Tên sản phẩm khách hỏi nhưng không có trong catalog, gộp theo chữ trùng khớp.","/customers, /products"],
+];
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+const sampleArg = ([n, t]) => {
+  if (n.startsWith("options")) return n === "options" && t.includes("InterestStatus") ? '{"search":"","limit":50}' : '{"limit":50}';
+  if (t.startsWith("number")) return n.startsWith("since") ? "1759683600000" : n.startsWith("until") ? "1759770000000" : "50";
+  if (t.includes("\"day\"")) return '"day"';
+  if (n.startsWith("author")) return n === "authorEmail" ? '"staff@senzu.co.jp"' : '"Tên nhân viên"';
+  if (n === "text") return '"Khách hẹn ghé cửa hàng thứ 7"';
+  return '"<' + n.replace("?", "") + '>"';
+};
+
+function render(filter) {
+  const q = (filter || "").trim().toLowerCase();
+  let html = "", shown = 0;
+  for (const [gk, gname] of Object.entries(G)) {
+    const items = F.filter(f => f[0] === gk && (!q || f.flat(2).join(" ").toLowerCase().includes(q)));
+    if (!items.length) continue;
+    html += `<div class="group-title" id="g-${gk}">${gname}</div>`;
+    for (const [, name, params, ret, desc, pages, kind] of items) {
+      shown++;
+      const sig = `${name}(${params.map(p => p[0] + ": " + p[1]).join(", ")}): ${ret}`;
+      const req = JSON.stringify({ fn: name, args: "__A__" }).replace('"__A__"', "[" + params.filter(p => !p[0].endsWith("?")).map(sampleArg).join(", ") + "]");
+      const tags = (kind === "write" ? '<span class="tag write">GHI</span>' : "") + (!pages ? '<span class="tag unused">UI hiện tại chưa dùng</span>' : "");
+      html += `<details class="fn"><summary><span class="name">${esc(name)}</span>${tags}<span class="desc">${esc(desc)}</span></summary><div class="body">
+        <pre>${esc(sig)}</pre>
+        ${params.length ? `<table><tr><th>#</th><th>Tham số</th><th>Kiểu</th><th>Ghi chú</th></tr>${params.map((p, i) => `<tr><td>${i}</td><td><code>${esc(p[0])}</code></td><td><code>${esc(p[1])}</code></td><td>${esc(p[2])}</td></tr>`).join("")}</table>` : '<div class="kv">Không có tham số — gửi <code>"args": []</code></div>'}
+        <div class="kv"><b>Trả về:</b> <code>${esc(ret)}</code> (xem mục 6)</div>
+        <div class="kv"><b>Trang hiện tại:</b> ${pages ? esc(pages) : "—"}</div>
+        <div class="kv"><b>Request mẫu:</b></div><pre>${esc(req)}</pre>
+      </div></details>`;
+    }
+  }
+  document.getElementById("fn-list").innerHTML = html || '<p class="kv">Không có hàm nào khớp.</p>';
+  document.getElementById("count").textContent = `${shown} / ${F.length} hàm`;
+}
+render("");
+document.getElementById("q").addEventListener("input", e => render(e.target.value));
+
+const root = document.documentElement;
+try { const t = localStorage.getItem("senzu-api-theme"); if (t) root.dataset.theme = t; } catch (e) {}
+document.getElementById("theme").addEventListener("click", () => {
+  const dark = root.dataset.theme ? root.dataset.theme === "dark" : !matchMedia("(prefers-color-scheme: light)").matches;
+  root.dataset.theme = dark ? "light" : "dark";
+  try { localStorage.setItem("senzu-api-theme", root.dataset.theme); } catch (e) {}
+});
+</script>
+</body>
+</html>

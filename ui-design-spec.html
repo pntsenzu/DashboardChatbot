@@ -1,0 +1,1069 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đặc tả UI chuẩn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap&subset=vietnamese" rel="stylesheet">
+<style>
+/* ===== Token — sao chép nguyên từ Sale Hub (app/globals.css) ===== */
+:root{
+  --background:220 20% 97.5%; --foreground:222 25% 11%;
+  --card:0 0% 100%; --popover:0 0% 100%;
+  --primary:137 70% 29%; --primary-hover:137 72% 25%; --primary-foreground:0 0% 100%;
+  --secondary:220 14% 94%; --secondary-foreground:222 20% 18%;
+  --muted:220 16% 96%; --muted-foreground:220 9% 42%;
+  --accent:137 38% 95%; --accent-foreground:137 70% 22%;
+  --destructive:0 72% 42%; --destructive-subtle:0 80% 97%; --destructive-border:0 60% 88%;
+  --warning:36 92% 30%; --warning-subtle:42 90% 95%; --warning-border:40 70% 82%;
+  --success:158 64% 28%; --success-subtle:155 45% 95%; --success-border:155 35% 82%;
+  --info:214 72% 42%; --info-subtle:214 90% 97%; --info-border:214 60% 87%;
+  --priority:20 85% 40%; --priority-subtle:24 100% 96%; --priority-border:24 80% 85%;
+  --border:220 14% 90%; --input:220 13% 62%; --ring:137 70% 34%;
+  --sidebar:220 18% 96.5%; --sidebar-foreground:222 20% 22%; --sidebar-border:220 14% 90%;
+  --brand-from:138 72% 34%; --brand-to:136 53% 28%;
+  --radius:.5rem;
+  --sh-xs:0 1px 2px 0 hsl(222 25% 11%/.05);
+  --sh-md:0 4px 12px -2px hsl(222 25% 11%/.10),0 2px 6px -2px hsl(222 25% 11%/.06);
+  --sh-lg:0 16px 40px -12px hsl(222 25% 11%/.22);
+  --code-bg:222 24% 10%; --code-fg:210 18% 90%;
+}
+*{box-sizing:border-box;border-color:hsl(var(--border))}
+html{-webkit-tap-highlight-color:transparent;scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;font-family:Inter,"Hiragino Sans","Yu Gothic UI",Meiryo,system-ui,sans-serif;font-size:14px;line-height:20px;
+  background:hsl(var(--background));color:hsl(var(--foreground));-webkit-font-smoothing:antialiased}
+a{color:hsl(var(--primary))}
+code,pre{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace}
+.tabular{font-variant-numeric:tabular-nums}
+/* thang chữ */
+.t-page{font-size:20px;font-weight:600;line-height:28px;letter-spacing:-.015em;margin:0}
+.t-section{font-size:14px;font-weight:600;line-height:20px;margin:0}
+.t-label{font-size:14px;font-weight:500;line-height:20px}
+.t-meta{font-size:12px;line-height:20px;color:hsl(var(--muted-foreground))}
+.t-overline{font-size:11px;line-height:16px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:hsl(var(--muted-foreground))}
+.t-metric{font-size:28px;line-height:32px;letter-spacing:-.02em;font-weight:600}
+
+/* ===== Khung tài liệu — chính là App Shell thu nhỏ ===== */
+.shell{display:flex;min-height:100dvh}
+.side{position:sticky;top:0;height:100dvh;width:240px;flex-shrink:0;display:flex;flex-direction:column;
+  background:hsl(var(--sidebar));border-right:1px solid hsl(var(--sidebar-border))}
+.side .brand{height:56px;display:flex;align-items:center;gap:10px;padding:0 16px;flex-shrink:0}
+.mark{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,hsl(var(--brand-from)),hsl(var(--brand-to)));
+  color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px}
+.side nav{flex:1;overflow-y:auto;padding:8px 12px 16px}
+.side .grp{margin-top:20px}.side .grp:first-child{margin-top:4px}
+.side .grp p{margin:0;padding:0 10px 4px}
+.side a.nl{display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:6px;color:hsl(var(--sidebar-foreground)/.8);
+  text-decoration:none;font-size:13.5px;transition:background .15s,color .15s}
+.side a.nl:hover{background:hsl(var(--card)/.7);color:hsl(var(--foreground))}
+.side a.nl.on{background:hsl(var(--card));color:hsl(var(--foreground));font-weight:500;box-shadow:var(--sh-xs),0 0 0 1px hsl(var(--border))}
+.side a.nl .n{font-size:11px;color:hsl(var(--muted-foreground));width:18px;text-align:right;flex-shrink:0}
+.side a.nl.on .n{color:hsl(var(--primary));font-weight:600}
+.side .foot{border-top:1px solid hsl(var(--sidebar-border));padding:10px 14px}
+.colm{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{position:sticky;top:0;z-index:20;height:56px;display:flex;align-items:center;gap:12px;padding:0 32px;
+  background:hsl(var(--card));border-bottom:1px solid hsl(var(--border))}
+.top h1{font-size:18px;font-weight:600;line-height:24px;letter-spacing:-.01em;margin:0}
+.top .grow{flex:1;min-width:0}
+main{max-width:1100px;width:100%;margin:0 auto;padding:24px 32px 80px}
+.doc-sec{padding-top:12px;margin-bottom:48px}
+.doc-sec > h2{font-size:20px;font-weight:600;line-height:28px;letter-spacing:-.015em;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+.doc-sec > h2 .num{font-size:11px;font-weight:600;color:hsl(var(--accent-foreground));background:hsl(var(--accent));border-radius:6px;padding:2px 7px}
+.doc-sec > .lead{color:hsl(var(--muted-foreground));margin:0 0 20px;max-width:72ch}
+h3.sub{font-size:14px;font-weight:600;margin:28px 0 10px}
+p{margin:0 0 10px}
+ul.rules{margin:0 0 10px;padding-left:18px}ul.rules li{margin:3px 0}
+.req{display:inline-block;font-size:11px;font-weight:600;font-family:"JetBrains Mono",monospace;color:hsl(var(--muted-foreground));margin-right:6px}
+
+/* ===== Primitive dùng cho demo (mô phỏng 1:1 class Tailwind) ===== */
+.card{background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:var(--radius);box-shadow:var(--sh-xs)}
+.pad{padding:16px 20px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.demo{background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:8px;overflow:hidden;margin:12px 0}
+.demo .stage{padding:20px;background:
+  radial-gradient(hsl(var(--border)) .8px,transparent .8px) 0 0/14px 14px, hsl(var(--background))}
+.demo .cap{display:flex;justify-content:space-between;gap:12px;padding:8px 14px;border-top:1px solid hsl(var(--border));font-size:12px;color:hsl(var(--muted-foreground))}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;border-radius:6px;font:500 14px/1 Inter,sans-serif;
+  height:36px;padding:0 14px;border:0;cursor:pointer;transition:background-color .15s,color .15s;user-select:none}
+.btn svg{width:16px;height:16px;flex-shrink:0}
+.btn:focus-visible{outline:none;box-shadow:0 0 0 2px hsl(var(--background)),0 0 0 4px hsl(var(--ring))}
+.b-default{background:hsl(var(--primary));color:#fff;box-shadow:var(--sh-xs)}.b-default:hover{background:hsl(var(--primary-hover))}
+.b-secondary{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}.b-secondary:hover{background:hsl(var(--secondary)/.7)}
+.b-outline{background:hsl(var(--card));color:hsl(var(--foreground));border:1px solid hsl(var(--input));box-shadow:var(--sh-xs)}.b-outline:hover{background:hsl(var(--muted))}
+.b-ghost{background:transparent;color:hsl(var(--foreground))}.b-ghost:hover{background:hsl(var(--muted))}
+.b-destructive{background:hsl(var(--destructive));color:#fff;box-shadow:var(--sh-xs)}.b-destructive:hover{background:hsl(var(--destructive)/.9)}
+.b-link{background:none;color:hsl(var(--primary));padding:0;height:auto}.b-link:hover{text-decoration:underline;text-underline-offset:4px}
+.s-sm{height:32px;padding:0 10px}.s-lg{height:40px;padding:0 20px}.s-icon{width:36px;padding:0}.s-icon-sm{width:32px;height:32px;padding:0}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+
+.badge{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;border:1px solid;border-radius:6px;padding:2px 6px;font-size:11px;line-height:16px;font-weight:500}
+.badge svg{width:12px;height:12px}
+.bd-default{border-color:hsl(var(--border));background:hsl(var(--muted));color:hsl(var(--muted-foreground))}
+.bd-success{border-color:hsl(var(--success-border));background:hsl(var(--success-subtle));color:hsl(var(--success))}
+.bd-warning{border-color:hsl(var(--warning-border));background:hsl(var(--warning-subtle));color:hsl(var(--warning))}
+.bd-destructive{border-color:hsl(var(--destructive-border));background:hsl(var(--destructive-subtle));color:hsl(var(--destructive))}
+.bd-info{border-color:hsl(var(--info-border));background:hsl(var(--info-subtle));color:hsl(var(--info))}
+.bd-priority{border-color:hsl(var(--priority-border));background:hsl(var(--priority-subtle));color:hsl(var(--priority))}
+.bd-brand{border-color:transparent;background:hsl(var(--accent));color:hsl(var(--accent-foreground))}
+
+.field{width:100%;border:1px solid hsl(var(--input));background:hsl(var(--card));border-radius:6px;font:14px Inter,sans-serif;color:hsl(var(--foreground));
+  box-shadow:var(--sh-xs);height:36px;padding:4px 12px;transition:border-color .15s,box-shadow .15s}
+.field::placeholder{color:hsl(var(--muted-foreground))}
+.field:focus{outline:none;border-color:hsl(var(--ring));box-shadow:0 0 0 2px hsl(var(--ring)/.25)}
+.field.inv{border-color:hsl(var(--destructive))}
+textarea.field{height:auto;min-height:80px;padding:8px 12px;resize:vertical}
+.ff{display:flex;flex-direction:column;gap:6px}
+.ff label{font-size:14px;font-weight:500;line-height:20px}
+.ff .req-star{color:hsl(var(--destructive));margin-left:2px}
+.ff .err{font-size:12px;line-height:20px;color:hsl(var(--destructive));margin:0}
+.sel{display:flex;align-items:center;justify-content:space-between}
+.chk{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
+.chk input{appearance:none;width:16px;height:16px;border:1px solid hsl(var(--input));border-radius:3px;background:hsl(var(--card));margin:0;display:grid;place-items:center;cursor:pointer}
+.chk input:checked{background:hsl(var(--primary));border-color:hsl(var(--primary))}
+.chk input:checked::after{content:"";width:8px;height:4px;border:2px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.search{position:relative}.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:hsl(var(--muted-foreground))}.search .field{padding-left:36px}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid hsl(var(--border));overflow-x:auto}
+.tab{position:relative;margin-bottom:-1px;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 10px;border:0;border-bottom:2px solid transparent;
+  background:none;font:500 14px Inter,sans-serif;color:hsl(var(--muted-foreground));cursor:pointer}
+.tab:hover{color:hsl(var(--foreground))}.tab.on{border-color:hsl(var(--primary));color:hsl(var(--foreground))}
+.tcount{border-radius:4px;background:hsl(var(--muted));padding:0 6px;font-size:11px;line-height:16px;font-weight:500;color:hsl(var(--muted-foreground))}
+
+table.tb{width:100%;border-collapse:collapse;font-size:14px}
+.tb thead{background:hsl(var(--muted)/.4)}.tb thead tr{border-bottom:1px solid hsl(var(--border))}
+.tb th{height:36px;padding:0 16px;text-align:left;white-space:nowrap}
+.tb td{height:44px;padding:8px 16px;border-bottom:1px solid hsl(var(--border))}
+.tb tbody tr:last-child td{border:0}.tb tbody tr:hover{background:hsl(var(--muted)/.5);cursor:pointer}
+.tb tr.sel{background:hsl(var(--accent)/.6)}.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.alert{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 12px;border:1px solid;border-radius:8px;padding:12px 16px;font-size:14px}
+.alert>svg{width:16px;height:16px;margin-top:2px;flex-shrink:0}
+.alert .bd{flex:1;min-width:12rem}.alert .ttl{font-weight:500;margin:0}.alert .ds{color:hsl(var(--muted-foreground));margin:0}
+.alert .act{margin-left:auto;align-self:center}
+.al-default{border-color:hsl(var(--border));background:hsl(var(--muted)/.6)}.al-default>svg{color:hsl(var(--muted-foreground))}
+.al-info{border-color:hsl(var(--info-border));background:hsl(var(--info-subtle))}.al-info>svg{color:hsl(var(--info))}
+.al-warning{border-color:hsl(var(--warning-border));background:hsl(var(--warning-subtle))}.al-warning>svg{color:hsl(var(--warning))}
+.al-destructive{border-color:hsl(var(--destructive-border));background:hsl(var(--destructive-subtle))}.al-destructive>svg{color:hsl(var(--destructive))}
+.al-success{border-color:hsl(var(--success-border));background:hsl(var(--success-subtle))}.al-success>svg{color:hsl(var(--success))}
+
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:hsl(var(--border));border:1px solid hsl(var(--border));border-radius:8px;overflow:hidden;box-shadow:var(--sh-xs)}
+.metric{background:hsl(var(--card));padding:14px 16px;display:flex;flex-direction:column;gap:4px;cursor:pointer;transition:background .15s}
+.metric:hover{background:hsl(var(--muted)/.5)}.metric.on{background:hsl(var(--accent))}
+
+.dlg{width:100%;max-width:30rem;background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:8px;box-shadow:var(--sh-lg);position:relative;display:flex;flex-direction:column}
+.dlg .h{padding:24px 56px 4px 24px}.dlg .h p{margin:4px 0 0}.dlg .b{padding:16px 24px}
+.dlg .f{display:flex;justify-content:flex-end;gap:8px;border-top:1px solid hsl(var(--border));background:hsl(var(--muted)/.3);padding:12px 24px;border-radius:0 0 8px 8px}
+.x{position:absolute;right:12px;top:12px;width:32px;height:32px;display:grid;place-items:center;border-radius:6px;color:hsl(var(--muted-foreground))}
+.overlay{background:hsl(var(--foreground)/.35);padding:32px;display:grid;place-items:center;border-radius:6px}
+
+.menu{width:15rem;background:hsl(var(--popover));border:1px solid hsl(var(--border));border-radius:6px;box-shadow:var(--sh-md);padding:4px}
+.mi{display:flex;align-items:center;gap:10px;min-height:32px;padding:0 10px;border-radius:4px;font-size:14px;cursor:default}
+.mi svg{width:16px;height:16px;color:hsl(var(--muted-foreground))}.mi:hover{background:hsl(var(--muted))}
+.mi.danger{color:hsl(var(--destructive))}.mi.danger svg{color:hsl(var(--destructive))}.mi.danger:hover{background:hsl(var(--destructive-subtle))}
+.mlabel{padding:6px 10px;font-size:12px;font-weight:500;color:hsl(var(--muted-foreground))}.msep{height:1px;background:hsl(var(--border));margin:4px -4px}
+.tip{display:inline-block;max-width:18rem;border-radius:6px;background:hsl(var(--foreground));color:hsl(var(--background));padding:6px 10px;font-size:12px;line-height:20px;box-shadow:var(--sh-md)}
+.toast{display:flex;align-items:center;gap:10px;width:22rem;border:1px solid hsl(var(--success-border));background:hsl(var(--success-subtle));color:hsl(var(--success));border-radius:6px;padding:14px 16px;box-shadow:var(--sh-md);font-weight:500}
+
+.skel{background:hsl(var(--muted));border-radius:6px;animation:pulse 2s cubic-bezier(.4,0,.6,1) infinite}@keyframes pulse{50%{opacity:.5}}
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;border:1px dashed hsl(var(--border));border-radius:8px;background:hsl(var(--card)/.6);padding:48px 24px}
+.empty .ic{width:40px;height:40px;border-radius:50%;background:hsl(var(--muted));color:hsl(var(--muted-foreground));display:grid;place-items:center;margin-bottom:12px}
+.empty .ic svg{width:20px;height:20px}
+.avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:600;background:hsl(var(--accent));color:hsl(var(--accent-foreground));flex-shrink:0}
+.avatar.lg{width:40px;height:40px;font-size:14px;background:hsl(var(--muted));color:hsl(var(--muted-foreground))}
+.listrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid hsl(var(--border))}.listrow:last-child{border:0}
+.listrow:hover{background:hsl(var(--muted)/.5)}
+.kcol{flex:1;min-width:15rem;background:hsl(var(--muted)/.4);border:1px solid hsl(var(--border));border-radius:8px;padding:8px}
+.kcard{background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:6px;box-shadow:var(--sh-xs);padding:12px;margin-top:8px}
+.bubble{max-width:75%;border:1px solid;border-radius:8px;padding:8px 12px;font-size:14px;line-height:24px;box-shadow:var(--sh-xs)}
+.bubble.in{border-color:hsl(var(--border));background:hsl(var(--card));border-bottom-left-radius:2px}
+.bubble.out{border-color:hsl(var(--primary)/.15);background:hsl(var(--accent));border-bottom-right-radius:2px;margin-left:auto}
+.convrow{position:relative;display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-bottom:1px solid hsl(var(--border))}
+.convrow.on{background:hsl(var(--accent)/.7)}.convrow.on::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:2px;border-radius:0 2px 2px 0;background:hsl(var(--primary))}
+
+/* bảng spec */
+table.spec{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0 4px}
+.spec th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:hsl(var(--muted-foreground));padding:8px 12px;background:hsl(var(--muted)/.5);border-bottom:1px solid hsl(var(--border))}
+.spec td{padding:8px 12px;border-bottom:1px solid hsl(var(--border));vertical-align:top}
+.spec tr:last-child td{border:0}
+.spec code,p code,li code{font-size:12px;background:hsl(var(--muted));border:1px solid hsl(var(--border));border-radius:4px;padding:0 4px}
+pre{background:hsl(var(--code-bg));color:hsl(var(--code-fg));border-radius:8px;padding:14px 16px;font-size:12px;line-height:1.6;overflow-x:auto;margin:10px 0;position:relative}
+pre .cp{position:absolute;top:8px;right:8px;font:500 11px Inter,sans-serif;color:hsl(var(--code-fg));background:hsl(0 0% 100%/.08);border:1px solid hsl(0 0% 100%/.15);border-radius:5px;padding:3px 8px;cursor:pointer}
+pre .c{color:hsl(220 10% 55%)}
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.swc{border:1px solid hsl(var(--border));border-radius:8px;overflow:hidden;background:hsl(var(--card))}
+.swc .chip{height:56px;border-bottom:1px solid hsl(var(--border))}
+.swc .meta{padding:8px 10px;font-size:12px;line-height:18px}.swc .meta b{display:block;font-weight:600}.swc .meta span{color:hsl(var(--muted-foreground));font-family:"JetBrains Mono",monospace;font-size:11px}
+.tone{display:grid;grid-template-columns:120px repeat(4,1fr);border:1px solid hsl(var(--border));border-radius:8px;overflow:hidden;font-size:12px;background:hsl(var(--card))}
+.tone>div{padding:10px;border-bottom:1px solid hsl(var(--border));display:flex;align-items:center;gap:6px}
+.tone .hd{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:hsl(var(--muted-foreground));background:hsl(var(--muted)/.5)}
+.dot{width:14px;height:14px;border-radius:4px;border:1px solid hsl(0 0% 0%/.08);flex-shrink:0}
+.callout{border-left:3px solid hsl(var(--primary));background:hsl(var(--accent));padding:10px 14px;border-radius:0 6px 6px 0;margin:12px 0;font-size:13.5px}
+.callout.warn{border-color:hsl(var(--warning));background:hsl(var(--warning-subtle))}
+.wire{border:1px solid hsl(var(--border));border-radius:8px;overflow:hidden;background:hsl(var(--background));font-size:11px;color:hsl(var(--muted-foreground))}
+.chkl li{list-style:none;margin:6px 0;padding-left:26px;position:relative}
+.chkl li::before{content:"";position:absolute;left:0;top:2px;width:16px;height:16px;border:1px solid hsl(var(--input));border-radius:3px;background:hsl(var(--card))}
+.chkl{padding:0}
+
+@media (max-width:1023px){.side{width:64px}.side .brand span,.side .grp p,.side a.nl .t,.side .foot{display:none}.side a.nl{justify-content:center;padding:0}.side a.nl .n{width:auto;text-align:center}.side .brand{justify-content:center;padding:0}}
+@media (max-width:767px){.side{display:none}.top{padding:0 16px}main{padding:20px 16px 60px}.grid2,.grid3{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.tone{grid-template-columns:90px repeat(4,1fr)}.hide-sm{display:none}}
+@media print{.side,.top{display:none}main{max-width:none;padding:0}.doc-sec{break-inside:avoid-page}pre .cp{display:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5v14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-loader" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-cx" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></symbol>
+    <symbol id="i-cc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7M7 7h10v10"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+  </defs>
+</svg>
+
+<div class="shell">
+  <aside class="side" aria-label="Mục lục">
+    <div class="brand"><span class="mark">S</span><span class="t-section">Đặc tả UI chuẩn</span></div>
+    <nav id="toc">
+      <div class="grp"><p class="t-overline">Nền tảng</p>
+        <a class="nl" href="#s1"><span class="n">01</span><span class="t">Tổng quan</span></a>
+        <a class="nl" href="#s2"><span class="n">02</span><span class="t">Công nghệ</span></a>
+        <a class="nl" href="#s3"><span class="n">03</span><span class="t">Nguyên tắc thiết kế</span></a>
+      </div>
+      <div class="grp"><p class="t-overline">Hệ thống thiết kế</p>
+        <a class="nl" href="#s4"><span class="n">04</span><span class="t">Màu sắc</span></a>
+        <a class="nl" href="#s5"><span class="n">05</span><span class="t">Chữ</span></a>
+        <a class="nl" href="#s6"><span class="n">06</span><span class="t">Khoảng cách · bo · bóng</span></a>
+      </div>
+      <div class="grp"><p class="t-overline">Bố cục</p>
+        <a class="nl" href="#s7"><span class="n">07</span><span class="t">Khung ứng dụng</span></a>
+        <a class="nl" href="#s8"><span class="n">08</span><span class="t">Mẫu trang</span></a>
+      </div>
+      <div class="grp"><p class="t-overline">Component</p>
+        <a class="nl" href="#s9"><span class="n">09</span><span class="t">Nút & Badge</span></a>
+        <a class="nl" href="#s10"><span class="n">10</span><span class="t">Form</span></a>
+        <a class="nl" href="#s11"><span class="n">11</span><span class="t">Hiển thị dữ liệu</span></a>
+        <a class="nl" href="#s12"><span class="n">12</span><span class="t">Lớp phủ</span></a>
+        <a class="nl" href="#s13"><span class="n">13</span><span class="t">Phản hồi & trạng thái</span></a>
+        <a class="nl" href="#s14"><span class="n">14</span><span class="t">Mẫu nghiệp vụ</span></a>
+      </div>
+      <div class="grp"><p class="t-overline">Chất lượng</p>
+        <a class="nl" href="#s15"><span class="n">15</span><span class="t">Truy cập & cảm ứng</span></a>
+        <a class="nl" href="#s16"><span class="n">16</span><span class="t">Nghiệm thu</span></a>
+        <a class="nl" href="#s17"><span class="n">17</span><span class="t">Phụ lục mã nguồn</span></a>
+      </div>
+    </nav>
+    <div class="foot t-meta">Tham chiếu: Senzu Sale Hub · 10/2026</div>
+  </aside>
+
+  <div class="colm">
+    <header class="top">
+      
+      <div class="grow">
+        <h1>Tài liệu yêu cầu giao diện</h1>
+        <p class="t-meta" style="margin:0;line-height:16px">Áp dụng bộ UI của Senzu Sale Hub cho dự án mới — công nghệ, bố cục, token, component</p>
+      </div>
+      <button class="btn b-outline s-sm" onclick="window.print()">In / PDF</button>
+    </header>
+
+<main>
+
+<!-- 01 -->
+<section class="doc-sec" id="s1">
+  <h2><span class="num">01</span>Tổng quan</h2>
+  <p class="lead">Tài liệu này mô tả đầy đủ giao diện của Senzu Sale Hub để đội dự án mới dựng lại <b>giống hệt</b> về bố cục, màu, chữ, component và hành vi — chỉ thay nội dung nghiệp vụ. Mọi ví dụ bên dưới là bản dựng trực tiếp bằng đúng token của sản phẩm gốc.</p>
+  <table class="spec card">
+    <tr><th style="width:180px">Mục</th><th>Yêu cầu</th></tr>
+    <tr><td>Tên dự án</td><td><i>[Điền tên dự án mới]</i></td></tr>
+    <tr><td>Phạm vi tài liệu</td><td>Hệ thống thiết kế (design system), khung ứng dụng, mẫu trang, thư viện component, quy tắc truy cập. Không bao gồm logic nghiệp vụ / API.</td></tr>
+    <tr><td>Loại sản phẩm</td><td>Ứng dụng web B2B nội bộ, mật độ thông tin cao, dùng hằng ngày trên desktop, tablet và điện thoại.</td></tr>
+    <tr><td>Tính cách giao diện</td><td>Gọn, trung tính, đáng tin. Nền xám rất nhạt + bề mặt trắng + viền hairline. Màu thương hiệu chỉ xuất hiện ở <b>hành động chính</b> và <b>mục đang chọn</b>.</td></tr>
+    <tr><td>Ngôn ngữ</td><td>Đa ngôn ngữ (vi / ja trong bản gốc). Font phải hiển thị đúng dấu tiếng Việt và có fallback chữ Nhật.</td></tr>
+    <tr><td>Mức bắt buộc</td><td><span class="badge bd-destructive">PHẢI</span> = bắt buộc nghiệm thu · <span class="badge bd-info">NÊN</span> = khuyến nghị mạnh · <span class="badge bd-default">CÓ THỂ</span> = tuỳ chọn</td></tr>
+  </table>
+</section>
+
+<!-- 02 -->
+<section class="doc-sec" id="s2">
+  <h2><span class="num">02</span>Công nghệ</h2>
+  <p class="lead">Giữ nguyên stack để copy được component trực tiếp từ Sale Hub mà không phải viết lại.</p>
+  <table class="spec card">
+    <tr><th style="width:200px">Lớp</th><th style="width:170px">Thư viện</th><th style="width:90px">Phiên bản</th><th>Ghi chú</th></tr>
+    <tr><td>Framework</td><td>Next.js (App Router)</td><td>15.5.x</td><td>React Server Components; trang server lấy dữ liệu, phần tương tác tách file <code>*-client.tsx</code>.</td></tr>
+    <tr><td>UI runtime</td><td>React / React DOM</td><td>19.0</td><td></td></tr>
+    <tr><td>Ngôn ngữ</td><td>TypeScript</td><td>5.7</td><td><code>strict</code>, alias <code>@/*</code>.</td></tr>
+    <tr><td>Style</td><td>Tailwind CSS</td><td>3.4.17</td><td>Token qua CSS variables (HSL) + <code>tailwindcss-animate</code>. Không dùng CSS module / styled-components.</td></tr>
+    <tr><td>Bộ component gốc</td><td>shadcn/ui (style <code>new-york</code>)</td><td>—</td><td>Đã chỉnh sửa sâu (xem mục 9–13). <code>components.json</code>: baseColor slate, cssVariables true.</td></tr>
+    <tr><td>Primitive truy cập</td><td>Radix UI</td><td>1.x / 2.x</td><td>dialog, dropdown-menu, label, select, separator, slot, tabs, tooltip.</td></tr>
+    <tr><td>Biến thể class</td><td>class-variance-authority · clsx · tailwind-merge</td><td>0.7 · 2.1 · 2.6</td><td>Hàm <code>cn()</code> = <code>twMerge(clsx(...))</code>.</td></tr>
+    <tr><td>Icon</td><td>lucide-react</td><td>0.469</td><td>Nét 2px; size 16 trong nút, 18 ở sidebar, 20 ở thanh đáy mobile.</td></tr>
+    <tr><td>Biểu đồ</td><td>Recharts</td><td>2.15</td><td>Dùng cho xu hướng KPI.</td></tr>
+    <tr><td>Toast</td><td>sonner</td><td>1.7</td><td>Một instance duy nhất (mục 13).</td></tr>
+    <tr><td>Font</td><td><code>next/font/google</code> Inter</td><td>—</td><td>subsets <code>latin</code> + <code>vietnamese</code>, biến <code>--font-sans</code>, <code>display: swap</code>.</td></tr>
+    <tr><td>Auth (tham khảo)</td><td>jose</td><td>5.9</td><td>JWT trong cookie, kiểm ở <code>middleware.ts</code>.</td></tr>
+    <tr><td>Triển khai</td><td>Vercel</td><td>—</td><td>Node.js runtime mặc định.</td></tr>
+  </table>
+  <h3 class="sub">Cấu trúc thư mục bắt buộc</h3>
+<pre><button class="cp">Sao chép</button>app/
+  layout.tsx            <span class="c"># font Inter, &lt;Toaster/&gt;, provider ngôn ngữ</span>
+  globals.css           <span class="c"># TOÀN BỘ token + thang chữ (mục 17)</span>
+  &lt;route&gt;/page.tsx      <span class="c"># server: lấy dữ liệu, bọc &lt;AppShell title description actions&gt;</span>
+  &lt;route&gt;/&lt;x&gt;-client.tsx <span class="c"># client: tương tác</span>
+components/
+  ui/                   <span class="c"># primitive: button badge card input select checkbox form-field label</span>
+                        <span class="c">#   tabs table alert dialog sheet dropdown-menu tooltip sonner</span>
+                        <span class="c">#   skeleton separator metric state</span>
+  app-shell-client.tsx  <span class="c"># sidebar / rail / thanh đáy / top bar</span>
+  page-header.tsx       <span class="c"># EntityHeader, MetaDot, Initials</span>
+lib/
+  utils.ts              <span class="c"># cn()</span>
+  modules.ts            <span class="c"># NGUỒN DUY NHẤT của điều hướng (NavItem, NAV_GROUPS)</span>
+tailwind.config.ts      <span class="c"># mục 17</span></pre>
+</section>
+
+<!-- 03 -->
+<section class="doc-sec" id="s3">
+  <h2><span class="num">03</span>Nguyên tắc thiết kế</h2>
+  <p class="lead">Tám nguyên tắc dưới đây là “tinh thần” của bộ UI. Khi gặp tình huống tài liệu chưa nói tới, quyết theo các nguyên tắc này.</p>
+  <div class="grid2">
+    <div class="card pad"><p class="t-section">1 · Trung tính trước, màu sau</p><p class="t-meta" style="margin:4px 0 0">Nền, chữ, viền dùng xám trung tính. Màu thương hiệu chỉ cho nút chính và mục đang chọn. Màu trạng thái mỗi màu <b>một nghĩa</b>.</p></div>
+    <div class="card pad"><p class="t-section">2 · Hairline thay vì bóng</p><p class="t-meta" style="margin:4px 0 0">Ranh giới bằng viền 1px <code>--border</code>. Bóng chỉ <code>shadow-xs</code>; bóng lớn dành cho lớp phủ (menu, dialog).</p></div>
+    <div class="card pad"><p class="t-section">3 · Không hộp trong hộp</p><p class="t-meta" style="margin:4px 0 0">Nhóm nội dung cấp trang dùng <code>Section</code> (tiêu đề + nội dung, không khung). <code>Card</code> chỉ cho bề mặt có ranh giới thật.</p></div>
+    <div class="card pad"><p class="t-section">4 · Mỗi vùng một nút chính</p><p class="t-meta" style="margin:4px 0 0">Mỗi vùng chỉ có tối đa một nút <code>default</code> (xanh). Còn lại là outline / ghost / secondary.</p></div>
+    <div class="card pad"><p class="t-section">5 · Thang chữ cố định</p><p class="t-meta" style="margin:4px 0 0">Chỉ 7 cấp chữ (<code>t-page</code> … <code>t-metric</code>). Không thêm cỡ chữ mới trong component.</p></div>
+    <div class="card pad"><p class="t-section">6 · Bốn trạng thái không lẫn</p><p class="t-meta" style="margin:4px 0 0">Đang tải ≠ lỗi ≠ chưa có ≠ không khớp bộ lọc. Lỗi tải tuyệt đối không hiển thị như “chưa có dữ liệu”.</p></div>
+    <div class="card pad"><p class="t-section">7 · Thiết kế theo cách chạm, không theo bề ngang</p><p class="t-meta" style="margin:4px 0 0">Thiết bị cảm ứng (<code>pointer: coarse</code>) → vùng chạm ≥ 44px, kể cả tablet đang hiện sidebar.</p></div>
+    <div class="card pad"><p class="t-section">8 · Truy cập là mặc định</p><p class="t-meta" style="margin:4px 0 0">Tương phản AA, focus ring rõ, ARIA đúng, không lồng control trong control.</p></div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section class="doc-sec" id="s4">
+  <h2><span class="num">04</span>Màu sắc</h2>
+  <p class="lead">Mọi màu là CSS variable dạng <code>H S% L%</code> (không có <code>hsl()</code>) để Tailwind ghép alpha: <code>bg-primary/5</code>, <code>ring-ring/25</code>. <span class="badge bd-destructive">PHẢI</span> không dùng mã hex cứng trong component.</p>
+
+  <h3 class="sub">Màu nền & bề mặt</h3>
+  <div class="sw" id="sw-base"></div>
+
+  <h3 class="sub">Màu thương hiệu & hành động</h3>
+  <div class="sw" id="sw-brand"></div>
+  <div class="callout">Màu nhận diện <b>#18943b → #216d36</b> (Green Gradient) chỉ dùng cho logo (<code>.bg-brand-gradient</code>). Làm <code>primary</code> thì hạ độ sáng xuống <code>137 70% 29%</code> để chữ trắng đạt tương phản AA.</div>
+
+  <h3 class="sub">Màu trạng thái — mỗi màu đúng một nghĩa</h3>
+  <p>Mỗi tone có 4 biến: <code>DEFAULT</code> (chữ/icon), <code>subtle</code> (nền nhạt), <code>border</code>, <code>foreground</code> (chữ trên nền đặc). Tailwind sinh ra <code>text-warning</code>, <code>bg-warning-subtle</code>, <code>border-warning-border</code>…</p>
+  <div class="tone" id="tones"></div>
+  <table class="spec card" style="margin-top:12px">
+    <tr><th style="width:130px">Tone</th><th>Nghĩa</th><th>Không dùng cho</th></tr>
+    <tr><td><span class="badge bd-brand">primary</span></td><td>Hành động: nút chính, tab/mục đang chọn, focus ring</td><td>Trạng thái “thành công”</td></tr>
+    <tr><td><span class="badge bd-success">success</span></td><td>Đã xong, khoẻ, thắng (xanh ngả ngọc — <b>khác</b> primary)</td><td>Nút</td></tr>
+    <tr><td><span class="badge bd-info">info</span></td><td>Trung tính có thông tin: đã đặt, đang chờ</td><td></td></tr>
+    <tr><td><span class="badge bd-warning">warning</span></td><td>Cần chú ý: sắp quá hạn, thiếu dữ liệu</td><td></td></tr>
+    <tr><td><span class="badge bd-priority">priority</span></td><td>Ưu tiên cao (cam, <b>không</b> đỏ)</td><td>Lỗi</td></tr>
+    <tr><td><span class="badge bd-destructive">destructive</span></td><td>Lỗi, xoá, thao tác phá huỷ</td><td>“Quan trọng”, “ưu tiên”</td></tr>
+  </table>
+
+  <h3 class="sub">Chế độ tối</h3>
+  <p><span class="badge bd-info">NÊN</span> Giữ sẵn bộ token <code>.dark</code> (xem phụ lục) để kiến trúc tương thích; bật bằng class <code>dark</code> trên <code>&lt;html&gt;</code> (<code>darkMode: ["class"]</code>). Bản gốc chưa bật cho người dùng.</p>
+</section>
+
+<!-- 05 -->
+<section class="doc-sec" id="s5">
+  <h2><span class="num">05</span>Chữ</h2>
+  <p class="lead">Font <b>Inter</b> (có subset tiếng Việt), fallback chữ Nhật: Hiragino Sans → Hiragino Kaku Gothic ProN → Yu Gothic UI → Meiryo → Noto Sans JP → system-ui. Cỡ chữ thân bài 14px. Bật <code>antialiased</code>.</p>
+  <div class="card">
+    <table class="spec" style="margin:0">
+      <tr><th style="width:120px">Class</th><th style="width:110px">Cỡ / đậm</th><th>Mẫu</th><th class="hide-sm">Dùng cho</th></tr>
+      <tr><td><code>t-page</code></td><td>20 / 600, -1.5%</td><td><span class="t-page">Nguyễn Thị Hà</span></td><td class="hide-sm">h1: tiêu đề trang, tên thực thể</td></tr>
+      <tr><td><code>t-section</code></td><td>14 / 600</td><td><span class="t-section">Công việc hôm nay</span></td><td class="hide-sm">h2: tiêu đề khối</td></tr>
+      <tr><td><code>t-card</code></td><td>14 / 600</td><td><span class="t-section">Tiêu đề thẻ</span></td><td class="hide-sm">h3 trong Card</td></tr>
+      <tr><td><code>t-label</code></td><td>14 / 500</td><td><span class="t-label">Số điện thoại</span></td><td class="hide-sm">Nhãn form, tiêu đề dòng danh sách</td></tr>
+      <tr><td><code>text-sm</code></td><td>14 / 400</td><td>Nội dung thân bài mặc định.</td><td class="hide-sm">Body</td></tr>
+      <tr><td><code>t-meta</code></td><td>12 / 400 muted</td><td><span class="t-meta">Cập nhật 26/09 12:33 · Nguyễn Thị Hà</span></td><td class="hide-sm">Metadata, mô tả, thời gian</td></tr>
+      <tr><td><code>t-overline</code></td><td>11 / 600 HOA, +6%</td><td><span class="t-overline">Làm việc</span></td><td class="hide-sm">Nhãn nhóm điều hướng, header bảng</td></tr>
+      <tr><td><code>t-metric</code></td><td>28 / 600, -2%</td><td><span class="t-metric tabular">1.284</span></td><td class="hide-sm">Số KPI (luôn kèm <code>.tabular</code>)</td></tr>
+    </table>
+  </div>
+  <ul class="rules" style="margin-top:12px">
+    <li><span class="badge bd-destructive">PHẢI</span> Mọi cột số, KPI, tiền tệ dùng <code>.tabular</code> (<code>font-variant-numeric: tabular-nums</code>) và căn phải trong bảng.</li>
+    <li><span class="badge bd-destructive">PHẢI</span> Chỉ thêm 2 cỡ ngoài thang Tailwind: <code>text-2xs</code> (11/16) và <code>text-metric</code> (28/32).</li>
+    <li><span class="badge bd-info">NÊN</span> Tên dài dùng <code>truncate</code> hoặc <code>line-clamp-2</code> + <code>[overflow-wrap:anywhere]</code>; không để chữ đẩy tràn layout.</li>
+  </ul>
+</section>
+
+<!-- 06 -->
+<section class="doc-sec" id="s6">
+  <h2><span class="num">06</span>Khoảng cách · bo góc · bóng · chuyển động</h2>
+  <div class="grid3">
+    <div class="card pad">
+      <p class="t-section">Bo góc</p>
+      <p class="t-meta">Gốc <code>--radius: 0.5rem</code></p>
+      <div class="row" style="gap:14px;margin-top:10px">
+        <div style="text-align:center"><div style="width:48px;height:48px;border:1px solid hsl(var(--input));border-radius:8px;background:hsl(var(--muted))"></div><span class="t-meta">lg 8</span></div>
+        <div style="text-align:center"><div style="width:48px;height:48px;border:1px solid hsl(var(--input));border-radius:6px;background:hsl(var(--muted))"></div><span class="t-meta">md 6</span></div>
+        <div style="text-align:center"><div style="width:48px;height:48px;border:1px solid hsl(var(--input));border-radius:4px;background:hsl(var(--muted))"></div><span class="t-meta">sm 4</span></div>
+        <div style="text-align:center"><div style="width:48px;height:48px;border:1px solid hsl(var(--input));border-radius:12px 12px 0 0;background:hsl(var(--muted))"></div><span class="t-meta">xl (sheet)</span></div>
+      </div>
+      <p class="t-meta" style="margin-top:8px">lg: Card, Alert, khung bảng · md: nút, ô nhập, thẻ kanban, menu · sm: item menu, checkbox</p>
+    </div>
+    <div class="card pad">
+      <p class="t-section">Bóng</p>
+      <div class="stack" style="margin-top:10px;gap:14px">
+        <div style="height:30px;border-radius:6px;background:#fff;box-shadow:var(--sh-xs);border:1px solid hsl(var(--border));padding:5px 10px" class="t-meta">shadow-xs — card, nút, ô nhập</div>
+        <div style="height:30px;border-radius:6px;background:#fff;box-shadow:var(--sh-md);padding:5px 10px" class="t-meta">shadow-md — menu, tooltip, toast</div>
+        <div style="height:30px;border-radius:6px;background:#fff;box-shadow:var(--sh-lg);padding:5px 10px" class="t-meta">shadow-lg — dialog, sheet</div>
+      </div>
+    </div>
+    <div class="card pad">
+      <p class="t-section">Chuyển động</p>
+      <ul class="rules t-meta" style="margin-top:6px">
+        <li>Mặc định <code>150ms</code> (<code>transitionDuration.DEFAULT</code>)</li>
+        <li>Menu / select / tooltip: fade-in + zoom-in-95, 150ms</li>
+        <li>Dialog: 200ms, fade + zoom 0.98 (desktop) / slide-up (mobile)</li>
+        <li>Sheet: slide từ cạnh, 200ms</li>
+        <li>Skeleton: <code>animate-pulse</code></li>
+      </ul>
+    </div>
+  </div>
+  <h3 class="sub">Nhịp khoảng cách (thang Tailwind 4px)</h3>
+  <table class="spec card">
+    <tr><th style="width:240px">Vị trí</th><th>Giá trị</th></tr>
+    <tr><td>Padding trang (ngang)</td><td><code>px-4</code> mobile · <code>sm:px-6</code> · <code>lg:px-8</code></td></tr>
+    <tr><td>Padding trang (dọc)</td><td><code>py-5</code> · <code>lg:py-6</code></td></tr>
+    <tr><td>Bề ngang nội dung tối đa</td><td><code>max-w-[1400px] mx-auto</code></td></tr>
+    <tr><td>Giữa các Section</td><td><code>space-y-6</code> (24px)</td></tr>
+    <tr><td>Tiêu đề Section → nội dung</td><td><code>space-y-3</code> (12px)</td></tr>
+    <tr><td>Padding Card</td><td><code>px-4 py-4 sm:px-5</code></td></tr>
+    <tr><td>Khoảng giữa các nút</td><td><code>gap-2</code> (8px)</td></tr>
+    <tr><td>Nhãn → ô nhập (FormField)</td><td><code>space-y-1.5</code> (6px)</td></tr>
+    <tr><td>Chiều cao thanh trên / brand sidebar</td><td><code>h-14</code> (56px)</td></tr>
+  </table>
+</section>
+
+<!-- 07 -->
+<section class="doc-sec" id="s7">
+  <h2><span class="num">07</span>Khung ứng dụng (App Shell)</h2>
+  <p class="lead">Khung cố định toàn màn hình <code>h-dvh</code>; chỉ <code>&lt;main&gt;</code> cuộn. Bố cục chuyển theo <b>bề ngang khả dụng</b>, ba cấp:</p>
+
+  <div class="grid3">
+    <div>
+      <div class="wire" style="height:200px;display:flex;flex-direction:column">
+        <div style="height:26px;background:#fff;border-bottom:1px solid hsl(var(--border));display:flex;align-items:center;gap:6px;padding:0 8px"><span class="mark" style="width:14px;height:14px;font-size:8px;border-radius:4px">S</span>Tiêu đề trang</div>
+        <div style="flex:1;padding:8px;display:flex;flex-direction:column;gap:6px"><div class="card" style="height:30px"></div><div class="card" style="flex:1"></div></div>
+        <div style="height:30px;background:#fff;border-top:1px solid hsl(var(--border));display:flex;justify-content:space-around;align-items:center"><b style="color:hsl(var(--primary))">●</b>○○○ ⋯</div>
+      </div>
+      <p class="t-section" style="margin-top:8px">&lt; 768px · Điện thoại</p>
+      <p class="t-meta">Thanh điều hướng đáy (4 mục chính + “Khác” mở bottom sheet). Nội dung dùng trọn bề ngang.</p>
+    </div>
+    <div>
+      <div class="wire" style="height:200px;display:flex">
+        <div style="width:24px;background:hsl(var(--sidebar));border-right:1px solid hsl(var(--border));display:flex;flex-direction:column;align-items:center;gap:7px;padding-top:6px"><span class="mark" style="width:14px;height:14px;font-size:8px;border-radius:4px">S</span>▪<br>▫<br>▫</div>
+        <div style="flex:1;display:flex;flex-direction:column"><div style="height:26px;background:#fff;border-bottom:1px solid hsl(var(--border));padding:6px 8px">Tiêu đề trang</div><div style="flex:1;padding:8px;display:grid;gap:6px"><div class="card"></div></div></div>
+      </div>
+      <p class="t-section" style="margin-top:8px">768–1023px · Tablet</p>
+      <p class="t-meta">Rail icon 64px, nhãn hiện trong tooltip bên phải. Nội dung ~700px.</p>
+    </div>
+    <div>
+      <div class="wire" style="height:200px;display:flex">
+        <div style="width:70px;background:hsl(var(--sidebar));border-right:1px solid hsl(var(--border));padding:6px;line-height:16px"><span class="mark" style="width:14px;height:14px;font-size:8px;border-radius:4px;display:inline-grid">S</span> Logo<br><span class="t-overline" style="font-size:7px">NHÓM</span><br><span style="background:#fff;border-radius:3px;padding:0 3px;box-shadow:var(--sh-xs)">▪ Mục</span><br>▫ Mục<br>▫ Mục</div>
+        <div style="flex:1;display:flex;flex-direction:column"><div style="height:26px;background:#fff;border-bottom:1px solid hsl(var(--border));padding:6px 8px;display:flex;justify-content:space-between">Tiêu đề trang <span style="background:hsl(var(--primary));color:#fff;border-radius:3px;padding:0 4px">+</span></div><div style="flex:1;padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px"><div class="card"></div><div class="card"></div></div></div>
+      </div>
+      <p class="t-section" style="margin-top:8px">≥ 1024px · Desktop</p>
+      <p class="t-meta">Sidebar đầy đủ 240px: logo + tên sản phẩm, nhóm có overline, tài khoản ở đáy.</p>
+    </div>
+  </div>
+
+  <h3 class="sub">Thành phần khung</h3>
+  <table class="spec card">
+    <tr><th style="width:170px">Phần</th><th>Đặc tả</th></tr>
+    <tr><td>Sidebar</td><td><code>bg-sidebar border-r border-sidebar-border</code>, rộng <code>w-16 lg:w-60</code>. Đầu: logo cao 56px (rail chỉ hiện dấu logo 32px; desktop: wordmark h-6 + vạch ngăn dọc 1×20px + tên sản phẩm 14/600). Nav <code>px-3 pt-2 pb-4</code>, cuộn riêng.</td></tr>
+    <tr><td>Nhóm điều hướng</td><td>Mỗi nhóm có <code>t-overline</code> (chỉ desktop), cách nhau <code>mt-5</code>. Ở rail: ngăn bằng <code>border-t</code>. Thứ tự nhóm cố định trong <code>NAV_GROUPS</code>.</td></tr>
+    <tr><td>Mục điều hướng</td><td>Cao <code>h-9</code> (cảm ứng <code>h-11</code>), <code>rounded-md px-2.5 gap-2.5</code>, icon 18px. <b>Đang chọn</b>: <code>bg-card shadow-xs ring-1 ring-border font-medium</code>, icon <code>text-primary</code>. Thường: <code>text-sidebar-foreground/80 hover:bg-card/70</code>. Có <code>aria-current="page"</code>. Mục đang chọn = href dài nhất khớp URL.</td></tr>
+    <tr><td>Tài khoản (đáy sidebar)</td><td>Avatar chữ cái đầu 32px <code>bg-accent text-accent-foreground</code> + tên/email + icon ChevronsUpDown → Dropdown (đổi ngôn ngữ, đăng xuất…, mục cuối ngăn bằng separator).</td></tr>
+    <tr><td>Thanh trên (top bar)</td><td><code>h-14 bg-card border-b px-4 sm:px-6 lg:px-8</code>, một hàng: [logo nhỏ — chỉ mobile] [h1 16→18px/600 + mô tả <code>t-meta</code> (ẩn trên mobile)] [hành động trang] [chuông thông báo]. Màn chi tiết thay tiêu đề bằng link “← Quay lại”.</td></tr>
+    <tr><td>Vùng nội dung</td><td><code>&lt;main id="main" tabIndex=-1&gt;</code> cuộn dọc, <code>overflow-x-hidden</code>. Trang tự quản cuộn (hội thoại) dùng <code>fill</code>: main thành flex-col, không cuộn.</td></tr>
+    <tr><td>Thanh đáy mobile</td><td><code>bg-card border-t</code>, mỗi mục <code>min-h-14 flex-1</code>, icon 20 + nhãn 11px. Đang chọn: <code>text-primary</code> + vạch 2px trên đỉnh. Có <code>pb-[env(safe-area-inset-bottom)]</code>.</td></tr>
+    <tr><td>Sheet “Khác”</td><td>Bottom sheet chứa các nhóm còn lại + khối tài khoản; mỗi dòng <code>min-h-11</code>.</td></tr>
+    <tr><td>Skip link</td><td>“Bỏ qua điều hướng” <code>sr-only</code>, hiện khi focus, trỏ tới <code>#main</code>.</td></tr>
+  </table>
+  <div class="callout"><b>Một nguồn điều hướng.</b> Sidebar, rail, thanh đáy và sheet đều sinh từ cùng một mảng <code>NavItem {href,label,icon,group,mobilePrimary}</code> trong <code>lib/modules.ts</code>. Tối đa 4 mục <code>mobilePrimary</code>.</div>
+</section>
+
+<!-- 08 -->
+<section class="doc-sec" id="s8">
+  <h2><span class="num">08</span>Mẫu trang</h2>
+  <p class="lead">Sáu khuôn trang dưới đây bao phủ toàn bộ Sale Hub. Trang mới phải chọn một khuôn, không tự sáng tác bố cục.</p>
+  <div class="grid2">
+    <div class="card pad">
+      <p class="t-section">A · Bảng điều khiển (“Hôm nay”)</p>
+      <p class="t-meta" style="margin:4px 0 10px">Alert banner cảnh báo → MetricGrid 4 ô (ô bấm được = bộ lọc) → Section có Tabs + danh sách việc → lưới 2 cột danh sách tắt “Xem tất cả →”.</p>
+      <div class="wire" style="padding:8px;display:grid;gap:5px"><div style="height:14px;border-radius:4px;background:hsl(var(--destructive-subtle));border:1px solid hsl(var(--destructive-border))"></div><div style="height:26px;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:hsl(var(--border));border-radius:4px;overflow:hidden"><i style="background:#fff"></i><i style="background:hsl(var(--accent))"></i><i style="background:#fff"></i><i style="background:#fff"></i></div><div style="height:48px" class="card"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><div class="card" style="height:28px"></div><div class="card" style="height:28px"></div></div></div>
+    </div>
+    <div class="card pad">
+      <p class="t-section">B · Danh sách (Khách hàng)</p>
+      <p class="t-meta" style="margin:4px 0 10px">Hàng bộ lọc (ô tìm <code>sm:w-80</code> + select + checkbox) → Table trong Card (≥640px) / danh sách xếp chồng (&lt;640px) → “Tải thêm”. Nút “Tạo …” ở thanh trên.</p>
+      <div class="wire" style="padding:8px;display:grid;gap:5px"><div style="display:flex;gap:5px"><div style="height:14px;width:45%;border:1px solid hsl(var(--input));border-radius:3px;background:#fff"></div><div style="height:14px;width:20%;border:1px solid hsl(var(--input));border-radius:3px;background:#fff"></div></div><div class="card" style="height:84px;background:repeating-linear-gradient(#fff 0 13px,hsl(var(--border)) 13px 14px)"></div></div>
+    </div>
+    <div class="card pad">
+      <p class="t-section">C · Chi tiết thực thể (Hồ sơ khách)</p>
+      <p class="t-meta" style="margin:4px 0 10px">Top bar = link quay lại. <code>EntityHeader</code>: avatar 40 + h1 + badge + dòng meta ngăn “•” + hành động bên phải. Bên dưới: lưới <code>lg:grid-cols-[minmax(0,1fr)_20rem]</code> — cột trái Tabs/timeline, cột phải các Card thông tin.</p>
+      <div class="wire" style="padding:8px;display:grid;gap:5px"><div style="display:flex;gap:5px;align-items:center"><i style="width:16px;height:16px;border-radius:50%;background:hsl(var(--muted));display:block"></i><b style="font-size:10px;color:hsl(var(--foreground))">Tên khách</b><span class="badge bd-success" style="font-size:8px;padding:0 3px;line-height:10px">Đang chăm</span></div><div style="display:grid;grid-template-columns:2fr 1fr;gap:5px"><div class="card" style="height:72px"></div><div style="display:grid;gap:5px"><div class="card"></div><div class="card"></div></div></div></div>
+    </div>
+    <div class="card pad">
+      <p class="t-section">D · Kanban (Cơ hội)</p>
+      <p class="t-meta" style="margin:4px 0 10px">≥768px: các cột <code>min-w-[15rem] flex-1 bg-muted/40 rounded-lg p-2</code>, cuộn ngang có snap. Header cột: tên + TabCount + tổng giá trị. Kéo-thả đổi giai đoạn; cột đích sáng <code>border-primary bg-primary/5</code>. &lt;768px: danh sách + menu ⋯.</p>
+      <div class="wire" style="padding:8px;display:flex;gap:5px"><div style="flex:1;background:hsl(var(--muted)/.6);border:1px solid hsl(var(--border));border-radius:4px;padding:3px;display:grid;gap:3px"><i class="card" style="height:20px;display:block"></i><i class="card" style="height:20px;display:block"></i></div><div style="flex:1;background:hsl(var(--muted)/.6);border:1px solid hsl(var(--border));border-radius:4px;padding:3px;display:grid;gap:3px;align-content:start"><i class="card" style="height:20px;display:block"></i></div><div style="flex:1;background:hsl(var(--primary)/.05);border:1px solid hsl(var(--primary));border-radius:4px;padding:3px;display:grid;gap:3px;align-content:start"><i class="card" style="height:20px;display:block"></i><i class="card" style="height:20px;display:block"></i></div></div>
+    </div>
+    <div class="card pad">
+      <p class="t-section">E · Hội thoại 3 cột</p>
+      <p class="t-meta" style="margin:4px 0 10px"><code>md:grid-cols-[17rem_1fr] xl:grid-cols-[18rem_1fr_18rem]</code>. Cột 1 danh sách hội thoại (tìm + lọc), cột 2 tin nhắn, cột 3 bối cảnh khách. Mỗi cột là Card tự cuộn. Mobile: một cột tại một thời điểm.</p>
+      <div class="wire" style="padding:8px;display:grid;grid-template-columns:1fr 2fr 1fr;gap:5px;height:80px"><div class="card"></div><div class="card"></div><div class="card"></div></div>
+    </div>
+    <div class="card pad">
+      <p class="t-section">F · Đăng nhập</p>
+      <p class="t-meta" style="margin:4px 0 10px">Giữa màn hình, <code>max-w-sm</code>. Logo h-12 → h1 <code>t-page</code> + mô tả → Card <code>rounded-xl p-6</code> chứa nút <code>lg w-full</code>, vạch “HOẶC” → dòng bảo mật nhỏ có icon khiên → chân trang © 11px.</p>
+      <div class="wire" style="padding:8px;display:grid;place-items:center;height:80px"><div style="width:90px;display:grid;gap:4px;text-align:center"><b style="color:hsl(var(--foreground))">LOGO</b><div class="card" style="height:30px;border-radius:6px"></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 09 -->
+<section class="doc-sec" id="s9">
+  <h2><span class="num">09</span>Nút & Badge</h2>
+  <h3 class="sub" style="margin-top:0">Button</h3>
+  <div class="demo"><div class="stage stack">
+    <div class="row">
+      <button class="btn b-default"><svg><use href="#i-plus"/></svg>Tạo cơ hội</button>
+      <button class="btn b-secondary">Secondary</button>
+      <button class="btn b-outline"><svg><use href="#i-check"/></svg>Hoàn tất</button>
+      <button class="btn b-ghost">Ghost</button>
+      <button class="btn b-destructive">Xoá vĩnh viễn</button>
+      <button class="btn b-link">Xem tất cả</button>
+    </div>
+    <div class="row">
+      <button class="btn b-default s-lg">Large 40</button>
+      <button class="btn b-default">Default 36</button>
+      <button class="btn b-outline s-sm">Small 32</button>
+      <button class="btn b-outline s-icon" aria-label="Thêm"><svg><use href="#i-plus"/></svg></button>
+      <button class="btn b-ghost s-icon-sm" aria-label="Khác"><svg><use href="#i-more"/></svg></button>
+      <button class="btn b-default" disabled><svg class="spin"><use href="#i-loader"/></svg>Đang lưu</button>
+      <button class="btn b-outline" disabled>Disabled</button>
+    </div>
+  </div><div class="cap"><span>components/ui/button.tsx</span><span>Tab vào để xem focus ring</span></div></div>
+  <table class="spec card">
+    <tr><th style="width:130px">Thuộc tính</th><th>Đặc tả</th></tr>
+    <tr><td>Nền chung</td><td><code>inline-flex items-center gap-2 rounded-md text-sm font-medium transition-colors</code>, icon con <code>size-4</code>. Focus: <code>ring-2 ring-ring ring-offset-2</code>. Disabled: <code>opacity-50 pointer-events-none</code>.</td></tr>
+    <tr><td>variant</td><td><b>default</b> <code>bg-primary hover:bg-primary-hover shadow-xs</code> · <b>secondary</b> <code>bg-secondary hover:/70</code> · <b>outline</b> <code>border-input bg-card hover:bg-muted shadow-xs</code> · <b>ghost</b> <code>hover:bg-muted</code> · <b>destructive</b> chỉ cho nút XÁC NHẬN trong dialog · <b>link</b> chữ primary, gạch chân khi hover</td></tr>
+    <tr><td>size</td><td>default <code>h-9 px-3.5</code> · sm <code>h-8 px-2.5</code> · lg <code>h-10 px-5</code> · icon <code>size-9</code> · icon-sm <code>size-8</code>. <b>Cảm ứng:</b> tất cả ≥ <code>h-11</code> (44px) qua variant <code>coarse:</code>.</td></tr>
+    <tr><td>loading</td><td>Prop <code>loading</code>: khoá nút, <code>aria-busy</code>, hiện Loader2 quay trước nhãn. Nhãn giữ nguyên hoặc đổi sang dạng tiếp diễn (“Đang lưu”).</td></tr>
+    <tr><td>Quy tắc</td><td><span class="badge bd-destructive">PHẢI</span> <code>type="button"</code> mặc định (submit phải ghi rõ). <span class="badge bd-destructive">PHẢI</span> tối đa 1 nút <code>default</code> mỗi vùng. Nút chỉ có icon phải có <code>aria-label</code>. Hỗ trợ <code>asChild</code> để bọc <code>&lt;Link&gt;</code>.</td></tr>
+  </table>
+
+  <h3 class="sub">Badge</h3>
+  <div class="demo"><div class="stage row">
+    <span class="badge bd-default">Mặc định</span>
+    <span class="badge bd-success"><svg><use href="#i-cc"/></svg>Đã chốt</span>
+    <span class="badge bd-info">Đã đặt</span>
+    <span class="badge bd-warning"><svg><use href="#i-clock"/></svg>Sắp quá hạn</span>
+    <span class="badge bd-priority"><svg><use href="#i-flame"/></svg>Ưu tiên</span>
+    <span class="badge bd-destructive">1 nghiêm trọng</span>
+    <span class="badge bd-brand">Brand</span>
+    <span class="tcount tabular">12</span>
+  </div><div class="cap"><span>components/ui/badge.tsx · TabCount</span></div></div>
+  <p><code>inline-flex rounded-md border px-1.5 py-0.5 text-2xs font-medium</code>, icon 12px. Mỗi tone = <code>border-{tone}-border bg-{tone}-subtle text-{tone}</code>. <span class="badge bd-destructive">PHẢI</span> Badge chỉ cho trạng thái / phân loại, không làm nhãn trang trí.</p>
+</section>
+
+<!-- 10 -->
+<section class="doc-sec" id="s10">
+  <h2><span class="num">10</span>Form</h2>
+  <div class="demo"><div class="stage">
+    <div class="grid2" style="max-width:720px">
+      <div class="ff"><label for="d1">Tên khách<span class="req-star">*</span></label><input id="d1" class="field" placeholder="Nguyễn Văn A"><span class="t-meta">Tên như trên giấy tờ.</span></div>
+      <div class="ff"><label for="d2">Số điện thoại<span class="req-star">*</span></label><input id="d2" class="field inv" value="09123" aria-invalid="true"><p class="err">Số điện thoại phải có 10 chữ số.</p></div>
+      <div class="ff"><label>Giai đoạn</label><button class="field sel" type="button"><span>Báo giá</span><svg width="16" height="16" style="color:hsl(var(--muted-foreground))"><use href="#i-down"/></svg></button></div>
+      <div class="ff"><label>Tìm</label><div class="search"><svg><use href="#i-search"/></svg><input class="field" type="search" placeholder="Tìm khách hoặc cơ hội…"></div></div>
+      <div class="ff" style="grid-column:1/-1"><label for="d3">Ghi chú</label><textarea id="d3" class="field" placeholder="Nội dung trao đổi…"></textarea></div>
+      <label class="chk"><input type="checkbox" checked>Hiện cả thắng / thua</label>
+      <label class="chk"><input type="checkbox"><span>Nhắc tôi<br><span class="t-meta">Gửi thông báo lúc 07:30</span></span></label>
+    </div>
+  </div><div class="cap"><span>input.tsx · select.tsx · checkbox.tsx · form-field.tsx</span></div></div>
+  <table class="spec card">
+    <tr><th style="width:130px">Phần</th><th>Đặc tả</th></tr>
+    <tr><td>fieldBase (chung)</td><td><code>w-full rounded-md border border-input bg-card text-sm shadow-xs</code>; placeholder muted; focus <code>border-ring ring-2 ring-ring/25</code> (không outline); disabled <code>opacity-50</code>; <code>aria-[invalid=true]:border-destructive</code>. Viền <code>--input</code> đạt ≥3:1 (WCAG 1.4.11).</td></tr>
+    <tr><td>Input</td><td><code>h-9 px-3</code> · cảm ứng <code>h-11</code>.</td></tr>
+    <tr><td>Textarea</td><td><code>min-h-20 px-3 py-2</code>.</td></tr>
+    <tr><td>Select (Radix)</td><td>Trigger dùng fieldBase + ChevronDown muted. Content <code>rounded-md border shadow-md p-1</code>, rộng bằng trigger, item <code>py-1.5 pl-2.5</code> (cảm ứng <code>py-2.5</code>), item chọn có dấu ✓ <code>text-primary</code>, focus <code>bg-muted</code>.</td></tr>
+    <tr><td>Checkbox</td><td><code>&lt;input type="checkbox"&gt;</code> native vẽ lại: 16px, <code>rounded-sm border-input</code>, chọn <code>bg-primary</code> + Check trắng. Cả nhãn là vùng bấm, cảm ứng <code>min-h-11</code>. Có thể kèm mô tả <code>t-meta</code>.</td></tr>
+    <tr><td>FormField</td><td>Nhãn (<code>t-label</code>, dấu * đỏ <code>aria-hidden</code>) → control → gợi ý <code>t-meta</code> HOẶC lỗi <code>text-xs text-destructive</code> (lỗi thay chỗ gợi ý). Tự gắn <code>id</code>, <code>aria-invalid</code>, <code>aria-describedby</code>, <code>aria-required</code>.</td></tr>
+    <tr><td>Ô tìm</td><td>Icon Search 16px tuyệt đối <code>left-3</code>, input <code>pl-9</code>, nhãn <code>sr-only</code>.</td></tr>
+    <tr><td>Lỗi cấp form</td><td><code>InlineError</code>: <code>rounded-md bg-destructive-subtle px-3 py-2 text-sm text-destructive</code>, <code>role="alert"</code>.</td></tr>
+  </table>
+</section>
+
+<!-- 11 -->
+<section class="doc-sec" id="s11">
+  <h2><span class="num">11</span>Hiển thị dữ liệu</h2>
+
+  <h3 class="sub" style="margin-top:0">Section & Card</h3>
+  <div class="demo"><div class="stage">
+    <div class="stack" style="gap:12px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;min-height:32px">
+        <div><h4 class="t-section">Cơ hội ưu tiên cao</h4><p class="t-meta" style="margin:0">4 cơ hội</p></div>
+        <button class="btn b-ghost s-sm">Xem tất cả <svg><use href="#i-chev"/></svg></button>
+      </div>
+      <div class="card">
+        <div class="listrow"><div style="flex:1;min-width:0"><div class="t-label">Nguyễn Thị Hà</div><div class="t-meta">Căn 2PN toà S3</div></div><svg width="16" height="16" style="color:hsl(var(--muted-foreground))"><use href="#i-chev"/></svg></div>
+        <div class="listrow"><div style="flex:1;min-width:0"><div class="t-label">Công ty TNHH Ánh Dương</div><div class="t-meta">Nhà phố Q7</div></div><svg width="16" height="16" style="color:hsl(var(--muted-foreground))"><use href="#i-chev"/></svg></div>
+      </div>
+    </div>
+  </div><div class="cap"><span>card.tsx — Section (không khung) chứa Card (có khung)</span></div></div>
+  <p><b>Card</b> <code>rounded-lg border bg-card shadow-xs</code>; Header <code>px-4 pt-4 sm:px-5 flex justify-between</code>; Content <code>p-4 sm:px-5</code>; Footer <code>border-t px-4 py-3</code>. <b>Section</b>: <code>&lt;section aria-labelledby&gt;</code>, hàng tiêu đề <code>min-h-8 items-end justify-between</code> (h2 <code>t-section</code> + mô tả <code>t-meta</code> | 1 hành động), luôn <code>min-w-0</code>.</p>
+
+  <h3 class="sub">MetricGrid & Metric (KPI)</h3>
+  <div class="demo"><div class="stage">
+    <div class="metrics">
+      <div class="metric"><span class="t-meta">Quá hạn</span><span class="t-metric tabular" style="color:hsl(var(--destructive))">3</span></div>
+      <div class="metric on"><span class="t-meta">Đến hạn hôm nay</span><span class="t-metric tabular">5</span></div>
+      <div class="metric"><span class="t-meta" style="display:flex;align-items:center;gap:4px">Cơ hội ưu tiên cao <svg width="14" height="14"><use href="#i-info"/></svg></span><span style="display:flex;align-items:center;gap:4px"><span class="t-metric tabular">4</span><svg width="16" height="16" style="color:hsl(var(--muted-foreground))"><use href="#i-up"/></svg></span></div>
+      <div class="metric"><span class="t-meta">Tỉ lệ thắng</span><span class="t-metric tabular" style="color:hsl(var(--warning))">38%</span><span class="t-meta">12/32 cơ hội</span></div>
+    </div>
+  </div><div class="cap"><span>metric.tsx</span><span>ô xanh nhạt = bộ lọc đang chọn (aria-pressed)</span></div></div>
+  <ul class="rules">
+    <li>Một khung liền <code>grid gap-px bg-border rounded-lg border overflow-hidden</code> → các ô ngăn bằng hairline. <b>Không</b> bọc mỗi con số trong Card riêng.</li>
+    <li>Ô: <code>px-4 py-3.5 gap-1 bg-card</code>; nhãn <code>t-meta</code> (+ nút ⓘ tooltip 28px), giá trị <code>t-metric tabular</code> (có thể tô tone), hint <code>t-meta</code> (mẫu số).</li>
+    <li>2 cột mobile → <code>lg:grid-cols-{3..7}</code>. Ô bấm được: một <code>&lt;button&gt;</code> phủ cả ô bằng <code>::before</code>; hover <code>bg-muted/50</code>; chọn <code>bg-accent</code>; mũi tên › hiện khi hover, ↗ khi mở sang màn khác.</li>
+    <li><span class="badge bd-destructive">PHẢI</span> Không lấy được số → “Chưa tải được”, <b>không hiện 0</b>. Không áp dụng → “Không áp dụng” + tooltip lý do. Đang tải → Skeleton <code>h-6 w-14</code>.</li>
+  </ul>
+
+  <h3 class="sub">Table</h3>
+  <div class="demo"><div class="stage">
+    <div class="card" style="overflow:hidden">
+      <table class="tb">
+        <thead><tr><th class="t-overline">Khách hàng</th><th class="t-overline">Trạng thái</th><th class="t-overline hide-sm">Phụ trách</th><th class="t-overline num">Giá trị</th></tr></thead>
+        <tbody>
+          <tr><td><span class="t-label">Nguyễn Thị Hà</span></td><td><span class="badge bd-success">Đang chăm</span></td><td class="hide-sm">Sale Demo</td><td class="num">350.000.000</td></tr>
+          <tr class="sel"><td><span class="t-label">Trần Văn Minh</span></td><td><span class="badge bd-warning">Thiếu bước tiếp</span></td><td class="hide-sm">Sale Demo</td><td class="num">700.000.000</td></tr>
+          <tr><td><span class="t-label">Lê Hoàng Anh</span></td><td><span class="badge bd-default">Mới</span></td><td class="hide-sm">—</td><td class="num">2.800.000.000</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div><div class="cap"><span>table.tsx</span></div></div>
+  <p>Header <code>h-9 bg-muted/40 t-overline</code>; hàng <code>h-11 px-4 border-b</code>; hover <code>bg-muted/50</code> (khi <code>interactive</code>); chọn <code>bg-accent/60</code>; cột số <code>numeric</code> → căn phải + tabular. <span class="badge bd-destructive">PHẢI</span> Bảng chỉ từ ≥640px; dưới đó trang render danh sách xếp chồng.</p>
+
+  <h3 class="sub">Tabs</h3>
+  <div class="demo"><div class="stage">
+    <div class="tabs" role="tablist"><button class="tab">Quá hạn <span class="tcount">3</span></button><button class="tab on">Hôm nay <span class="tcount">5</span></button><button class="tab">Sắp tới</button><button class="tab">Đã hoàn tất</button></div>
+  </div><div class="cap"><span>tabs.tsx — kiểu gạch chân, không dùng pill</span></div></div>
+  <p>List <code>flex gap-1 border-b overflow-x-auto</code> (ẩn thanh cuộn). Trigger <code>min-h-9 px-2.5 border-b-2 border-transparent -mb-px text-sm font-medium text-muted-foreground</code>; active <code>border-primary text-foreground</code>. <span class="badge bd-destructive">PHẢI</span> Luôn có <code>TabsContent</code> tương ứng (aria-controls hợp lệ).</p>
+
+  <h3 class="sub">Đầu trang chi tiết (EntityHeader) & Avatar</h3>
+  <div class="demo"><div class="stage">
+    <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+      <span class="avatar lg">NH</span>
+      <div style="flex:1;min-width:200px">
+        <div class="row" style="gap:4px 8px"><span class="t-page">Nguyễn Thị Hà</span><span class="badge bd-success">Đang chăm</span><span class="badge bd-priority"><svg><use href="#i-flame"/></svg>Ưu tiên</span></div>
+        <div class="row" style="gap:6px;color:hsl(var(--muted-foreground))">0912 345 678 <span style="color:hsl(var(--border))">•</span> Zalo: Hà Nguyễn <span style="color:hsl(var(--border))">•</span> Tạo 12/09</div>
+      </div>
+      <div class="row"><button class="btn b-outline"><svg><use href="#i-edit"/></svg>Sửa</button><button class="btn b-default"><svg><use href="#i-plus"/></svg>Tạo cơ hội</button></div>
+    </div>
+  </div><div class="cap"><span>page-header.tsx — EntityHeader · MetaDot · Initials</span></div></div>
+</section>
+
+<!-- 12 -->
+<section class="doc-sec" id="s12">
+  <h2><span class="num">12</span>Lớp phủ (Dialog · Sheet · Menu · Tooltip)</h2>
+  <div class="grid2">
+    <div class="demo" style="margin:0"><div class="stage overlay">
+      <div class="dlg">
+        <span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span>
+        <div class="h"><p class="t-section" style="font-size:16px;line-height:24px">Xoá khách hàng?</p><p class="t-meta" style="font-size:14px">Hồ sơ và lịch sử sẽ bị xoá vĩnh viễn. Không thể hoàn tác.</p></div>
+        <div class="b"><div class="ff"><label>Gõ tên khách để xác nhận</label><input class="field"></div></div>
+        <div class="f"><button class="btn b-outline">Huỷ</button><button class="btn b-destructive"><svg><use href="#i-trash"/></svg>Xoá</button></div>
+      </div>
+    </div><div class="cap"><span>dialog.tsx</span></div></div>
+    <div class="demo" style="margin:0"><div class="stage stack" style="align-items:flex-start">
+      <div class="menu">
+        <div class="mlabel">sale.demo@example.com</div><div class="msep"></div>
+        <div class="mi"><svg><use href="#i-edit"/></svg>Đổi hạn</div>
+        <div class="mi"><svg><use href="#i-check"/></svg>Hoàn tất</div>
+        <div class="msep"></div>
+        <div class="mi danger"><svg><use href="#i-trash"/></svg>Xoá việc</div>
+      </div>
+      <span class="tip">Tỉ lệ thắng = số cơ hội thắng / tổng cơ hội đã đóng trong kỳ.</span>
+    </div><div class="cap"><span>dropdown-menu.tsx · tooltip.tsx</span></div></div>
+  </div>
+  <table class="spec card" style="margin-top:12px">
+    <tr><th style="width:120px">Component</th><th>Đặc tả</th></tr>
+    <tr><td>Overlay</td><td><code>bg-foreground/35</code>, fade 150ms.</td></tr>
+    <tr><td>Dialog</td><td><b>Desktop</b>: giữa màn, <code>rounded-lg border shadow-lg</code>, <code>max-h-[88dvh]</code>, size sm 26rem / <b>md 30rem</b> / lg 36rem. <b>Mobile (&lt;640)</b>: thành bottom sheet <code>rounded-t-xl max-h-[92dvh]</code>, trượt lên. Header <code>px-6 pt-6 pr-14</code> (title 16/600, mô tả 14 muted) · Body <code>px-6 py-4</code> tự cuộn · Footer <code>border-t bg-muted/30 px-6 py-3 justify-end gap-2</code> (mobile xếp dọc, nút chính ở dưới cùng gần ngón tay, chừa safe-area). Nút ✕ <code>size-8</code> góc phải trên (cảm ứng 44).</td></tr>
+    <tr><td>Sheet</td><td>right: <code>w-full sm:max-w-[28rem] border-l</code> (drawer chi tiết) · bottom: <code>rounded-t-xl max-h-[88dvh]</code> (menu “Khác”) · left: <code>w-72</code>. Có SheetHeader / SheetBody như Dialog.</td></tr>
+    <tr><td>Confirm</td><td>Thao tác phá huỷ luôn qua Dialog xác nhận; chỉ ở đây mới dùng nút <code>destructive</code>.</td></tr>
+    <tr><td>Dropdown</td><td><code>min-w-48 rounded-md border shadow-md p-1</code>, căn <code>end</code>, offset 6. Item <code>min-h-8 px-2.5 gap-2.5 rounded-sm</code> (cảm ứng <code>min-h-11</code>), icon muted; focus <code>bg-muted</code>. Item nguy hiểm <code>text-destructive focus:bg-destructive-subtle</code>, đặt cuối sau separator. Label <code>text-xs font-medium muted</code>.</td></tr>
+    <tr><td>Tooltip</td><td>Nền đảo <code>bg-foreground text-background</code>, <code>max-w-72 rounded-md px-2.5 py-1.5 text-xs</code>, delay 200–300ms. <code>InfoTip</code>: trigger phải là button nhận focus. Dùng để đưa định nghĩa dài ra khỏi luồng đọc.</td></tr>
+  </table>
+</section>
+
+<!-- 13 -->
+<section class="doc-sec" id="s13">
+  <h2><span class="num">13</span>Phản hồi & trạng thái</h2>
+  <h3 class="sub" style="margin-top:0">Alert</h3>
+  <div class="demo"><div class="stage stack">
+    <div class="alert al-destructive"><svg><use href="#i-cx"/></svg><div class="bd"><p class="ttl">Không tải được danh sách khách</p><p class="ds">Dữ liệu chưa được tải nên thông tin bên dưới có thể chưa đầy đủ. Thử lại sau giây lát.</p></div><div class="act"><button class="btn b-outline s-sm">Thử lại</button></div></div>
+    <div class="alert al-warning"><svg><use href="#i-alert"/></svg><div class="bd"><p class="ttl">Nick “Sale Demo 2” mất đăng nhập</p><p class="ds">Không ghi nhận tin nhắn từ 24/09 12:43.</p></div><div class="act"><button class="btn b-outline s-sm">Kết nối lại</button></div></div>
+    <div class="alert al-info"><svg><use href="#i-info"/></svg><div class="bd"><p class="ttl">Dữ liệu cập nhật mỗi 15 phút</p></div></div>
+    <div class="alert al-success"><svg><use href="#i-cc"/></svg><div class="bd"><p class="ttl">Đã đồng bộ xong</p></div></div>
+  </div><div class="cap"><span>alert.tsx</span></div></div>
+  <p><code>flex flex-wrap gap-x-3 rounded-lg border px-4 py-3 text-sm</code>, icon 16 theo tone, tiêu đề <code>font-medium</code>, nội dung muted, hành động <code>ml-auto</code> cùng hàng. <code>role="alert"</code> cho lỗi/cảnh báo, <code>status</code> cho thông tin.</p>
+
+  <h3 class="sub">Toast</h3>
+  <div class="demo"><div class="stage"><div class="toast"><svg width="18" height="18"><use href="#i-cc"/></svg>Đã lưu khách hàng</div></div><div class="cap"><span>sonner.tsx</span></div></div>
+  <p>Sonner <code>richColors closeButton duration 3500</code>, <code>rounded-md border shadow-md</code>. Vị trí: <b>bottom-right</b> trên desktop, <b>top-center</b> trên mobile (đáy là thanh điều hướng). <span class="badge bd-destructive">PHẢI</span> Chỉ mount MỘT <code>&lt;Toaster/&gt;</code> trong root layout. Toast chỉ để xác nhận thành công; lỗi hiển thị tại chỗ.</p>
+
+  <h3 class="sub">Bốn trạng thái dữ liệu</h3>
+  <div class="grid2">
+    <div class="demo" style="margin:0"><div class="stage">
+      <div class="stack" style="gap:12px">
+        <div class="row" style="flex-wrap:nowrap;gap:12px"><div style="flex:1" class="stack"><div class="skel" style="height:14px;width:72%;gap:0"></div><div class="skel" style="height:12px;width:40%;margin-top:-6px"></div></div><div class="skel" style="height:32px;width:64px"></div></div>
+        <div class="row" style="flex-wrap:nowrap;gap:12px"><div style="flex:1" class="stack"><div class="skel" style="height:14px;width:58%"></div><div class="skel" style="height:12px;width:40%;margin-top:-6px"></div></div><div class="skel" style="height:32px;width:64px"></div></div>
+        <p class="t-meta" style="display:flex;align-items:center;gap:8px;margin:0"><svg class="spin" width="16" height="16"><use href="#i-loader"/></svg>Đang tải…</p>
+      </div>
+    </div><div class="cap"><span><b>Đang tải</b> — Skeleton giữ nhịp layout thật</span></div></div>
+    <div class="demo" style="margin:0"><div class="stage">
+      <div class="empty"><span class="ic"><svg><use href="#i-inbox"/></svg></span><p class="t-label" style="margin:0">Chưa có khách hàng</p><p class="t-meta" style="font-size:14px;max-width:24rem;margin:4px 0 0">Khách sẽ xuất hiện khi bạn tạo mới hoặc khi có hội thoại Zalo được gắn.</p><div style="margin-top:16px"><button class="btn b-default"><svg><use href="#i-plus"/></svg>Tạo khách</button></div></div>
+    </div><div class="cap"><span><b>Chưa có</b> — EmptyState kind="none"</span></div></div>
+  </div>
+  <table class="spec card" style="margin-top:12px">
+    <tr><th style="width:150px">Trạng thái</th><th>Component</th><th>Quy tắc</th></tr>
+    <tr><td>Đang tải</td><td><code>Skeleton</code> · <code>ListSkeleton</code> · <code>TableSkeleton</code> · <code>Loading</code></td><td>Skeleton có cùng hình dạng & chiều cao nội dung thật (không giật layout). <code>Loading</code> (spinner + chữ) chỉ cho thao tác ngắn không có hình dạng.</td></tr>
+    <tr><td>Lỗi</td><td><code>ErrorBox</code> · <code>LoadMoreError</code> · <code>InlineError</code></td><td>Tiêu đề nói CÁI GÌ hỏng · vì sao quan trọng · làm gì tiếp (nút “Thử lại”). Lỗi “tải thêm” hiện ngay chỗ nút, giữ dữ liệu đã tải.</td></tr>
+    <tr><td>Chưa có</td><td><code>EmptyState kind="none"</code></td><td>Khung <code>border-dashed rounded-lg py-12</code>, icon tròn 40px muted, tiêu đề <code>t-label</code>, gợi ý, tối đa 1–2 hành động. <code>compact</code> khi nằm trong panel / cột kanban.</td></tr>
+    <tr><td>Không khớp lọc</td><td><code>EmptyState kind="filtered"</code></td><td>Icon SearchX + cách gỡ bộ lọc.</td></tr>
+    <tr><td>Không tồn tại</td><td><code>NotFoundState</code></td><td>Luôn có nút quay lại; không để ngõ cụt.</td></tr>
+  </table>
+</section>
+
+<!-- 14 -->
+<section class="doc-sec" id="s14">
+  <h2><span class="num">14</span>Mẫu nghiệp vụ dùng lại</h2>
+  <div class="grid2">
+    <div class="demo" style="margin:0"><div class="stage">
+      <div class="kcol">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 6px 0"><span class="t-section">Báo giá</span><span class="tcount">3</span></div>
+        <div class="t-meta" style="padding:0 6px">3,2 T VND</div>
+        <div class="kcard"><div class="t-label">Lê Hoàng Anh</div><div class="t-meta">Đơn 100 bộ</div>
+          <div class="row" style="margin-top:6px"><span class="tabular" style="font-weight:600">3,2 T VND</span><span class="badge bd-priority"><svg><use href="#i-flame"/></svg>Ưu tiên</span><span style="font-size:11px;font-weight:500;color:hsl(var(--warning));display:inline-flex;gap:3px;align-items:center"><svg width="12" height="12"><use href="#i-clock"/></svg>24 ngày</span></div>
+        </div>
+        <div class="kcard" style="border-style:dashed;box-shadow:none;text-align:center" ><span class="t-meta">Kéo thẻ vào đây</span></div>
+      </div>
+    </div><div class="cap"><span>Cột & thẻ kanban</span></div></div>
+    <div class="demo" style="margin:0"><div class="stage">
+      <div class="card" style="overflow:hidden">
+        <div class="convrow on"><div style="display:flex;justify-content:space-between"><span class="t-label">Nguyễn Thị Hà</span><span style="font-size:11px;color:hsl(var(--muted-foreground))">12:33</span></div><span class="t-meta" style="line-height:16px">Chị muốn xem thêm căn góc…</span></div>
+        <div class="convrow"><div style="display:flex;justify-content:space-between"><span class="t-label">Trần Văn Minh</span><span style="font-size:11px;color:hsl(var(--muted-foreground))">Hôm qua</span></div><span class="t-meta" style="line-height:16px">Ok em gửi báo giá nhé</span></div>
+      </div>
+      <div class="stack" style="margin-top:12px;gap:8px">
+        <div class="bubble in">Em gửi chị bảng giá căn 2PN nhé.</div>
+        <div class="bubble out">Cảm ơn em, chị xem rồi phản hồi.</div>
+      </div>
+    </div><div class="cap"><span>Dòng hội thoại · bong bóng tin nhắn</span></div></div>
+  </div>
+  <table class="spec card" style="margin-top:12px">
+    <tr><th style="width:170px">Mẫu</th><th>Đặc tả</th></tr>
+    <tr><td>Thẻ kanban</td><td><code>rounded-md border bg-card shadow-xs p-3</code>: tên (14/500 truncate) → mô tả <code>line-clamp-2 text-xs</code> → hàng giá trị (tabular 600) + badge + tín hiệu thời gian (11px có icon, tô tone) → <code>border-t px-3 py-2</code> “việc tiếp theo”. Đang kéo <code>opacity-40</code>; đang lưu <code>opacity-70</code> + “Đang chuyển giai đoạn…”; con trỏ grab chỉ khi có chuột (<code>fine:</code>).</td></tr>
+    <tr><td>Dòng danh sách đang chọn</td><td><code>bg-accent/70</code> + vạch dọc 2px <code>bg-primary</code> mép trái (<code>inset-y-2</code>), <code>aria-current</code>. Hover <code>bg-muted/50</code>. Cao <code>min-h-14</code>.</td></tr>
+    <tr><td>Bong bóng tin nhắn</td><td><code>max-w-[85%] sm:max-w-[75%] rounded-lg border px-3 py-2 text-sm leading-6 shadow-xs</code>. Gửi đi: phải, <code>bg-accent border-primary/15 rounded-br-sm</code>. Nhận: trái, <code>bg-card rounded-bl-sm</code>. Có tiền tố <code>sr-only</code> “Bạn gửi / Khách gửi”.</td></tr>
+    <tr><td>Dòng việc cần làm</td><td>Tiêu đề <code>t-label</code> + meta (khách · hạn · số lần dời) | nút ghost “Dời hạn” + nút outline “✓ Hoàn tất” + icon ⋯ menu.</td></tr>
+    <tr><td>Banner cảnh báo gộp</td><td>Card viền destructive-border; đầu banner <code>bg-destructive-subtle</code> có icon + “Cần chú ý” + badge số nghiêm trọng; mỗi cảnh báo một hàng (chấm màu + tiêu đề + meta + hành động + ⋯); chân “Xem thêm N cảnh báo ⌄”.</td></tr>
+    <tr><td>Tín hiệu thời hạn</td><td>Quá hạn → <code>text-destructive</code>; hôm nay/sắp tới → <code>text-warning</code>; còn xa → muted. Luôn kèm chữ, không chỉ màu.</td></tr>
+  </table>
+</section>
+
+<!-- 15 -->
+<section class="doc-sec" id="s15">
+  <h2><span class="num">15</span>Truy cập & cảm ứng</h2>
+  <ul class="rules">
+    <li><span class="badge bd-destructive">PHẢI</span> Tương phản chữ ≥ 4.5:1 (muted-foreground đã đạt trên nền trắng); viền ô nhập & control ≥ 3:1.</li>
+    <li><span class="badge bd-destructive">PHẢI</span> Mọi control có <code>focus-visible:ring-2 ring-ring</code> (thêm <code>ring-offset-2</code> cho nút; <code>ring-inset</code> cho mục trong danh sách/thanh đáy).</li>
+    <li><span class="badge bd-destructive">PHẢI</span> Thêm variant Tailwind <code>coarse:</code> = <code>@media (pointer: coarse)</code> và <code>fine:</code> = <code>(pointer: fine)</code>. Trên cảm ứng mọi vùng chạm ≥ 44×44 (nút, item menu, tab, checkbox, link nhỏ).</li>
+    <li><span class="badge bd-info">NÊN</span> Link chữ nhỏ dùng <code>.hit-area</code> (mở rộng vùng chạm bằng <code>::after</code> inset -15px -6px) và nút icon nhỏ dùng <code>.hit-area-lg</code> (inset -8px) — không làm dòng cao thêm.</li>
+    <li><span class="badge bd-destructive">PHẢI</span> Không lồng control tương tác (button trong button). Ô bấm được dùng một button phủ <code>::before</code>, các nút phụ <code>z-10</code> nằm trên.</li>
+    <li><span class="badge bd-destructive">PHẢI</span> Một h1 mỗi trang; Section dùng <code>aria-labelledby</code>; icon trang trí <code>aria-hidden</code>; nút icon có <code>aria-label</code>.</li>
+    <li><span class="badge bd-destructive">PHẢI</span> Không truyền nghĩa chỉ bằng màu: trạng thái luôn có chữ / icon; thêm <code>sr-only</code> khi cần (“Cảnh báo:”, “Việc tiếp theo:”).</li>
+    <li><span class="badge bd-destructive">PHẢI</span> Không tràn ngang trên 390px: phần tử trong grid/flex có <code>min-w-0</code>, chữ dài <code>truncate</code>/<code>overflow-wrap:anywhere</code>.</li>
+    <li><span class="badge bd-info">NÊN</span> Tôn trọng safe-area iOS (<code>viewportFit: cover</code>, <code>env(safe-area-inset-bottom)</code>) và <code>-webkit-tap-highlight-color: transparent</code>.</li>
+    <li><span class="badge bd-info">NÊN</span> Kiểm bằng axe: không có vi phạm critical/serious.</li>
+  </ul>
+</section>
+
+<!-- 16 -->
+<section class="doc-sec" id="s16">
+  <h2><span class="num">16</span>Tiêu chí nghiệm thu</h2>
+  <p class="lead">Chụp mỗi trang ở 3 bề ngang (390 · 834 · 1440) và so với Sale Hub.</p>
+  <div class="grid2">
+    <div class="card pad"><p class="t-section">Hệ thống thiết kế</p><ul class="chkl t-meta" style="font-size:13px">
+      <li>globals.css & tailwind.config trùng phụ lục (chỉ đổi hue brand nếu được duyệt)</li>
+      <li>Không có mã màu hex / cỡ chữ lẻ trong component</li>
+      <li>Chỉ dùng 7 class chữ + text-sm</li>
+      <li>Màu trạng thái dùng đúng nghĩa (bảng mục 4)</li>
+      <li>Tối đa 1 nút primary mỗi vùng</li>
+    </ul></div>
+    <div class="card pad"><p class="t-section">Bố cục</p><ul class="chkl t-meta" style="font-size:13px">
+      <li>390px: thanh đáy + sheet “Khác”, không tràn ngang</li>
+      <li>834px: rail 64px có tooltip</li>
+      <li>1440px: sidebar 240px, nội dung max 1400px</li>
+      <li>Dialog thành bottom sheet dưới 640px</li>
+      <li>Bảng đổi sang danh sách dưới 640px</li>
+    </ul></div>
+    <div class="card pad"><p class="t-section">Trạng thái</p><ul class="chkl t-meta" style="font-size:13px">
+      <li>Mỗi màn có đủ: skeleton, lỗi + Thử lại, rỗng, không khớp lọc</li>
+      <li>KPI không lấy được không hiện 0</li>
+      <li>Toast chỉ 1 instance, đúng vị trí theo thiết bị</li>
+    </ul></div>
+    <div class="card pad"><p class="t-section">Truy cập</p><ul class="chkl t-meta" style="font-size:13px">
+      <li>Dùng được hoàn toàn bằng bàn phím, focus ring thấy rõ</li>
+      <li>Vùng chạm ≥ 44px trên thiết bị cảm ứng</li>
+      <li>axe: 0 vi phạm critical/serious</li>
+      <li>Skip link hoạt động</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- 17 -->
+<section class="doc-sec" id="s17">
+  <h2><span class="num">17</span>Phụ lục mã nguồn</h2>
+  <p class="lead">Sao chép nguyên văn. Đây là nguồn sự thật (source of truth) — nếu phần mô tả phía trên khác với mã dưới đây, theo mã.</p>
+  <h3 class="sub">app/globals.css</h3>
+<pre><button class="cp">Sao chép</button>@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 97.5%;
+    --foreground: 222 25% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 25% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 25% 11%;
+    --primary: 137 70% 29%;          <span class="c">/* chỉ cho hành động */</span>
+    --primary-hover: 137 72% 25%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 94%;
+    --secondary-foreground: 222 20% 18%;
+    --muted: 220 16% 96%;
+    --muted-foreground: 220 9% 42%;
+    --accent: 137 38% 95%;
+    --accent-foreground: 137 70% 22%;
+    --destructive: 0 72% 42%;   --destructive-foreground: 0 0% 100%;
+    --destructive-subtle: 0 80% 97%; --destructive-border: 0 60% 88%;
+    --warning: 36 92% 30%;      --warning-foreground: 0 0% 100%;
+    --warning-subtle: 42 90% 95%;    --warning-border: 40 70% 82%;
+    --success: 158 64% 28%;     --success-foreground: 0 0% 100%;
+    --success-subtle: 155 45% 95%;   --success-border: 155 35% 82%;
+    --info: 214 72% 42%;        --info-foreground: 0 0% 100%;
+    --info-subtle: 214 90% 97%;      --info-border: 214 60% 87%;
+    --priority: 20 85% 40%;     --priority-foreground: 0 0% 100%;
+    --priority-subtle: 24 100% 96%;  --priority-border: 24 80% 85%;
+    --border: 220 14% 90%;
+    --input: 220 13% 62%;
+    --ring: 137 70% 34%;
+    --sidebar: 220 18% 96.5%;
+    --sidebar-foreground: 222 20% 22%;
+    --sidebar-border: 220 14% 90%;
+    --brand-from: 138 72% 34%;       <span class="c">/* #18943b — chỉ logo */</span>
+    --brand-to: 136 53% 28%;         <span class="c">/* #216d36 */</span>
+    --radius: 0.5rem;
+  }
+  .dark {
+    --background: 222 24% 8%;   --foreground: 210 18% 94%;
+    --card: 222 22% 11%;        --card-foreground: 210 18% 94%;
+    --popover: 222 22% 11%;     --popover-foreground: 210 18% 94%;
+    --primary: 137 55% 44%;     --primary-hover: 137 55% 50%; --primary-foreground: 222 30% 8%;
+    --secondary: 222 16% 18%;   --secondary-foreground: 210 16% 90%;
+    --muted: 222 16% 16%;       --muted-foreground: 218 11% 64%;
+    --accent: 137 30% 18%;      --accent-foreground: 137 50% 80%;
+    --destructive: 0 75% 64%;   --destructive-foreground: 0 60% 12%;
+    --destructive-subtle: 0 40% 15%; --destructive-border: 0 40% 34%;
+    --warning: 38 70% 56%;      --warning-foreground: 222 30% 8%;
+    --warning-subtle: 38 40% 14%;    --warning-border: 38 35% 30%;
+    --success: 158 50% 50%;     --success-foreground: 222 30% 8%;
+    --success-subtle: 158 35% 14%;   --success-border: 158 30% 28%;
+    --info: 214 80% 66%;        --info-foreground: 222 30% 8%;
+    --info-subtle: 214 40% 16%;      --info-border: 214 35% 32%;
+    --priority: 24 90% 62%;     --priority-foreground: 222 30% 8%;
+    --priority-subtle: 24 45% 15%;   --priority-border: 24 40% 32%;
+    --border: 222 14% 20%;      --input: 222 12% 42%;  --ring: 137 50% 46%;
+    --sidebar: 222 22% 10%;     --sidebar-foreground: 210 16% 88%; --sidebar-border: 222 14% 18%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html { -webkit-tap-highlight-color: transparent; }
+  body { @apply bg-background text-foreground; -webkit-font-smoothing: antialiased; }
+  .tabular { font-variant-numeric: tabular-nums; }
+}
+
+@layer components {
+  .t-page     { @apply text-xl font-semibold leading-7 tracking-[-0.015em]; }
+  .t-section  { @apply text-sm font-semibold leading-5 text-foreground; }
+  .t-card     { @apply text-sm font-semibold leading-5; }
+  .t-label    { @apply text-sm font-medium leading-5; }
+  .t-meta     { @apply text-xs leading-5 text-muted-foreground; }
+  .t-overline { @apply text-2xs font-semibold uppercase tracking-[0.06em] text-muted-foreground; }
+  .t-metric   { @apply text-metric font-semibold; }
+
+  .bg-brand-gradient {
+    background-image: linear-gradient(135deg, hsl(var(--brand-from)), hsl(var(--brand-to)));
+  }
+  .hit-area { @apply relative; }
+  @media (pointer: coarse) { .hit-area::after { content: ""; position: absolute; inset: -15px -6px; } }
+  .hit-area-lg { @apply relative; }
+  @media (pointer: coarse) { .hit-area-lg::after { content: ""; position: absolute; inset: -8px; } }
+}</pre>
+
+  <h3 class="sub">tailwind.config.ts</h3>
+<pre><button class="cp">Sao chép</button>import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
+
+const tone = (name: string) => ({
+  DEFAULT: `hsl(var(--${name}))`,
+  foreground: `hsl(var(--${name}-foreground))`,
+  subtle: `hsl(var(--${name}-subtle))`,
+  border: `hsl(var(--${name}-border))`,
+});
+
+export default {
+  darkMode: ["class"],
+  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
+  theme: {
+    container: { center: true, padding: "1.5rem" },
+    extend: {
+      fontFamily: { sans: ["var(--font-sans)", "\"Hiragino Sans\"", "\"Hiragino Kaku Gothic ProN\"",
+        "\"Yu Gothic UI\"", "Meiryo", "\"Noto Sans JP\"", "ui-sans-serif", "system-ui", "sans-serif"] },
+      fontSize: {
+        "2xs": ["11px", { lineHeight: "16px" }],
+        metric: ["28px", { lineHeight: "32px", letterSpacing: "-0.02em" }],
+      },
+      colors: {
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
+        popover: { DEFAULT: "hsl(var(--popover))", foreground: "hsl(var(--popover-foreground))" },
+        primary: { DEFAULT: "hsl(var(--primary))", hover: "hsl(var(--primary-hover))",
+                   foreground: "hsl(var(--primary-foreground))" },
+        secondary: { DEFAULT: "hsl(var(--secondary))", foreground: "hsl(var(--secondary-foreground))" },
+        muted: { DEFAULT: "hsl(var(--muted))", foreground: "hsl(var(--muted-foreground))" },
+        accent: { DEFAULT: "hsl(var(--accent))", foreground: "hsl(var(--accent-foreground))" },
+        destructive: tone("destructive"), warning: tone("warning"), success: tone("success"),
+        info: tone("info"), priority: tone("priority"),
+        border: "hsl(var(--border))", input: "hsl(var(--input))", ring: "hsl(var(--ring))",
+        sidebar: { DEFAULT: "hsl(var(--sidebar))", foreground: "hsl(var(--sidebar-foreground))",
+                   border: "hsl(var(--sidebar-border))" },
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      boxShadow: {
+        xs: "0 1px 2px 0 hsl(222 25% 11% / 0.05)",
+        md: "0 4px 12px -2px hsl(222 25% 11% / 0.10), 0 2px 6px -2px hsl(222 25% 11% / 0.06)",
+        lg: "0 16px 40px -12px hsl(222 25% 11% / 0.22)",
+      },
+      transitionDuration: { DEFAULT: "150ms" },
+    },
+  },
+  plugins: [
+    require("tailwindcss-animate"),
+    plugin(({ addVariant }) => {
+      addVariant("coarse", "@media (pointer: coarse)");
+      addVariant("fine", "@media (pointer: fine)");
+    }),
+  ],
+} satisfies Config;</pre>
+
+  <h3 class="sub">components/ui/button.tsx (biến thể)</h3>
+<pre><button class="cp">Sao chép</button>const buttonVariants = cva(
+  "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow-xs hover:bg-primary-hover",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/70",
+        outline: "border border-input bg-card text-foreground shadow-xs hover:bg-muted",
+        ghost: "text-foreground hover:bg-muted",
+        destructive: "bg-destructive text-destructive-foreground shadow-xs hover:bg-destructive/90",
+        link: "h-auto px-0 text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-3.5 coarse:h-11 coarse:px-4",
+        sm: "h-8 px-2.5 coarse:h-11 coarse:px-3",
+        lg: "h-10 px-5 coarse:h-12",
+        icon: "size-9 coarse:size-11",
+        "icon-sm": "size-8 coarse:size-11",
+      },
+    },
+    defaultVariants: { variant: "default", size: "default" },
+  }
+);</pre>
+
+  <h3 class="sub">app/layout.tsx (font & toaster)</h3>
+<pre><button class="cp">Sao chép</button>import { Inter } from "next/font/google";
+const inter = Inter({ subsets: ["latin", "vietnamese"], variable: "--font-sans", display: "swap" });
+
+export const viewport = { themeColor: "#ffffff", viewportFit: "cover" };
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    &lt;html lang="vi" className={inter.variable}&gt;
+      &lt;body className="font-sans antialiased"&gt;
+        {children}
+        &lt;Toaster /&gt;   <span class="c">{/* MỘT instance duy nhất */}</span>
+      &lt;/body&gt;
+    &lt;/html&gt;
+  );
+}</pre>
+  <div class="callout warn"><b>Mã đầy đủ của từng component</b> (button, badge, card, input, select, checkbox, form-field, tabs, table, alert, dialog, sheet, dropdown-menu, tooltip, sonner, skeleton, metric, state, page-header, app-shell-client) nằm trong repo <code>senzu/sale-hub</code> tại <code>components/ui/</code> và <code>components/</code>. Đội dự án mới nên sao chép nguyên thư mục rồi gỡ phần i18n (<code>useT</code>) nếu không cần.</div>
+</section>
+
+</main>
+  </div>
+</div>
+
+<script>
+// Bảng màu: render từ token thật trên :root
+const cs=getComputedStyle(document.documentElement);
+const hx=(v)=>{const [h,s,l]=v.trim().replace(/%/g,'').split(/\s+/).map(Number);const a=s/100*Math.min(l/100,1-l/100);const f=n=>{const k=(n+h/30)%12;return Math.round(255*(l/100-a*Math.max(-1,Math.min(k-3,9-k,1)))).toString(16).padStart(2,'0')};return '#'+f(0)+f(8)+f(4)};
+const sw=(id,list)=>{document.getElementById(id).innerHTML=list.map(([v,n,d])=>{const val=cs.getPropertyValue('--'+v);return `<div class="swc"><div class="chip" style="background:hsl(${val})"></div><div class="meta"><b>${n}</b><span>--${v}</span><br><span>${hx(val)} · ${val.trim()}</span>${d?`<div class="t-meta" style="line-height:16px;margin-top:2px">${d}</div>`:''}</div></div>`}).join('')};
+sw('sw-base',[['background','Background','Nền ứng dụng'],['card','Card / Surface','Bề mặt'],['muted','Muted','Bề mặt phụ, hover'],['secondary','Secondary','Nút phụ'],['sidebar','Sidebar',''],['foreground','Foreground','Chữ chính'],['muted-foreground','Muted fg','Metadata ≥4.5:1'],['border','Border','Hairline'],['input','Input','Viền ô nhập ≥3:1']]);
+sw('sw-brand',[['primary','Primary','Nút chính, đang chọn'],['primary-hover','Primary hover',''],['ring','Ring','Focus'],['accent','Accent','Nền mục đang chọn'],['accent-foreground','Accent fg',''],['brand-from','Brand from','Logo gradient'],['brand-to','Brand to','Logo gradient']]);
+const tones=['success','info','warning','priority','destructive'];
+let t='<div class="hd">Tone</div><div class="hd">DEFAULT</div><div class="hd">subtle</div><div class="hd">border</div><div class="hd">Badge</div>';
+for(const n of tones){t+=`<div><b>${n}</b></div>`;for(const s of ['','-subtle','-border']){const v=cs.getPropertyValue('--'+n+s);t+=`<div><span class="dot" style="background:hsl(${v})"></span><code style="font-size:11px">${hx(v)}</code></div>`}t+=`<div><span class="badge bd-${n}">${n}</span></div>`}
+document.getElementById('tones').innerHTML=t;
+// Sao chép code
+document.querySelectorAll('pre .cp').forEach(b=>b.addEventListener('click',()=>{const txt=b.parentElement.innerText.replace(/^Sao chép\n?/,'').replace(/^Đã chép\n?/,'');navigator.clipboard?.writeText(txt).then(()=>{b.textContent='Đã chép';setTimeout(()=>b.textContent='Sao chép',1500)})}));
+// Mục lục: đánh dấu mục đang xem
+const links=[...document.querySelectorAll('#toc a')];
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id))}})},{rootMargin:'-80px 0px -70% 0px'});
+document.querySelectorAll('.doc-sec').forEach(s=>io.observe(s));
+// Tabs demo
+document.querySelectorAll('.tabs').forEach(g=>g.addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;g.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b))}));
+document.querySelectorAll('.metrics').forEach(g=>g.addEventListener('click',e=>{const b=e.target.closest('.metric');if(!b)return;g.querySelectorAll('.metric').forEach(x=>x.classList.toggle('on',x===b))}));
+</script>
+</body>
+</html>
