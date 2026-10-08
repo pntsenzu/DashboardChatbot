@@ -468,11 +468,14 @@ export function AppShellClient({
           </div>
         </header>
 
-        {/* Vùng nội dung: CHỈ main cuộn (§7) */}
+        {/* Vùng nội dung: CHỈ main cuộn (§7)
+            `relative` để <main> làm containing block cho các phần tử tuyệt đối
+            bên trong (sr-only, gridline…) — nếu không chúng lấy ICB, nằm dưới
+            đáy khung nhìn và làm trang cuộn ra vùng trống ở dưới. */}
         <main
           id="main"
           tabIndex={-1}
-          className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none"
+          className="relative min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none"
         >
           <div className="mx-auto w-full max-w-[1400px] px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
             {children}

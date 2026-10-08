@@ -139,30 +139,34 @@ export function TrendChart({
         </div>
       )}
 
-      {/* Bảng số liệu thay thế — đọc được bằng bàn phím / screen reader. */}
-      <table className="sr-only">
-        <caption>{tfmt(t.chart.tableCaption, { title })}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t.chart.timeHeader}</th>
-            {series.map((s) => (
-              <th key={s.key} scope="col">
-                {s.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {categories.map((cat, i) => (
-            <tr key={cat}>
-              <th scope="row">{cat}</th>
+      {/* Bảng số liệu thay thế — đọc được bằng bàn phím / screen reader.
+          sr-only bọc ở DIV vì <table> không co về 1px được: bảng vẫn giữ kích
+          thước thật, tràn khỏi khung và làm trang cuộn thêm vùng trống ở dưới. */}
+      <div className="sr-only">
+        <table>
+          <caption>{tfmt(t.chart.tableCaption, { title })}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{t.chart.timeHeader}</th>
               {series.map((s) => (
-                <td key={s.key}>{fmt(s.values[i])}</td>
+                <th key={s.key} scope="col">
+                  {s.label}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {categories.map((cat, i) => (
+              <tr key={cat}>
+                <th scope="row">{cat}</th>
+                {series.map((s) => (
+                  <td key={s.key}>{fmt(s.values[i])}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }

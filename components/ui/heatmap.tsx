@@ -150,27 +150,30 @@ export function Heatmap({ cells, title, description, className }: HeatmapProps) 
         </div>
       )}
 
-      {/* Bảng số liệu thay thế: chỉ các ô có dữ liệu, xếp theo số tin giảm dần. */}
+      {/* Bảng số liệu thay thế: chỉ các ô có dữ liệu, xếp theo số tin giảm dần.
+          sr-only bọc ở DIV — <table> không co về 1px nên sẽ tràn khung (xem TrendChart). */}
       {nonZero.length > 0 && (
-        <table className="sr-only">
-          <caption>{tfmt(t.chart.heatmapTableCaption, { title })}</caption>
-          <thead>
-            <tr>
-              <th scope="col">{t.chart.heatmapWeekdayHeader}</th>
-              <th scope="col">{t.chart.heatmapHourHeader}</th>
-              <th scope="col">{t.chart.heatmapCountHeader}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {nonZero.map((c) => (
-              <tr key={`${c.weekday}-${c.hour}`}>
-                <th scope="row">{weekLabels[c.weekday]}</th>
-                <td>{String(c.hour).padStart(2, "0")}:00</td>
-                <td>{c.count}</td>
+        <div className="sr-only">
+          <table>
+            <caption>{tfmt(t.chart.heatmapTableCaption, { title })}</caption>
+            <thead>
+              <tr>
+                <th scope="col">{t.chart.heatmapWeekdayHeader}</th>
+                <th scope="col">{t.chart.heatmapHourHeader}</th>
+                <th scope="col">{t.chart.heatmapCountHeader}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {nonZero.map((c) => (
+                <tr key={`${c.weekday}-${c.hour}`}>
+                  <th scope="row">{weekLabels[c.weekday]}</th>
+                  <td>{String(c.hour).padStart(2, "0")}:00</td>
+                  <td>{c.count}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </figure>
   );
