@@ -76,6 +76,10 @@ export const vi = {
     heatmapWeekdayHeader: "Thứ",
     heatmapHourHeader: "Giờ",
     timeHeader: "Thời điểm",
+    /** Chọn kiểu hiển đồ: cột / đường (nhóm nút aria-pressed trong TrendChart). */
+    viewLabel: "Kiểu biểu đồ",
+    viewBar: "Cột",
+    viewLine: "Đường",
     /** Nhãn thứ trong tuần (0 = Chủ nhật), khớp `HeatmapCell.weekday`. */
     weekdays: ["CN", "T2", "T3", "T4", "T5", "T6", "T7"],
   },
@@ -494,6 +498,10 @@ export const ja: Dict = {
     heatmapWeekdayHeader: "曜日",
     heatmapHourHeader: "時刻",
     timeHeader: "時間",
+    /** 表示形式の切替（棒 / 折れ線）、TrendChart 内の aria-pressed ボタングループ。 */
+    viewLabel: "グラフの種類",
+    viewBar: "棒",
+    viewLine: "折れ線",
     /** 週のラベル（0 = 日曜）、`HeatmapCell.weekday` に一致。 */
     weekdays: ["日", "月", "火", "水", "木", "金", "土"],
   },
