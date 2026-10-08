@@ -1,0 +1,14 @@
+1. Prompt Tổng quát / Bắt đầu công việc (Initial Setup & Overview)
+Prompt: "Hãy đọc file AGENTS.md, kiểm tra các file spec data-api.html và ui-design-spec.html, sau đó tổng hợp trạng thái hiện tại của dự án DashboardChatbot và đề xuất các bước cần triển khai tiếp theo."
+
+2. Prompt Phát triển Giao diện UI (Theo UI Design Spec)
+Prompt: "Kích hoạt skill senzu-ui-design-spec và đối chiếu với ui-design-spec.html. Hãy giúp mình thiết kế/cập nhật lại trang [tên trang, ví dụ: Dashboard / Chat Analytics] tuân thủ đúng hệ thống bảng màu HSL CSS tokens, typography scale và hiệu ứng hairline borders."
+
+3. Prompt Tích hợp Data API (Backend & Data Fetching)
+Prompt: "Sử dụng skill senzu-data-api và tham chiếu file data-api.html. Hãy triển khai hàm/API client kết nối tới RPC endpoint cho chức năng [tên chức năng, ví dụ: Lấy danh sách hội thoại / Thống kê tin nhắn] với đầy đủ kiểu dữ liệu TypeScript và xử lý lỗi."
+
+4. Prompt Sửa lỗi & Debug (Fixing Bugs)
+Prompt: "Ứng dụng đang gặp lỗi [mô tả lỗi hoặc dán log lỗi ở đây]. Hãy kiểm tra mã nguồn trong thư mục app/ và components/, tìm nguyên nhân gốc rễ và sửa lại mã nguồn sao cho đạt chuẩn."
+
+5. Prompt Tự động hóa Git & GitHub
+Prompt: "Sử dụng skill github-automation để tạo commit với thông điệp theo đúng chuẩn dự án và push các thay đổi mới nhất lên repository trên GitHub."
