@@ -104,6 +104,8 @@ export function ConversationsToolbar({ search, status = "", limit }: ToolbarProp
         <label className="flex items-center gap-2 t-meta">
           {t.conversations.limitPrefix}
           <select
+            id="conversations-limit"
+            name="limit"
             value={limit}
             onChange={(e) => go({ limit: Number(e.target.value) })}
             aria-label={t.conversations.limitAria}

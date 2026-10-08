@@ -38,6 +38,42 @@ function safeCallback(raw: string | null): string {
   return "/";
 }
 
+/**
+ * Kiểm tra thread CÓ tồn tại trên Data API (DEF-02).
+ *
+ * Trang /conversations/[id] phải trả HTTP 404 thật cho id không tồn tại, nhưng
+ * `loading.tsx` stream shell với status 200 trước khi `notFound()` trong page
+ * chạy được -> kiểm tra ở middleware (TRƯỚC khi render) để status 404 là thật,
+ * URL giữ nguyên và vẫn hiển thị trang 404 có thương hiệu.
+ *
+ * Trả `null` (không kết luận được) khi thiếu cấu hình hoặc API lỗi -> FAIL OPEN:
+ * cho render trang như bình thường, page-level `notFound()` vẫn giữ nội dung 404.
+ */
+async function conversationExists(id: string): Promise<boolean | null> {
+  const url = process.env.DATA_API_URL?.trim().replace(/\/+$/, "");
+  const token = process.env.DATA_API_TOKEN?.trim();
+  if (!url || !token) return null;
+
+  try {
+    const res = await fetch(`${url}/rpc`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ fn: "getConversationMessages", args: [id] }),
+      signal: AbortSignal.timeout(5000),
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { result?: unknown };
+    if (!Array.isArray(data.result)) return null;
+    return data.result.length > 0;
+  } catch {
+    return null;
+  }
+}
+
 export default async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
@@ -62,13 +98,30 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (!authConfigured && process.env.NODE_ENV !== "production") return NextResponse.next();
-
-  if (!token) {
+  // Cần đăng nhập khi đã cấu hình Google OAuth hoặc ở production;
+  // chưa cấu hình + development -> cho phép truy cập (như trước đây).
+  const requireAuth = authConfigured || process.env.NODE_ENV === "production";
+  if (requireAuth && !token) {
     const login = req.nextUrl.clone();
     login.pathname = "/login";
     login.search = `?callbackUrl=${encodeURIComponent(`${pathname}${search}`)}`;
     return NextResponse.redirect(login);
+  }
+
+  // Chi tiết hội thoại: id không tồn tại -> 404 thật (DEF-02), giữ nguyên URL.
+  const detail = pathname.match(/^\/conversations\/([^/]+)\/?$/);
+  if (detail) {
+    let id = detail[1];
+    try {
+      id = decodeURIComponent(id);
+    } catch {
+      /* percent-encoding hỏng -> giữ nguyên id gốc */
+    }
+    if ((await conversationExists(id)) === false) {
+      // Rewrite tới route không tồn tại -> Next render not-found.tsx (có thương hiệu)
+      // với status 404 thật, URL vẫn là /conversations/<id>.
+      return NextResponse.rewrite(new URL("/khong-ton-tai", req.url));
+    }
   }
 
   return NextResponse.next();

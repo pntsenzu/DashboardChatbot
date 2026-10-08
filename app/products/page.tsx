@@ -1,10 +1,16 @@
 import React from "react";
-import { rpc } from "@/lib/senzu-api";
 import { fmt } from "@/lib/i18n";
 import { getDict } from "@/lib/i18n-server";
 import { formatNumber } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { resolveRange, toISODateVN } from "@/lib/date-range";
+import {
+  getProductMentionSummaryInRange,
+  getProductQuestionBreakdownInRange,
+  getTopProductsInRange,
+  getUnknownProductMentionsInRange,
+  needsEndBound,
+} from "@/lib/range-aggregates";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetricGrid, Metric } from "@/components/ui/metric";
 import { Section, Card, CardContent } from "@/components/ui/card";
@@ -12,6 +18,11 @@ import { DateRangeFilter } from "@/components/date-range-filter";
 
 // Kỳ lấy số liệu nằm trên URL (?range=&from=&to=) -> dynamic.
 export const dynamic = "force-dynamic";
+
+/** Tiêu đề tab theo ngôn ngữ hiện tại (định dạng "%s · Senzu Chatbot Dashboard"). */
+export function generateMetadata() {
+  return { title: getDict().products.title };
+}
 
 interface SearchParams {
   range?: string;
@@ -28,11 +39,15 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
   const range = resolveRange(searchParams, now, "last30");
   const { sinceMs, untilMs, preset } = range;
 
+  // Kỳ đã kết thúc: 4 API sản phẩm chỉ nhận `sinceMs` -> bù bằng hiệu hai lần
+  // gọi (`since` − `until`) để mọi số trên trang thuộc đúng kỳ đã chọn (DEF-08).
+  const bounded = needsEndBound(untilMs, now);
+
   const [topProducts, questionTypes, summary, unknownProducts] = await Promise.all([
-    rpc("getTopProducts", sinceMs, 10),
-    rpc("getProductQuestionBreakdown", sinceMs),
-    rpc("getProductMentionSummary", sinceMs),
-    rpc("getUnknownProductMentions", sinceMs, 10),
+    getTopProductsInRange(sinceMs, untilMs, 10, bounded),
+    getProductQuestionBreakdownInRange(sinceMs, untilMs, bounded),
+    getProductMentionSummaryInRange(sinceMs, untilMs, bounded),
+    getUnknownProductMentionsInRange(sinceMs, untilMs, 10, bounded),
   ]);
 
   /** Ngày theo giờ VN, vd "01/10/2026". */
@@ -44,7 +59,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
       year: "numeric",
     });
 
-  // API sản phẩm chỉ nhận mốc bắt đầu -> kỳ đã kết thúc phải ghi rõ (như trang Lưu lượng).
+  // Kỳ đã kết thúc: số liệu đã được bù về đúng kỳ — ghi rõ phần API không lọc được.
   const endedInPast = untilMs < now - 60_000;
 
   return (
@@ -73,7 +88,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
       ) : null}
       {endedInPast ? (
         <p className="t-meta" role="note">
-          {fmt(t.products.aggregateNote, { from: fmtDate(sinceMs) })}
+          {t.products.aggregateNote}
         </p>
       ) : null}
 

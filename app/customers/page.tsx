@@ -10,6 +10,11 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 
 export const revalidate = 15;
 
+/** Tiêu đề tab theo ngôn ngữ hiện tại (định dạng "%s · Senzu Chatbot Dashboard"). */
+export function generateMetadata() {
+  return { title: getDict().customers.title };
+}
+
 /** Khóa dịch cho mức độ quan tâm — mỗi màu một nghĩa (§4). */
 const INTEREST: Record<
   string,
@@ -26,10 +31,16 @@ export default async function CustomersPage() {
   const t = getDict();
   const dl = t.dateLocale;
 
-  const [customers, summary] = await Promise.all([
+  const periodStart = now - 7 * DAY;
+  const [allCustomers, summary] = await Promise.all([
     rpc("getCustomersWithInterest", { limit: 50 }),
-    rpc("getCustomerSummary", now - 7 * DAY),
+    rpc("getCustomerSummary", periodStart),
   ]);
+
+  // Bảng và KPI phải cùng một kỳ: API danh sách khách KHÔNG lọc theo thời gian,
+  // nên tự lọc theo lần tương tác gần nhất trong 7 ngày (DEF-04) — khớp caption
+  // "…trong 7 ngày qua" và KPI "Tổng khách trong kỳ".
+  const customers = allCustomers.filter((c) => c.lastInteractionMs >= periodStart);
 
   const interestOf = (status: string) =>
     INTEREST[status] ?? { key: "inactive" as const, variant: "default" as const };

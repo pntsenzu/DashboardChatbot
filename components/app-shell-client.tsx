@@ -125,6 +125,19 @@ function AccountMenu({
   const wrapRef = useRef<HTMLDivElement>(null);
   const { t } = useI18n();
 
+  /**
+   * Toàn bộ chữ hiện ra trong nút (chữ cái đầu + tên + email). Accessible name
+   * PHẢI chứa đúng chuỗi này, nếu không Lighthouse báo `label-content-name-mismatch`
+   * (visible text khác "Tài khoản") — DEF-10.
+   */
+  const visibleText = [
+    initials(user),
+    compact ? "" : user?.name || t.shell.userFallback,
+    compact ? "" : user?.email,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   useEffect(() => {
     if (!open) return;
     const onDocClick = (event: MouseEvent) => {
@@ -147,7 +160,7 @@ function AccountMenu({
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={t.shell.account}
+        aria-label={`${t.shell.account} ${visibleText}`.trim()}
         onClick={() => setOpen((v) => !v)}
         className={cn(
           "flex h-9 w-full items-center gap-2 rounded-md px-1.5 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring coarse:h-11",

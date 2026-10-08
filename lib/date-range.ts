@@ -121,12 +121,16 @@ export function resolveRange(
     case "custom": {
       const from = parseISODateVN(params.from);
       const to = parseISODateVN(params.to);
+      // `from <= to`: từ == đến là kỳ HỢP LỆ (một ngày). Chỉ từ chối khi đảo ngày
+      // (from > to) hoặc kéo quá dài — trước đây `from < to` vô tình chặn luôn
+      // kỳ một ngày, làm nút "Tùy chọn" từ "Hôm nay"/"Hôm qua" rơi về mặc định.
       const valid =
         Number.isFinite(from) &&
         Number.isFinite(to) &&
-        from < to &&
+        from <= to &&
         to - from <= MAX_CUSTOM_DAYS * DAY;
       if (!valid) return buildDefault(true);
+      // `to` bao gồm (bao cả ngày kết thúc) -> đầu kỳ kế tiếp là 00:00 ngày sau `to`.
       return build("custom", from, to + DAY);
     }
     // Hai kỳ có mốc bắt đầu cố định phải tự build — không rơi về `defaultPreset`,

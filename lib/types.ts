@@ -7,7 +7,8 @@ export type AttentionEventType = "SYSTEM_ERROR" | "HUMAN_REQUEST_SIGNAL" | "LOW_
 // Volume & Metrics
 export interface VolumePoint { bucket: string; incoming: number; outgoing: number; }
 export interface HeatmapCell { weekday: number; hour: number; count: number; }
-export interface CustomerRow { senderId: string; senderName: string | null; msgCount: number; lastTs: number; isNew: boolean; }
+/** `lastTs` = `null` khi không xác định được tin cuối **trong kỳ** (kỳ đã kết thúc). */
+export interface CustomerRow { senderId: string; senderName: string | null; msgCount: number; lastTs: number | null; isNew: boolean; }
 export interface CustomerSummary { totalCustomers: number; newCustomers: number; returningCustomers: number; }
 export interface LatencyStats { matchedCount: number; incomingCount: number; avgMs: number | null; medianMs: number | null; p90Ms: number | null; }
 export interface DailyPerformancePoint { date: string; repliedRatio: number | null; avgLatencyMs: number | null; }

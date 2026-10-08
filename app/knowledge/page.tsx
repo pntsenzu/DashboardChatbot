@@ -10,6 +10,11 @@ import { Cpu, CheckCircle2, XCircle } from "lucide-react";
 // Trạng thái bot là heartbeat -> KHÔNG cache (data-api §9).
 export const dynamic = "force-dynamic";
 
+/** Tiêu đề tab theo ngôn ngữ hiện tại (định dạng "%s · Senzu Chatbot Dashboard"). */
+export function generateMetadata() {
+  return { title: getDict().knowledge.title };
+}
+
 export default async function KnowledgePage() {
   const status = await rpc("getSystemStatus");
   const t = getDict();

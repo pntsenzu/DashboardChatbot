@@ -1,5 +1,6 @@
-import React from "react";
+import React, { cache } from "react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { rpc } from "@/lib/senzu-api";
 import { fmt } from "@/lib/i18n";
 import { getDict } from "@/lib/i18n-server";
@@ -12,6 +13,31 @@ import { EmptyState } from "@/components/ui/state";
 // Hội thoại là dữ liệu trực tiếp từ bot -> KHÔNG cache (data-api §9).
 export const dynamic = "force-dynamic";
 
+/**
+ * Lấy tin nhắn của một thread. Dùng `cache()` để `generateMetadata` (kiểm tra
+ * tồn tại TRƯỚC khi stream shell -> HTTP 404 thật) và trang render dùng chung
+ * đúng MỘT lần gọi API trong cùng request (DEF-02).
+ */
+const getThreadMessages = cache((id: string) => rpc("getConversationMessages", id));
+
+/** Tiêu đề tab = đúng heading h1 của trang (định dạng "%s · Senzu Chatbot Dashboard"). */
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  const messages = await getThreadMessages(params.id);
+  if (messages.length === 0) notFound();
+  const t = getDict();
+  return { title: `${t.conversationDetail.threadPrefix} ${params.id}` };
+}
+
+/**
+ * Chỉ giữ lại TÊN FILE của tri thức (`…/knowledge/senzu.md` -> `senzu.md`):
+ * đường dẫn tuyệt đối của server là thông tin nội bộ, không được đưa ra browser (DEF-03).
+ */
+function knowledgeFileName(path: string | null): string | null {
+  if (!path) return path;
+  const parts = path.split(/[\\/]/);
+  return parts[parts.length - 1] || path;
+}
+
 export default async function ConversationDetailPage({
   params,
 }: {
@@ -20,10 +46,14 @@ export default async function ConversationDetailPage({
   const conversationId = params.id;
 
   const [messages, processing, attention] = await Promise.all([
-    rpc("getConversationMessages", conversationId),
+    getThreadMessages(conversationId),
     rpc("getConversationProcessing", conversationId),
     rpc("getConversationAttention", conversationId),
   ]);
+
+  // Id không tồn tại (hoặc không có tin nào) -> 404 thật, KHÔNG dựng "thread rỗng"
+  // giả để người dùng tưởng hội thoại đã tồn tại (DEF-02) — nhất quán với /customers/[id].
+  if (messages.length === 0) notFound();
 
   const t = getDict();
   const dl = t.dateLocale;
@@ -127,7 +157,8 @@ export default async function ConversationDetailPage({
                             {t.conversationDetail.modelLabel} {proc.aiModel}
                           </span>
                           <span className="truncate">
-                            {t.conversationDetail.knowledgeLabel} {proc.knowledgePath}
+                            {t.conversationDetail.knowledgeLabel}{" "}
+                            {knowledgeFileName(proc.knowledgePath)}
                           </span>
                         </span>
                       ) : null}

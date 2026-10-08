@@ -17,6 +17,11 @@ export const dynamic = "force-dynamic";
 
 const VALID_STATUS: ConversationStatus[] = ["attention", "active", "answered"];
 
+/** Tiêu đề tab theo ngôn ngữ hiện tại (định dạng "%s · Senzu Chatbot Dashboard"). */
+export function generateMetadata() {
+  return { title: getDict().conversations.title };
+}
+
 export default async function ConversationsPage({
   searchParams,
 }: {

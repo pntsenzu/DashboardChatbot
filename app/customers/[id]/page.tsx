@@ -15,6 +15,12 @@ import { ArrowLeft, MessageSquare, ShoppingBag, FileText, Send } from "lucide-re
 // Hồ sơ khách gồm cả hội thoại -> KHÔNG cache (data-api §9).
 export const dynamic = "force-dynamic";
 
+/** Tiêu đề tab = tên khách (fallback: id) — định dạng "%s · Senzu Chatbot Dashboard". */
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  const detail = await rpc("getCustomerDetail", params.id).catch(() => null);
+  return { title: detail?.customerName || params.id };
+}
+
 // Server Action for adding note
 async function addNoteAction(formData: FormData) {
   "use server";

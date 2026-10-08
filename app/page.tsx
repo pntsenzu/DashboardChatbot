@@ -16,6 +16,11 @@ import { MessageSquare, Bot } from "lucide-react";
 
 export const revalidate = 30;
 
+/** Tiêu đề tab theo ngôn ngữ hiện tại (định dạng "%s · Senzu Chatbot Dashboard"). */
+export function generateMetadata() {
+  return { title: getDict().overview.title };
+}
+
 export default async function OverviewPage() {
   const DAY = 86_400_000;
   const now = Date.now();
@@ -25,8 +30,8 @@ export default async function OverviewPage() {
   const [
     currentStats,
     prevStats,
-    attentionItems,
-    recentConvs,
+    allAttentionItems,
+    allRecentConvs,
     systemStatus,
     aiInsights,
     dailyTrend,
@@ -34,13 +39,23 @@ export default async function OverviewPage() {
   ] = await Promise.all([
     rpc("getPeriodStats", now - 7 * DAY, now),
     rpc("getPeriodStats", now - 14 * DAY, now - 7 * DAY),
-    rpc("getAttentionItems", 5),
-    rpc("getRecentConversations", 5),
+    rpc("getAttentionItems", 50),
+    rpc("getRecentConversations", 50),
     rpc("getSystemStatus"),
     rpc("getAiInsightCounts", now - 7 * DAY, now),
     rpc("getDailyPerformanceTrend", now - 7 * DAY, now),
     rpc("getVolume", now - 7 * DAY, "day"),
   ]);
+
+  // Hai khối dưới overline "Báo cáo 7 ngày gần nhất" PHẢI nằm trong đúng 7 ngày đó:
+  // API chỉ trả sự kiện / hội thoại MỚI NHẤT, không lọc theo kỳ (DEF-13).
+  const periodStart = now - 7 * DAY;
+  const attentionItems = allAttentionItems
+    .filter((item) => item.createdAtMs >= periodStart)
+    .slice(0, 5);
+  const recentConvs = allRecentConvs
+    .filter((conv) => conv.lastMessageAtMs >= periodStart)
+    .slice(0, 5);
 
   const calcDiff = (curr: number, prev: number): number | null => {
     // Không đủ dữ liệu so sánh -> null để UI hiện "—", tránh bịa ra +0%.

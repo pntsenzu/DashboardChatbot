@@ -4,6 +4,12 @@ import { fmt } from "@/lib/i18n";
 import { getDict } from "@/lib/i18n-server";
 import { formatMs, formatDateTime, formatNumber } from "@/lib/utils";
 import { resolveRange, toISODateVN } from "@/lib/date-range";
+import {
+  getHeatmapInRange,
+  getLatencyInRange,
+  getTopCustomersInRange,
+  needsEndBound,
+} from "@/lib/range-aggregates";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetricGrid, Metric } from "@/components/ui/metric";
 import { Section, Card, CardContent } from "@/components/ui/card";
@@ -15,6 +21,11 @@ import { Badge } from "@/components/ui/badge";
 
 // Số liệu phân tích lấy theo bộ lọc trên URL -> dynamic (cookie locale + query).
 export const dynamic = "force-dynamic";
+
+/** Tiêu đề tab theo ngôn ngữ hiện tại (định dạng "%s · Senzu Chatbot Dashboard"). */
+export function generateMetadata() {
+  return { title: getDict().volume.title };
+}
 
 interface SearchParams {
   range?: string;
@@ -29,11 +40,15 @@ export default async function VolumePage({ searchParams }: { searchParams: Searc
   const range = resolveRange(searchParams, now);
   const { sinceMs, untilMs, groupBy, preset } = range;
 
+  // Kỳ đã kết thúc: Heatmap / Top khách / Độ trễ chỉ được API tính từ `sinceMs`
+  // -> bù thêm tham số `untilMs` để mọi bảng cùng một kỳ (DEF-07).
+  const bounded = needsEndBound(untilMs, now);
+
   const [volume, latency, topCustomers, heatmap] = await Promise.all([
     rpc("getVolume", sinceMs, groupBy, untilMs),
-    rpc("getResponseLatency", sinceMs),
-    rpc("getTopCustomers", sinceMs, 10),
-    rpc("getHeatmap", sinceMs),
+    getLatencyInRange(sinceMs, untilMs, bounded),
+    getTopCustomersInRange(sinceMs, untilMs, 10, bounded),
+    getHeatmapInRange(sinceMs, untilMs, bounded),
   ]);
 
   /** Ngày theo giờ VN, vd "01/10/2026". */
@@ -45,6 +60,15 @@ export default async function VolumePage({ searchParams }: { searchParams: Searc
       year: "numeric",
     });
 
+  /**
+   * "Tin nhắn cuối" trong kỳ đã chọn — `null` (hiện "—") nghĩa là không xác định
+   * được mốc trong kỳ (tin cuối nằm sau ngày kết thúc), không hiển thị ngày ngoài kỳ.
+   */
+  const fmtLastMessage = (ts: number | null) =>
+    ts == null ? "—" : formatDateTime(ts, dl);
+  const lastMessageTitle = (ts: number | null) =>
+    ts == null ? t.volume.lastMessageUnknown : undefined;
+
   const isHour = groupBy === "hour";
 
   /** Bucket "YYYY-MM-DD" (ngày) hoặc "YYYY-MM-DDTHH" (giờ) -> nhãn trục X. */
@@ -55,8 +79,8 @@ export default async function VolumePage({ searchParams }: { searchParams: Searc
     return hour ? `${day} ${hour[1]}` : day;
   };
 
-  // Kỳ đã kết thúc (Hôm qua / Tháng trước / Tùy chọn quá khứ): API tổng hợp
-  // (độ trễ, heatmap, top khách) chỉ nhận mốc bắt đầu -> ghi rõ, không im lặng.
+  // Kỳ đã kết thúc (Hôm qua / Tháng trước / Tùy chọn quá khứ): số liệu đã được
+  // bù về đúng kỳ, nhưng P50/P90 không cộng dồn được -> ghi rõ, không im lặng.
   const endedInPast = untilMs < now - 60_000;
 
   return (
@@ -64,7 +88,7 @@ export default async function VolumePage({ searchParams }: { searchParams: Searc
       <PageHeader
         overline={t.volume.overline}
         title={t.volume.title}
-        description={fmt(t.volume.description, { from: fmtDate(sinceMs), to: fmtDate(untilMs) })}
+        description={fmt(t.volume.description, { from: fmtDate(sinceMs), to: fmtDate(untilMs - 1) })}
       />
 
       {/* Bộ lọc ngày — trạng thái nằm trên URL (?range=&from=&to=) */}
@@ -84,7 +108,7 @@ export default async function VolumePage({ searchParams }: { searchParams: Searc
       ) : null}
       {endedInPast ? (
         <p className="t-meta" role="note">
-          {fmt(t.volume.aggregateNote, { from: fmtDate(sinceMs) })}
+          {t.volume.aggregateNote}
         </p>
       ) : null}
 
@@ -253,7 +277,9 @@ export default async function VolumePage({ searchParams }: { searchParams: Searc
                           {formatNumber(c.msgCount, dl)}
                         </TableCell>
                         <TableCell className="text-right tabular text-muted-foreground">
-                          {formatDateTime(c.lastTs, dl)}
+                          <span title={lastMessageTitle(c.lastTs)}>
+                            {fmtLastMessage(c.lastTs)}
+                          </span>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -267,7 +293,9 @@ export default async function VolumePage({ searchParams }: { searchParams: Searc
                   <li key={c.senderId} className="flex items-center justify-between gap-3 px-3 py-2.5">
                     <span className="min-w-0">
                       <span className="t-label block truncate">{c.senderName || c.senderId}</span>
-                      <span className="t-meta block truncate">{formatDateTime(c.lastTs, dl)}</span>
+                      <span className="t-meta block truncate" title={lastMessageTitle(c.lastTs)}>
+                        {fmtLastMessage(c.lastTs)}
+                      </span>
                     </span>
                     <span className="flex shrink-0 items-center gap-2">
                       {c.isNew ? <Badge variant="success">{t.volume.badgeNewShort}</Badge> : null}

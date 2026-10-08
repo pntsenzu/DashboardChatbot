@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { getDict } from "@/lib/i18n-server";
 
 /** Trạng thái KHÔNG KHỚP / KHÔNG TỒN TẠI (mục 13 UI Spec). */
+export function generateMetadata() {
+  return { title: getDict().states.notFoundTitle };
+}
+
 export default function NotFound() {
   const t = getDict();
 

@@ -301,7 +301,7 @@ export const vi = {
 
   conversationDetail: {
     back: "Quay lại danh sách hội thoại",
-    threadPrefix: "Thread:",
+    threadPrefix: "Hội thoại:",
     meta: "{messages} tin nhắn · {processings} lượt xử lý AI",
     warningTitle: "Cảnh báo cần chú ý",
     historyTitle: "Lịch sử tin nhắn",
@@ -371,7 +371,7 @@ export const vi = {
     kpiGap: "Tỉ lệ chưa xác định (Knowledge Gap)",
     description: "{from} – {to} · giờ Việt Nam (UTC+7)",
     aggregateNote:
-      "Các API sản phẩm chỉ nhận mốc bắt đầu — số liệu trên trang được tính từ {from} đến nay.",
+      "Kỳ đã kết thúc: số lượt hỏi đã được tính đúng trong kỳ đã chọn; số khách quan tâm chỉ là ước tính vì API không nhận ngày kết thúc.",
     topTitle: "Top sản phẩm được hỏi nhiều nhất",
     topEmpty: "Chưa có lượt hỏi sản phẩm nào trong kỳ đã chọn.",
     topCustomers: "{n} khách hàng quan tâm",
@@ -388,7 +388,7 @@ export const vi = {
 
   knowledge: {
     overline: "Hệ thống & Tri thức Bot",
-    title: "Trạng thái Bot Chatbot",
+    title: "Trạng thái Chatbot",
     heartbeatTitle: "Bot Messenger Heartbeat",
     heartbeatDesc: "Giám sát các tiến trình tự động hóa và đồng bộ dữ liệu",
     rowChrome: "Chrome Process Running",
@@ -441,11 +441,12 @@ export const vi = {
     thCustomer: "Khách hàng",
     thCount: "Số tin",
     thLastMessage: "Tin nhắn cuối",
+    lastMessageUnknown: "Không xác định được tin cuối trong kỳ đã chọn.",
     badgeNew: "Khách mới",
     badgeNewShort: "Mới",
     countUnit: "{n} tin",
     aggregateNote:
-      "API tổng hợp chỉ nhận mốc bắt đầu — mục Độ trễ / Heatmap / Top khách được tính từ {from} đến nay.",
+      "Kỳ đã kết thúc: Heatmap / Top khách / độ trễ trung bình đã được tính đúng trong kỳ đã chọn; độ trễ trung vị (P50) và P90 không tính được cho kỳ đã kết thúc nên để trống.",
   },
 
   range: {
@@ -785,7 +786,7 @@ export const ja: Dict = {
     kpiGap: "未確定率（ナレッジギャップ）",
     description: "{from} ～ {to} · ベトナム時間（UTC+7）",
     aggregateNote:
-      "商品 API は開始日しか受け付けません — このページの数値は {from} から現在までを集計しています。",
+      "期間が終了: 問い合わせ件数は選択期間内で集計済みです。関心顧客数は概算値です（API が終了日を受け付けないため）。",
     topTitle: "問い合わせの多い商品トップ",
     topEmpty: "選択期間の商品問い合わせはまだありません。",
     topCustomers: "{n} 名が関心",
@@ -802,7 +803,7 @@ export const ja: Dict = {
 
   knowledge: {
     overline: "システムとナレッジ",
-    title: "Chatbot Bot の状態",
+    title: "Chatbot の状態",
     heartbeatTitle: "Messenger Bot ハートビート",
     heartbeatDesc: "自動化プロセスとデータ同期の監視",
     rowChrome: "Chrome プロセス稼働",
@@ -855,11 +856,12 @@ export const ja: Dict = {
     thCustomer: "顧客",
     thCount: "メッセージ数",
     thLastMessage: "最新メッセージ",
+    lastMessageUnknown: "選択期間内の最新メッセージを特定できません。",
     badgeNew: "新規顧客",
     badgeNewShort: "新規",
     countUnit: "{n} 件",
     aggregateNote:
-      "集計 API は開始日しか受け付けません — 遅延 / ヒートマップ / 上位顧客は {from} から現在までを集計しています。",
+      "期間が終了: ヒートマップ・上位顧客・平均遅延は選択期間内で集計済みです。中央値（P50）と P90 は終了期間では算出できないため空欄にします。",
   },
 
   range: {
