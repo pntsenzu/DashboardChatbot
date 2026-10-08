@@ -12,17 +12,25 @@ interface DateRangeFilterProps {
   /** Đầu/cuối kỳ dùng để điền sẵn ô "Tùy chọn" (chuỗi YYYY-MM-DD). */
   from: string;
   to: string;
+  /** Trang đang gắn bộ lọc — preset và form GET đều trỏ về trang này. */
+  basePath?: string;
   className?: string;
 }
 
 /**
- * Bộ lọc ngày cho biểu đồ: Hôm nay · Hôm qua · 7 ngày · Tháng này · Tháng trước · Tùy chọn.
+ * Bộ lọc ngày cho báo cáo: Hôm nay · Hôm qua · 7 ngày · 30 ngày · Tháng này · Tháng trước · Tùy chọn.
  *
  * - Nút preset dùng `router.push` -> URL là nguồn sự thật (refresh/Back đều đúng).
  * - Ô đang chọn `bg-accent` + `aria-pressed` (§11).
  * - Ô "Tùy chọn" là form GET thuần -> vẫn chạy khi JavaScript chưa tải.
  */
-export function DateRangeFilter({ preset, from, to, className }: DateRangeFilterProps) {
+export function DateRangeFilter({
+  preset,
+  from,
+  to,
+  basePath = "/volume",
+  className,
+}: DateRangeFilterProps) {
   const router = useRouter();
   const { t } = useI18n();
   const [draftFrom, setDraftFrom] = React.useState(from);
@@ -38,13 +46,16 @@ export function DateRangeFilter({ preset, from, to, className }: DateRangeFilter
     today: t.range.today,
     yesterday: t.range.yesterday,
     last7: t.range.last7,
+    last30: t.range.last30,
     thisMonth: t.range.thisMonth,
     lastMonth: t.range.lastMonth,
     custom: t.range.custom,
   };
 
   const hrefFor = (id: RangePresetId) =>
-    id === "custom" && from && to ? `/volume?range=custom&from=${from}&to=${to}` : `/volume?range=${id}`;
+    id === "custom" && from && to
+      ? `${basePath}?range=custom&from=${from}&to=${to}`
+      : `${basePath}?range=${id}`;
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -77,7 +88,7 @@ export function DateRangeFilter({ preset, from, to, className }: DateRangeFilter
       {preset === "custom" && (
         <form
           method="GET"
-          action="/volume"
+          action={basePath}
           className="flex flex-wrap items-end gap-2"
         >
           <input type="hidden" name="range" value="custom" />

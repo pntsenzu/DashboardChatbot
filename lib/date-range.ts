@@ -11,6 +11,7 @@ export type RangePresetId =
   | "today"
   | "yesterday"
   | "last7"
+  | "last30"
   | "thisMonth"
   | "lastMonth"
   | "custom";
@@ -20,10 +21,14 @@ export const RANGE_PRESETS: RangePresetId[] = [
   "today",
   "yesterday",
   "last7",
+  "last30",
   "thisMonth",
   "lastMonth",
   "custom",
 ];
+
+/** Kỳ mặc định của `resolveRange` khi URL chưa chọn (hoặc chọn sai) kỳ. */
+export type DefaultRangePreset = Extract<RangePresetId, "last7" | "last30">;
 
 export interface DateRange {
   preset: RangePresetId;
@@ -69,15 +74,17 @@ function parseISODateVN(value: string | undefined): number {
 
 /**
  * Chuyển `?range=&from=&to=` thành khoảng thời gian dùng được.
- * Tham số thiếu/sai -> rơi về "7 ngày gần nhất" (không bao giờ throw).
+ * Tham số thiếu/sai -> rơi về `defaultPreset` (7 ngày, hoặc 30 ngày nếu
+ * trang truyền vào) — không bao giờ throw.
  */
 export function resolveRange(
   params: { range?: string; from?: string; to?: string },
-  now: number = Date.now()
+  now: number = Date.now(),
+  defaultPreset: DefaultRangePreset = "last7"
 ): DateRange {
   const preset = RANGE_PRESETS.includes(params.range as RangePresetId)
     ? (params.range as RangePresetId)
-    : "last7";
+    : defaultPreset;
 
   const endOfToday = startOfDayVN(now) + DAY;
 
@@ -93,6 +100,12 @@ export function resolveRange(
     groupBy: untilMs - sinceMs <= 2 * DAY ? "hour" : "day",
     fallback,
   });
+
+  /** Kỳ mặc định: 7 hay 30 ngày tùy `defaultPreset`. */
+  const buildDefault = (fallback = false): DateRange =>
+    defaultPreset === "last30"
+      ? build("last30", now - 30 * DAY, now, fallback)
+      : build("last7", now - 7 * DAY, now, fallback);
 
   switch (preset) {
     case "today":
@@ -113,11 +126,16 @@ export function resolveRange(
         Number.isFinite(to) &&
         from < to &&
         to - from <= MAX_CUSTOM_DAYS * DAY;
-      if (!valid) return build("last7", now - 7 * DAY, now, true);
+      if (!valid) return buildDefault(true);
       return build("custom", from, to + DAY);
     }
+    // Hai kỳ có mốc bắt đầu cố định phải tự build — không rơi về `defaultPreset`,
+    // nếu không `/products` (mặc định 30 ngày) sẽ nhảy lại 30 ngày khi bấm "7 ngày".
+    case "last30":
+      return build("last30", now - 30 * DAY, now);
     case "last7":
-    default:
       return build("last7", now - 7 * DAY, now);
+    default:
+      return buildDefault();
   }
 }

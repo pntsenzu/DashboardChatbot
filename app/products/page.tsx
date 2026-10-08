@@ -4,28 +4,78 @@ import { fmt } from "@/lib/i18n";
 import { getDict } from "@/lib/i18n-server";
 import { formatNumber } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { resolveRange, toISODateVN } from "@/lib/date-range";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetricGrid, Metric } from "@/components/ui/metric";
 import { Section, Card, CardContent } from "@/components/ui/card";
+import { DateRangeFilter } from "@/components/date-range-filter";
 
-export const revalidate = 30;
+// Kỳ lấy số liệu nằm trên URL (?range=&from=&to=) -> dynamic.
+export const dynamic = "force-dynamic";
 
-export default async function ProductsPage() {
-  const DAY = 86_400_000;
+interface SearchParams {
+  range?: string;
+  from?: string;
+  to?: string;
+}
+
+export default async function ProductsPage({ searchParams }: { searchParams: SearchParams }) {
   const now = Date.now();
   const t = getDict();
   const dl = t.dateLocale;
 
+  // Mặc định 30 ngày: dữ liệu hỏi sản phẩm thưa nên 7 ngày thường trống.
+  const range = resolveRange(searchParams, now, "last30");
+  const { sinceMs, untilMs, preset } = range;
+
   const [topProducts, questionTypes, summary, unknownProducts] = await Promise.all([
-    rpc("getTopProducts", now - 7 * DAY, 10),
-    rpc("getProductQuestionBreakdown", now - 7 * DAY),
-    rpc("getProductMentionSummary", now - 7 * DAY),
-    rpc("getUnknownProductMentions", now - 7 * DAY, 10),
+    rpc("getTopProducts", sinceMs, 10),
+    rpc("getProductQuestionBreakdown", sinceMs),
+    rpc("getProductMentionSummary", sinceMs),
+    rpc("getUnknownProductMentions", sinceMs, 10),
   ]);
+
+  /** Ngày theo giờ VN, vd "01/10/2026". */
+  const fmtDate = (ms: number) =>
+    new Date(ms).toLocaleDateString(dl, {
+      timeZone: "Asia/Ho_Chi_Minh",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+
+  // API sản phẩm chỉ nhận mốc bắt đầu -> kỳ đã kết thúc phải ghi rõ (như trang Lưu lượng).
+  const endedInPast = untilMs < now - 60_000;
 
   return (
     <div className="space-y-4">
-      <PageHeader overline={t.products.overline} title={t.products.title} />
+      <PageHeader
+        overline={t.products.overline}
+        title={t.products.title}
+        description={fmt(t.products.description, { from: fmtDate(sinceMs), to: fmtDate(untilMs - 1) })}
+      />
+
+      {/* Bộ lọc ngày — trạng thái nằm trên URL (?range=&from=&to=) */}
+      <DateRangeFilter
+        basePath="/products"
+        preset={preset}
+        from={preset === "custom" ? (searchParams.from ?? "") : toISODateVN(sinceMs)}
+        to={
+          preset === "custom"
+            ? (searchParams.to ?? toISODateVN(untilMs - 1))
+            : toISODateVN(untilMs - 1)
+        }
+      />
+      {range.fallback ? (
+        <p className="t-meta text-warning" role="status">
+          {t.range.invalid}
+        </p>
+      ) : null}
+      {endedInPast ? (
+        <p className="t-meta" role="note">
+          {fmt(t.products.aggregateNote, { from: fmtDate(sinceMs) })}
+        </p>
+      ) : null}
 
       {/* Summary KPI — một khung hairline (§11) */}
       <MetricGrid className="sm:grid-cols-3" aria-label={t.products.title}>
