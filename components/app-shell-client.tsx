@@ -86,7 +86,7 @@ function NavLink({
       href={item.href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group relative flex h-9 items-center justify-center rounded-md text-sm font-medium transition-colors coarse:h-11",
+        "relative flex h-9 items-center justify-center rounded-md text-sm font-medium transition-colors coarse:h-11",
         // rail (768–1023): icon 44px; desktop (≥1024): đầy đủ
         "md:w-11 md:px-0 lg:w-full lg:justify-start lg:gap-2.5 lg:px-2.5",
         active
@@ -104,13 +104,6 @@ function NavLink({
           {count}
         </Badge>
       ) : null}
-      {/* Tooltip chỉ cần khi ở dạng rail 64px (§7) */}
-      <span
-        role="tooltip"
-        className="pointer-events-none absolute left-full top-1/2 z-40 ml-2 hidden max-w-[220px] -translate-y-1/2 truncate rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md md:group-hover:block lg:hidden"
-      >
-        {label}
-      </span>
     </Link>
   );
 }
@@ -368,7 +361,7 @@ export function AppShellClient({
         {/* Điều hướng */}
         <nav
           aria-label={t.shell.navMain}
-          className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-2"
+          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-1.5 pb-4 pt-2 lg:px-3"
         >
           {NAV_GROUPS.map((group) => (
             <div
