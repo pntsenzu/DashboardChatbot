@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Đề xuất Thống kê Phân tích &amp; Tính năng Backend — Senzu Chatbot Dashboard</title>
+<style>
+  :root {
+    --background: 220 20% 97.5%;
+    --card: 0 0% 100%;
+    --foreground: 222 25% 11%;
+    --muted: 220 16% 96%;
+    --muted-fg: 220 9% 42%;
+    --border: 220 14% 90%;
+    --primary: 137 70% 29%;
+    --primary-subtle: 137 38% 95%;
+    --info: 214 72% 42%;
+    --info-subtle: 214 90% 97%;
+    --warning: 36 92% 30%;
+    --warning-subtle: 42 90% 95%;
+    --danger: 0 72% 42%;
+    --danger-subtle: 0 80% 97%;
+    --radius: 0.5rem;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font: 14px/1.6 "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 24px 64px; }
+  header.doc { border-bottom: 1px solid hsl(var(--border)); padding-bottom: 20px; margin-bottom: 24px; }
+  .overline { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: hsl(var(--primary)); }
+  h1 { font-size: 24px; line-height: 32px; font-weight: 650; margin: 6px 0 8px; }
+  .meta { color: hsl(var(--muted-fg)); font-size: 12.5px; }
+  .meta span + span::before { content: "·"; margin: 0 8px; color: hsl(var(--border)); }
+  h2 { font-size: 18px; line-height: 26px; font-weight: 650; margin: 40px 0 6px; padding-top: 8px; }
+  h2 .no { color: hsl(var(--muted-fg)); font-weight: 600; margin-right: 8px; }
+  h3 { font-size: 15px; font-weight: 650; margin: 26px 0 6px; }
+  p { margin: 8px 0; }
+  .lead { color: hsl(var(--muted-fg)); }
+  nav.toc { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 14px 18px; margin: 20px 0; }
+  nav.toc b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: hsl(var(--muted-fg)); margin-bottom: 6px; }
+  nav.toc ol { margin: 0; padding-left: 20px; }
+  nav.toc a { color: hsl(var(--foreground)); text-decoration: none; }
+  nav.toc a:hover { color: hsl(var(--primary)); text-decoration: underline; }
+  .card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 16px 18px; margin: 14px 0; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .tw { overflow-x: auto; margin: 12px 0; }
+  table { width: 100%; min-width: 100%; border-collapse: collapse; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); overflow: hidden; margin: 0; font-size: 13px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid hsl(var(--border)); vertical-align: top; }
+  thead th { background: hsl(var(--muted)); font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: hsl(var(--muted-fg)); font-weight: 600; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td code, p code, li code { background: hsl(var(--muted)); border: 1px solid hsl(var(--border)); border-radius: 4px; padding: 1px 5px; font: 12px/1.5 "Cascadia Code", Consolas, ui-monospace, monospace; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; border-radius: 999px; padding: 1px 9px; border: 1px solid transparent; white-space: nowrap; }
+  .p1 { background: hsl(var(--warning-subtle)); border-color: hsl(40 70% 82%); color: hsl(var(--warning)); }
+  .p2 { background: hsl(var(--info-subtle)); border-color: hsl(214 60% 87%); color: hsl(var(--info)); }
+  .p3 { background: hsl(var(--muted)); border-color: hsl(var(--border)); color: hsl(var(--muted-fg)); }
+  .ready { background: hsl(var(--primary-subtle)); border-color: hsl(155 35% 82%); color: hsl(var(--primary)); }
+  .new  { background: hsl(var(--danger-subtle)); border-color: hsl(0 60% 88%); color: hsl(var(--danger)); }
+  .eff { font-size: 11.5px; color: hsl(var(--muted-fg)); white-space: nowrap; }
+  ul.tight { margin: 6px 0; padding-left: 18px; }
+  ul.tight li { margin: 3px 0; }
+  .note { border-left: 3px solid hsl(var(--primary)); background: hsl(var(--primary-subtle)); padding: 10px 14px; border-radius: 0 var(--radius) var(--radius) 0; margin: 12px 0; font-size: 13px; }
+  .warn { border-left: 3px solid hsl(var(--warning)); background: hsl(var(--warning-subtle)); padding: 10px 14px; border-radius: 0 var(--radius) var(--radius) 0; margin: 12px 0; font-size: 13px; }
+  figure.mock { margin: 14px 0; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 14px 16px; }
+  figure.mock figcaption { font-size: 12px; color: hsl(var(--muted-fg)); margin-top: 8px; }
+  .kpi-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .kpi { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 8px 14px; min-width: 150px; }
+  .kpi .lbl { font-size: 11.5px; color: hsl(var(--muted-fg)); }
+  .kpi .val { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .kpi .delta-up { color: hsl(var(--primary)); font-size: 12px; font-weight: 600; }
+  .kpi .delta-down { color: hsl(var(--danger)); font-size: 12px; font-weight: 600; }
+  footer.doc { margin-top: 48px; border-top: 1px solid hsl(var(--border)); padding-top: 14px; color: hsl(var(--muted-fg)); font-size: 12px; }
+  @media print { .tw { overflow: visible; } body { background: #fff; } .wrap { max-width: none; } a { text-decoration: none; color: inherit; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <div class="overline">Báo cáo đề xuất · Không thay đổi code</div>
+  <h1>Thống kê phân tích cần thêm cho UI &amp; Tính năng Backend tương ứng</h1>
+  <div class="meta">
+    <span>Senzu Chatbot Dashboard (Next.js 14)</span><span>08/10/2026</span><span>Thực hiện: OpenCode Agent</span><span>Ngữ cảnh: QA log run-20261008 (13 defect đã fix)</span>
+  </div>
+</header>
+
+<p class="lead">Tài liệu này <b>chỉ là đề xuất</b> — chưa có thay đổi code nào. Nội dung: (1) rà soát thống kê mà UI đang có, (2) đề xuất các thống kê phân tích mới nên thêm, nổi bật là <b>phân tích sở thích người dùng</b>, và (3) từ từng thống kê, suy ra <b>hàm Backend / Data API cần bổ sung</b> kèm mức ưu tiên và effort.</p>
+
+<nav class="toc">
+  <b>Mục lục</b>
+  <ol>
+    <li><a href="#hien-trang">Hiện trạng: UI đang có gì, Backend đang có gì</a></li>
+    <li><a href="#quick-win">Nhóm R — 10 hàm Backend đã sẵn nhưng UI chưa dùng (quick win)</a></li>
+    <li><a href="#so-thich">Nhóm A — Thống kê phân tích sở thích &amp; hành vi người dùng</a></li>
+    <li><a href="#chat-luong">Nhóm B — Chất lượng trả lời &amp; độ hài lòng</a></li>
+    <li><a href="#van-hanh">Nhóm C — Hiệu suất vận hành &amp; so sánh kỳ</a></li>
+    <li><a href="#chuyen-doi">Nhóm D — Tín hiệu mua hàng &amp; chuyển đổi</a></li>
+    <li><a href="#ung-dung">Nhóm E — Trải nghiệm báo cáo (export, tự động hoá)</a></li>
+    <li><a href="#backend-moi">Bảng tổng hợp: hàm Backend mới đề xuất</a></li>
+    <li><a href="#sua-hien-co">Sửa đổi hàm hiện có (bắt buộc nên làm)</a></li>
+    <li><a href="#lo-trinh">Lộ trình ưu tiên</a></li>
+    <li><a href="#luu-y">Ghi chú kỹ thuật, diễn giải số liệu &amp; rủi ro</a></li>
+  </ol>
+</nav>
+
+<!-- ============================================================ -->
+<h2 id="hien-trang"><span class="no">1.</span>Hiện trạng</h2>
+
+<h3>1.1. Thống kê trên UI (theo trang)</h3>
+<div class="tw">
+<table>
+  <thead><tr><th>Trang</th><th>Thống kê đang có</th><th>Khoảng trống chính</th></tr></thead>
+  <tbody>
+    <tr><td><code>/</code> Tổng quan</td><td>KPI kỳ (tin vào/ra, khách, độ trễ TB, repliedRatio), xu hướng hiệu suất hằng ngày, số lượt AI insight, sự kiện cần chú ý (5), hội thoại vừa hoạt động (5), badge sidebar, trạng thái bot</td><td>Không có <b>delta so với kỳ trước</b>; sự kiện chú ý chỉ list, không phân bố theo thời gian</td></tr>
+    <tr><td><code>/volume</code></td><td>Lượng tin theo ngày/giờ (cột/đường), heatmap thứ × giờ, top 10 khách, độ trễ avg/P50/P90</td><td>Không có <b>repliedRatio theo ngày</b>, không so sánh kỳ, không tách AI/nhân viên theo ngày</td></tr>
+    <tr><td><code>/products</code></td><td>Tổng lượt hỏi, khớp catalog, Knowledge Gap %, top sản phẩm, phân bổ loại câu hỏi, sản phẩm ngoài catalog</td><td>Chỉ tổng theo kỳ — <b>không có chuỗi thời gian theo từng sản phẩm</b>; không có phễu hỏi → đặt hàng</td></tr>
+    <tr><td><code>/customers</code></td><td>KPI khách mới/quay lại trong kỳ, bảng khách + sản phẩm quan tâm + lý do ghi nhận, chi tiết khách (sản phẩm, hội thoại, ghi chú)</td><td>Không có <b>phân bố mức quan tâm</b>, không có xu hướng khách hoạt động theo ngày, không có retention</td></tr>
+    <tr><td><code>/conversations</code></td><td>Danh sách + lọc trạng thái, chi tiết tin, model AI + file tri thức, sự kiện chú ý</td><td>Không có <b>tỷ lệ hội thoại được trả lời</b>, độ dài hội thoại, hội thoại im lặng</td></tr>
+    <tr><td><code>/knowledge</code></td><td>Trạng thái bot, trạng thái file tri thức</td><td>Không có thống kê lỗi truy vấn tri thức theo thời gian</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note"><b>Nhận xét:</b> dashboard hiện thiên về “<b>đo lường hiện tại</b>” (lượng, top, độ trễ tức thời). Thiếu ba lớp phân tích: <b>(i) xu hướng theo thời gian</b> của các chỉ số chất lượng, <b>(ii) phân tích nguyên nhân</b> (vì sao khách hỏi, vì sao bot trả lời chưa đúng), và <b>(iii) so sánh kỳ</b> (tuần này khác tuần trước thế nào).</div>
+
+<h3>1.2. Backend — Data API</h3>
+<p>API hiện có <b>37 hàm whitelist</b> (skill <code>senzu-data-api</code>, đối chiếu <code>data-api.html</code>). Quét toàn bộ code: UI đang gọi <b>27 hàm</b> — <b>10 hàm còn lại tồn tại nhưng không trang nào dùng</b> (probe ngày 08/10/2026: cả 10 đều phản hồi hợp lệ, xem mục 2). Ngoài ra API có những “gạch nối” nghiệp vụ sẵn để làm phân tích sâu: <code>AttentionEventType</code> (LOW_CONFIDENCE, KNOWLEDGE_GAP, UNKNOWN_PRODUCT, UNKNOWN_PRICE, HUMAN_REQUEST_SIGNAL, SYSTEM_ERROR), <code>InterestStatus</code> (purchase_intent / considering / new / inactive), <code>ProductQuestionType</code> (PRICE / FEATURE / AVAILABILITY / ORDER / GENERAL / OTHER), <code>replied<wbr/>Ratio</code>, <code>unresolved<wbr/>Rate</code>.</p>
+
+<!-- ============================================================ -->
+<h2 id="quick-win"><span class="no">2.</span>Nhóm R — 10 hàm Backend đã sẵn, UI chưa dùng (quick win, không cần backend mới)</h2>
+<p class="lead">Probe thật qua <code>POST /rpc</code> ngày 08/10/2026. Tất cả đều sống; cột “Đề xuất hiển thị” là thống kê mới thêm được ngay chỉ bằng UI.</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Hàm (đã có)</th><th>Kết quả probe (dữ liệu thật)</th><th>Thống kê UI đề xuất</th><th>Trang</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>get<wbr/>Interest<wbr/>Signals<wbr/>Trend(sinceMs, untilMs)</code></td>
+      <td><code>[{date, productMentions, priceQuestions, informationQuestions, orderSignals}]</code> — 08/10: 2 mentions, 2 info-questions</td>
+      <td><b>“Tín hiệu quan tâm theo ngày”</b> — 4 đường (hỏi sản phẩm / hỏi giá / hỏi thông tin / tín hiệu đặt hàng). Đây là lõi của <i>phân tích sở thích theo thời gian</i> mà không cần hàm mới</td>
+      <td><code>/products</code> hoặc <code>/customers</code></td>
+    </tr>
+    <tr>
+      <td><code>get<wbr/>Customer<wbr/>Activity<wbr/>Trend(sinceMs, untilMs)</code></td>
+      <td><code>[{date, activeCustomers, newCustomers, returningCustomers}]</code> — 07/10: 2 active (1 mới, 1 quay lại)</td>
+      <td><b>“Khách hoạt động theo ngày”</b> — area chart xếp chồng (stacked) mới/quay lại; đối chiếu với KPI kỳ đơn điệu hiện tại</td>
+      <td><code>/customers</code></td>
+    </tr>
+    <tr>
+      <td><code>get<wbr/>Conversation<wbr/>Volume<wbr/>Trend(sinceMs, untilMs)</code></td>
+      <td><code>[{date, customerMessages, aiReplies, otherOutgoing}]</code> — 08/10: 5 tin KH, 5 AI, 25 NV</td>
+      <td><b>“AI vs Nhân viên theo ngày”</b> — tỷ lệ tự động hoá, % phản hồi do AI đảm nhiệm</td>
+      <td><code>/volume</code> hoặc <code>/conversations</code></td>
+    </tr>
+    <tr>
+      <td><code>get<wbr/>Customers<wbr/>Per<wbr/>Bucket(sinceMs, untilMs)</code></td>
+      <td><code>[{bucket, incoming, outgoing}]</code></td>
+      <td><b>“Số khách theo khung giờ/ngày”</b> — đặt cạnh lượng tin để phân biệt “nhiều tin vì nhiều khách” hay “nhiều tin vì một khách nhắn nhiều”</td>
+      <td><code>/volume</code></td>
+    </tr>
+    <tr>
+      <td><code>get<wbr/>Customer<wbr/>Activity<wbr/>Stats(sinceMs, untilMs)</code></td>
+      <td><code>{customersWithProductInterest: 1, customersWithPurchaseSignal: 0}</code></td>
+      <td>KPI <b>“Khách đã hỏi sản phẩm / khách có tín hiệu mua”</b> trong kỳ</td>
+      <td><code>/customers</code></td>
+    </tr>
+    <tr>
+      <td><code>get<wbr/>Customer<wbr/>Purchase<wbr/>Signal(customerId)</code></td>
+      <td><code>{totalProductQuestions: 2, orderMentions: 0}</code> (Nam Thanh)</td>
+      <td>Card <b>“Tín hiệu mua hàng”</b> trong chi tiết khách — hiện trang chỉ hiện số tin &amp; sản phẩm quan tâm</td>
+      <td><code>/customers/[id]</code></td>
+    </tr>
+    <tr>
+      <td><code>get<wbr/>Open<wbr/>Attention<wbr/>Items(limit)</code></td>
+      <td>List đủ object: type, severity, source, conversationId, messagePreview, metadata.reason, createdAtMs</td>
+      <td><b>“Sự kiện cần chú ý theo loại &amp; theo ngày”</b> — biểu đồ tròn theo type, timeline theo createdAtMs (dashboard hiện chỉ list 5 mục + badge đếm)</td>
+      <td><code>/</code></td>
+    </tr>
+    <tr>
+      <td><code>get<wbr/>Customer<wbr/>Open<wbr/>Attention(customerId)</code></td>
+      <td><code>[]</code> (khách không có sự kiện)</td>
+      <td>Badge cảnh báo trong danh sách/chi tiết khách</td>
+      <td><code>/customers</code></td>
+    </tr>
+    <tr>
+      <td><code>get<wbr/>Total<wbr/>Customers<wbr/>Lifetime()</code></td>
+      <td><code>3</code></td>
+      <td>KPI phụ “Tổng khách từ trước đến nay” đối chiếu “trong kỳ”</td>
+      <td><code>/customers</code></td>
+    </tr>
+    <tr>
+      <td><code>get<wbr/>All<wbr/>Customers(limit)</code></td>
+      <td><code>[{customerId, customerName, totalMessages, totalConversations, lastInteractionMs}]</code> (3 khách)</td>
+      <td><b>Danh bạ khách toàn cục</b> — tách khỏi bộ lọc 7 ngày của <code>/customers</code> (hiện không xem được khách_inactive &gt; 7 ngày)</td>
+      <td><code>/customers</code> (tab mới)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note"><b>Ưu tiên P1, effort S–M:</b> nhóm R không đụng Backend, chỉ thêm block UI + gọi hàm sẵn. Ước tính ~1–2 ngày cho 6 widget đầu tiên.</div>
+
+<!-- ============================================================ -->
+<h2 id="so-thich"><span class="no">3.</span>Nhóm A — Thống kê phân tích sở thích &amp; hành vi người dùng</h2>
+<p class="lead">Đúng ví dụ đã nêu: “phân tích sở thích của người dùng”. Sở thích ở đây được suy ra từ hành vi trong hội thoại: khách hỏi gì, hỏi loại nào (giá/đặc điểm/còn hàng/đặt mua), ở mức nào (InterestStatus), và thay đổi ra sao theo thời gian.</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th>ID</th><th>Thống kê UI mới</th><th>Mô tả &amp; giá trị</th><th>Nguồn dữ liệu</th><th>Ưu tiên</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>A1</td>
+      <td><b>Xu hướng sở thích theo sản phẩm</b></td>
+      <td>Biểu đồ đường/area nhiều series: số lượt nhắc mỗi top-N sản phẩm theo ngày/tuần. Trả lời câu hỏi “sản phẩm nào đang lên/down?”. Hiện <code>/products</code> chỉ có top tổng theo kỳ → không thấy chiều thời gian.</td>
+      <td><span class="badge new">cần hàm mới</span> <code>get<wbr/>Product<wbr/>Mention<wbr/>Trend</code></td>
+      <td><span class="badge p1">P1</span> <span class="eff">S</span></td>
+    </tr>
+    <tr>
+      <td>A2</td>
+      <td><b>Tín hiệu quan tâm theo ngày</b> (4 đường: mention / hỏi giá / hỏi thông tin / order)</td>
+      <td>Phân biệt “khách chỉ dò giá” với “khách thực sự muốn mua” theo thời gian.</td>
+      <td><span class="badge ready">ĐÃ CÓ</span> <code>get<wbr/>Interest<wbr/>Signals<wbr/>Trend</code></td>
+      <td><span class="badge p1">P1</span> <span class="eff">S</span></td>
+    </tr>
+    <tr>
+      <td>A3</td>
+      <td><b>Phân bố mức quan tâm</b></td>
+      <td>Biểu đồ tròn/cột theo InterestStatus: <i>purchase_intent / considering / new / inactive</i> + cột “lý do”. Đối chiếu KPI “Tổng khách trong kỳ” hiện tại.</td>
+      <td><code>get<wbr/>Customers<wbr/>With<wbr/>Interest</code> (đã có, chỉ cần aggregate phía UI) hoặc hàm tổng hợp mới</td>
+      <td><span class="badge p2">P2</span> <span class="eff">S</span></td>
+    </tr>
+    <tr>
+      <td>A4</td>
+      <td><b>So sánh sở thích kỳ này ↔ kỳ trước</b> (Risers / Fallers)</td>
+      <td>Bảng “tăng mạnh nhất / giảm mạnh nhất” so với tuần trước — dạng insight-actionable cho team bán hàng.</td>
+      <td><span class="badge new">cần hàm mới</span> <code>get<wbr/>Preference<wbr/>Delta</code> (hoặc UI tự gọi 2 lần <code>get<wbr/>Top<wbr/>Products</code> và diff, chấp nhận chưa tối ưu)</td>
+      <td><span class="badge p2">P2</span> <span class="eff">M</span></td>
+    </tr>
+    <tr>
+      <td>A5</td>
+      <td><b>Sở thích theo phân khúc khách</b></td>
+      <td>So sánh cấu trúc sở thích: khách mới ↔ khách quay lại; khách có tín hiệu mua ↔ khách dò giá. Trả lời “khách cũ thích gì khác khách mới?”.</td>
+      <td><span class="badge new">cần hàm mới</span> <code>get<wbr/>Preference<wbr/>By<wbr/>Segment(sinceMs, untilMs, segment)</code></td>
+      <td><span class="badge p2">P2</span> <span class="eff">M</span></td>
+    </tr>
+    <tr>
+      <td>A6</td>
+      <td><b>Chủ đề / từ khóa hot từ tin nhắn khách</b></td>
+      <td>Top-N từ khóa/khẩu hiệu (VD: “màu trắng”, “size L”, “giao hàng”) rút từ <code>incoming</code> messages — gộp cả câu ngoài catalog. Hiện phải tự đọc từng hội thoại.</td>
+      <td><span class="badge new">cần hàm mới</span> <code>get<wbr/>Top<wbr/>Keywords</code> — NLP/tokenise phía server; <b>cần dữ liệu mới</b> (xem mục 11)</td>
+      <td><span class="badge p2">P2</span> <span class="eff">L</span></td>
+    </tr>
+    <tr>
+      <td>A7</td>
+      <td><b>Sản phẩm thường đi cùng</b> (co-occurrence)</td>
+      <td>“Khách hỏi A thường hỏi B tiếp theo” — gợi ý ngữ cảnh cho bot &amp; gợi ý bán chéo.</td>
+      <td><span class="badge new">cần hàm mới</span> <code>get<wbr/>Product<wbr/>Co<wbr/>Occurrence</code></td>
+      <td><span class="badge p3">P3</span> <span class="eff">M</span></td>
+    </tr>
+    <tr>
+      <td>A8</td>
+      <td><b>Hành trình sở thích theo hội thoại</b></td>
+      <td>Trong chi tiết khách: timeline “quan tâm sản phẩm nào → hỏi giá → hỏi còn hàng → ORDER” để thấy khách đang ở bước nào (dùng InterestStatus reasons).</td>
+      <td><code>get<wbr/>Customer<wbr/>Detail</code> + <code>get<wbr/>Customer<wbr/>Interests</code> (đã có) — cần trả thêm <code>last<wbr/>Mention<wbr/>At<wbr/>Ms</code> theo loại câu hỏi</td>
+      <td><span class="badge p3">P3</span> <span class="eff">S</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<figure class="mock">
+  <b>Minh hoạ A1 + A2 (mô tả bố cục, chưa phải design final):</b>
+  <svg viewBox="0 0 720 190" width="100%" height="190" role="img" aria-label="Minh hoạ biểu đồ xu hướng sở thích theo sản phẩm">
+    <g stroke="#e7e8ea" stroke-width="1">
+      <line x1="40" y1="30" x2="700" y2="30"/><line x1="40" y1="70" x2="700" y2="70"/>
+      <line x1="40" y1="110" x2="700" y2="110"/><line x1="40" y1="150" x2="700" y2="150"/>
+    </g>
+    <g font-size="10" fill="#6b7280" font-family="Segoe UI, sans-serif">
+      <text x="44" y="168">01/10</text><text x="205" y="168">03/10</text>
+      <text x="365" y="168">05/10</text><text x="525" y="168">07/10</text><text x="668" y="168">08/10</text>
+    </g>
+    <polyline fill="none" stroke="#2f6fd0" stroke-width="2" stroke-linecap="round" points="60,140 220,132 380,118 540,86 680,58"/>
+    <polyline fill="none" stroke="#1f7a35" stroke-width="2" stroke-linecap="round" points="60,146 220,142 380,130 540,122 680,96"/>
+    <polyline fill="none" stroke="#cc5f05" stroke-width="2" stroke-linecap="round" stroke-dasharray="5 4" points="60,148 220,148 380,144 540,138 680,138"/>
+    <g font-size="11" font-family="Segoe UI, sans-serif">
+      <rect x="500" y="10" width="10" height="10" fill="#2f6fd0"/><text x="516" y="19" fill="#1a1d21">Áo sơ mi nam (↑)</text>
+      <rect x="610" y="10" width="10" height="10" fill="#1f7a35"/><text x="626" y="19" fill="#1a1d21">Café-DriS (→)</text>
+    </g>
+    <g font-size="10" fill="#6b7280" font-family="Segoe UI, sans-serif">
+      <text x="4" y="34">12</text><text x="8" y="74">8</text><text x="8" y="114">4</text><text x="12" y="154">0</text>
+    </g>
+  </svg>
+  <figcaption>Hình 1 — Mô tả A1: mỗi sản phẩm một đường theo ngày; % thay đổi kỳ này/kỳ trước (A4) hiển thị chip +/- ở legend. A2 dùng bố cục tương tự với 4 đường tín hiệu quan tâm.</figcaption>
+</figure>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="lbl">Khách có tín hiệu mua (kỳ này)</div><div class="val">1</div><div class="delta-down">↓ 2 so với tuần trước</div></div>
+  <div class="kpi"><div class="lbl">Lượt hỏi giá / ngày (TB)</div><div class="val">0,4</div><div class="delta-up">↑ 0,2</div></div>
+  <div class="kpi"><div class="lbl">Sản phẩm đang lên</div><div class="val">Áo sơ mi</div><div class="delta-up">+100% nhắc</div></div>
+</div>
+<p class="lead">Hình 2 — Mô tả lớp “delta” (A4/C1): mọi KPI thêm chip so với kỳ trước, dùng <code>get<wbr/>Period<wbr/>Stats</code> gọi 2 lần (spec đã có ví dụ sẵn).</p>
+
+<!-- ============================================================ -->
+<h2 id="chat-luong"><span class="no">4.</span>Nhóm B — Chất lượng trả lời &amp; độ hài lòng</h2>
+
+<div class="tw">
+<table>
+  <thead><tr><th>ID</th><th>Thống kê UI mới</th><th>Mô tả &amp; giá trị</th><th>Nguồn dữ liệu</th><th>Ưu tiên</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>B1</td>
+      <td><b>Tỷ lệ tin được trả lời theo ngày</b> (repliedRatio trend)</td>
+      <td>Hiện <code>replied<wbr/>Ratio</code> chỉ có ở mức “cả kỳ” (getPeriodStats) → không thấy ngày nào bị tụt. Line chart + ngưỡng cảnh báo.</td>
+      <td><span class="badge new">cần hàm mới</span> <code>get<wbr/>Replied<wbr/>Ratio<wbr/>Trend</code></td>
+      <td><span class="badge p1">P1</span> <span class="eff">M</span></td>
+    </tr>
+    <tr>
+      <td>B2</td>
+      <td><b>Sự kiện chất lượng theo thời gian &amp; theo loại</b></td>
+      <td>Stacked bar theo ngày của LOW_CONFIDENCE / KNOWLEDGE_GAP / UNKNOWN_PRODUCT / UNKNOWN_PRICE / SYSTEM_ERROR — “tuần này bot kém chắc hơn tuần trước ở đâu?”. Hôm nay dashboard chỉ có list 5 mục + badge đếm.</td>
+      <td><span class="badge ready">đã có dữ liệu</span> <code>get<wbr/>Open<wbr/>Attention<wbr/>Items</code> (có createdAtMs, type, severity) — đủ để tính ở UI; nên có hàm tổng hợp để không tải toàn bộ</td>
+      <td><span class="badge p1">P1</span> <span class="eff">S–M</span></td>
+    </tr>
+    <tr>
+      <td>B3</td>
+      <td><b>Tín hiệu “nhờ nhân viên” theo thời gian</b> (handoff)</td>
+      <td>Loại <code>HUMAN_REQUEST_SIGNAL</code> — khách chủ động muốn gặp người. Tỷ lệ handoff/100 hội thoại là KPI chất lượng quan trọng.</td>
+      <td><span class="badge new">cần hàm mới</span> <code>get<wbr/>Handoff<wbr/>Trend</code> (nhóm từ attention) — hoặc tính chung với B2</td>
+      <td><span class="badge p2">P2</span> <span class="eff">S</span></td>
+    </tr>
+    <tr>
+      <td>B4</td>
+      <td><b>Tin khách không được trả lời</b></td>
+      <td>Danh sách + đếm incoming không có outgoing kế tiếp trong X phút — “im lặng” là lỗi nặng nhất của chatbot. Khác với unresolvedRate (độ trễ); đây là “không bao giờ trả lời”.</td>
+      <td><span class="badge new">cần hàm mới</span> <code>get<wbr/>Unanswered<wbr/>Messages(sinceMs, untilMs, limit)</code></td>
+      <td><span class="badge p1">P1</span> <span class="eff">M</span></td>
+    </tr>
+    <tr>
+      <td>B5</td>
+      <td><b>Cảm xúc khách theo thời gian</b> (sentiment)</td>
+      <td>%% tin khách tích cực / trung tính / tiêu cực theo ngày; khoanh vùng hội thoại cần can thiệp. <b>Không có dữ liệu này trong hệ thống hiện tại.</b></td>
+      <td><span class="badge new">cần hàm mới + dữ liệu mới</span> <code>get<wbr/>Sentiment<wbr/>Trend</code> — cần job phân loại (mục 11.1)</td>
+      <td><span class="badge p2">P2</span> <span class="eff">L</span></td>
+    </tr>
+    <tr>
+      <td>B6</td>
+      <td><b>Điểm hài lòng sau hội thoại</b> (rating 1–5 / 👍👎)</td>
+      <td>CSAT tối giản: bot hỏi “Anh/chị thấy câu trả lời vừa rồi có hữu ích không?” sau khi kết thúc chuỗi. NPS-lite theo tuần.</td>
+      <td><span class="badge new">cần hàm mới + luồng thu thập mới</span> <code>get<wbr/>Satisfaction<wbr/>Ratings</code> — xem 11.1</td>
+      <td><span class="badge p3">P3</span> <span class="eff">L</span></td>
+    </tr>
+    <tr>
+      <td>B7</td>
+      <td><b>Độ trễ theo model AI / loại câu hỏi</b></td>
+      <td>P50/P90 hiện gộp chung; cần biết model nào chậm, loại câu hỏi nào chậm (ORDER hay PRICE?).</td>
+      <td><span class="badge new">mở rộng hàm có</span> <code>get<wbr/>Response<wbr/>Latency(sinceMs, untilMs, groupBy)</code> — thêm tham số <code>group<wbr/>By: "model"|"questionType"</code>; dữ liệu <code>ai<wbr/>Model</code> đã có trong message_processing</td>
+      <td><span class="badge p2">P2</span> <span class="eff">M</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="van-hanh"><span class="no">5.</span>Nhóm C — Hiệu suất vận hành &amp; so sánh kỳ</h2>
+
+<div class="tw">
+<table>
+  <thead><tr><th>ID</th><th>Thống kê UI mới</th><th>Mô tả &amp; giá trị</th><th>Nguồn dữ liệu</th><th>Ưu tiên</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>C1</td>
+      <td><b>Delta so với kỳ trước trên mọi KPI</b></td>
+      <td>Gọi <code>get<wbr/>Period<wbr/>Stats</code> 2 lần (7 ngày hiện tại + 7 ngày trước — spec đã có ví dụ code) rồi hiện chip ↑↓. Áp dụng cho toàn dashboard.</td>
+      <td><span class="badge ready">ĐÃ CÓ</span> <code>get<wbr/>Period<wbr/>Stats</code></td>
+      <td><span class="badge p1">P1</span> <span class="eff">S</span></td>
+    </tr>
+    <tr>
+      <td>C2</td>
+      <td><b>AI vs Nhân viên theo ngày</b></td>
+      <td>% tin do AI trả lời, tách <code>ai<wbr/>Replies</code>/<code>other<wbr/>Outgoing</code> — đo mức độ tự động hoá.</td>
+      <td><span class="badge ready">ĐÃ CÓ</span> <code>get<wbr/>Conversation<wbr/>Volume<wbr/>Trend</code></td>
+      <td><span class="badge p1">P1</span> <span class="eff">S</span></td>
+    </tr>
+    <tr>
+      <td>C3</td>
+      <td><b>Khách hoạt động theo ngày</b> (mới / quay lại stack)</td>
+      <td>Bổ nghĩa cho KPI “khách mới 1, khách quay lại 1” hiện tại — xem thêm việc giữ chân khách.</td>
+      <td><span class="badge ready">ĐÃ CÓ</span> <code>get<wbr/>Customer<wbr/>Activity<wbr/>Trend</code></td>
+      <td><span class="badge p1">P1</span> <span class="eff">S</span></td>
+    </tr>
+    <tr>
+      <td>C4</td>
+      <td><b>Trạng thái hội thoại theo thời gian</b></td>
+      <td>Stacked % attention / active / answered theo ngày — “hội thoại tồn đọng đang tăng hay giảm?”.</td>
+      <td><span class="badge new">cần hàm mới</span> <code>get<wbr/>Conversation<wbr/>Status<wbr/>Trend</code></td>
+      <td><span class="badge p2">P2</span> <span class="eff">M</span></td>
+    </tr>
+    <tr>
+      <td>C5</td>
+      <td><b>Hiệu suất theo khung giờ</b></td>
+      <td>Đặt heatmap “giờ cao điểm” cạnh repliedRatio theo giờ — giờ cao điểm có đang bị trả lời kém hơn không.</td>
+      <td><span class="badge new">cần hàm mới</span> <code>get<wbr/>Performance<wbr/>By<wbr/>Hour</code> (hoặc B1 groupBy=hour)</td>
+      <td><span class="badge p2">P2</span> <span class="eff">M</span></td>
+    </tr>
+    <tr>
+      <td>C6</td>
+      <td><b>Cảnh báo bất thường</b> (anomaly flag)</td>
+      <td>“Lượng tin hôm nay thấp hơn 2σ trung bình 4 tuần” — tự động gắn chip ⚠ thay vì để người dùng tự phát hiện.</td>
+      <td><span class="badge new">cần hàm mới</span> <code>get<wbr/>Metric<wbr/>Baseline(metric, weeks)</code></td>
+      <td><span class="badge p3">P3</span> <span class="eff">M</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="chuyen-doi"><span class="no">6.</span>Nhóm D — Tín hiệu mua hàng &amp; chuyển đổi</h2>
+
+<div class="tw">
+<table>
+  <thead><tr><th>ID</th><th>Thống kê UI mới</th><th>Mô tả &amp; giá trị</th><th>Nguồn dữ liệu</th><th>Ưu tiên</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>D1</td>
+      <td><b>Phễu quan tâm → mua</b></td>
+      <td>4 bước: <i>nhắc sản phẩm → hỏi giá → hỏi còn hàng/đặt hàng (ORDER) → xác nhận mua</i>. Tỷ lệ rơi ở từng bước cho biết lỗ hổng (nhiều người hỏi giá nhưng ít ai order).</td>
+      <td>Bước 1–3: <span class="badge ready">đã có</span> <code>get<wbr/>Interest<wbr/>Signals<wbr/>Trend</code> + <code>get<wbr/>Product<wbr/>Question<wbr/>Breakdown</code> (ORDER). Bước 4: <span class="badge new">cần dữ liệu mới</span> (xem 11.1)</td>
+      <td><span class="badge p1">P1</span> <span class="eff">M</span></td>
+    </tr>
+    <tr>
+      <td>D2</td>
+      <td><b>Khách có tín hiệu mua theo thời gian</b></td>
+      <td>Số khách purchase_intent mới trong kỳ + danh sách họ (để team sale chủ động follow-up).</td>
+      <td><span class="badge ready">đã có</span> <code>get<wbr/>Customer<wbr/>Activity<wbr/>Stats</code> + <code>get<wbr/>Customers<wbr/>With<wbr/>Interest</code></td>
+      <td><span class="badge p1">P1</span> <span class="eff">S</span></td>
+    </tr>
+    <tr>
+      <td>D3</td>
+      <td><b>Sản phẩm nhiều ORDER nhưng chưa chốt</b></td>
+      <td>Bảng “cần chốt đơn”: sản phẩm có lượt ORDER nhiều mà unresolvedRate cao.</td>
+      <td><code>get<wbr/>Product<wbr/>Question<wbr/>Breakdown</code> + <code>get<wbr/>Product<wbr/>Mention<wbr/>Summary</code> (đã có, cần join phía UI)</td>
+      <td><span class="badge p2">P2</span> <span class="eff">S</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ung-dung"><span class="no">7.</span>Nhóm E — Trải nghiệm báo cáo</h2>
+
+<div class="tw">
+<table>
+  <thead><tr><th>ID</th><th>Chức năng</th><th>Mô tả</th><th>Nguồn</th><th>Ưu tiên</th></tr></thead>
+  <tbody>
+    <tr><td>E1</td><td><b>Xuất CSV</b> cho bảng/biểu đồ</td><td>Nút “Tải CSV” trên /volume, /products, /customers — dữ liệu đã tải sẵn, xuất phía client hoặc route handler; không cần RPC mới.</td><td>UI + <code>/api/export</code></td><td><span class="badge p2">P2</span> <span class="eff">S</span></td></tr>
+    <tr><td>E2</td><td><b>Báo cáo tự động hằng tuần</b></td><td>Tổng hợp 1 trang (KPI, top sản phẩm, sự kiện, delta) gửi email/Slack mỗi sáng thứ 2 — dựng từ các hàm đã có, chạy job định kỳ.</td><td><span class="badge new">cần service mới</span> <code>report-worker</code></td><td><span class="badge p3">P3</span> <span class="eff">M</span></td></tr>
+    <tr><td>E3</td><td><b>Drill-down từ KPI → danh sách</b></td><td>Bấm “repliedRatio 95%” → danh sách 5% tin chưa trả lời (B4). Hiện các số liệu là tĩnh, không đi tới dữ liệu gốc.</td><td>UI + B4</td><td><span class="badge p2">P2</span> <span class="eff">S</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="backend-moi"><span class="no">8.</span>Bảng tổng hợp: hàm Backend mới đề xuất</h2>
+<p class="lead">Ký hiệu: <b>Nguồn</b> = dữ liệu đã có trong DB (chỉ cần viết truy vấn) hay <b> cần dữ liệu mới</b>. Tham số theo đúng convention hiện tại: <code>since<wbr/>Ms</code> bao gồm, <code>until<wbr/>Ms</code> không bao gồm, bucket theo UTC+7.</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th>#</th><th>Hàm đề xuất</th><th>Chữ ký</th><th>Trả về (dạng)</th><th>Nguồn</th><th>Cho thống kê</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><code>get<wbr/>Product<wbr/>Mention<wbr/>Trend</code></td><td><code>(sinceMs, untilMs, groupBy, limit)</code></td><td><code>[{bucket, series: [{productId, name, count}]}]</code></td><td>Có (product_mentions)</td><td>A1</td></tr>
+    <tr><td>2</td><td><code>get<wbr/>Preference<wbr/>Delta</code></td><td><code>(sinceMs, untilMs, prevSinceMs, prevUntilMs, limit)</code></td><td><code>[{productId, name, current, previous, deltaPct}]</code></td><td>Có</td><td>A4</td></tr>
+    <tr><td>3</td><td><code>get<wbr/>Preference<wbr/>By<wbr/>Segment</code></td><td><code>(sinceMs, untilMs, segment)</code></td><td><code>[{productId, name, count, customers}]</code></td><td>Có</td><td>A5</td></tr>
+    <tr><td>4</td><td><code>get<wbr/>Product<wbr/>Co<wbr/>Occurrence</code></td><td><code>(sinceMs, untilMs, minSupport, limit)</code></td><td><code>[{a, b, together, support}]</code></td><td>Có</td><td>A7</td></tr>
+    <tr><td>5</td><td><code>get<wbr/>Replied<wbr/>Ratio<wbr/>Trend</code></td><td><code>(sinceMs, untilMs, groupBy)</code></td><td><code>[{bucket, incoming, replied, ratio}]</code></td><td>Có (messages)</td><td>B1, C5</td></tr>
+    <tr><td>6</td><td><code>get<wbr/>Attention<wbr/>Trend</code></td><td><code>(sinceMs, untilMs, types[]?)</code></td><td><code>[{bucket, counts: {type: n}, severity}]</code></td><td>Có (attention, có createdAtMs)</td><td>B2, B3</td></tr>
+    <tr><td>7</td><td><code>get<wbr/>Unanswered<wbr/>Messages</code></td><td><code>(sinceMs, untilMs, limit)</code></td><td><code>[{messageId, threadId, customerId, text, timestampMs}]</code></td><td>Có (messages)</td><td>B4</td></tr>
+    <tr><td>8</td><td><code>get<wbr/>Response<wbr/>Latency</code> (mở rộng)</td><td><code>(sinceMs, untilMs, groupBy?)</code></td><td>Thêm nhánh <code>group<wbr/>By: "model"|"questionType"</code> → <code>[{key, avgMs, p50, p90, pairs}]</code></td><td>Có (message_processing.aiModel)</td><td>B7</td></tr>
+    <tr><td>9</td><td><code>get<wbr/>Conversation<wbr/>Status<wbr/>Trend</code></td><td><code>(sinceMs, untilMs, groupBy)</code></td><td><code>[{bucket, attention, active, answered}]</code></td><td>Có</td><td>C4</td></tr>
+    <tr><td>10</td><td><code>get<wbr/>Metric<wbr/>Baseline</code></td><td><code>(metric, windowWeeks)</code></td><td><code>{mean, stddev, p50, p90}</code></td><td>Có (tính từ lịch sử)</td><td>C6</td></tr>
+    <tr><td>11</td><td><code>get<wbr/>Top<wbr/>Keywords</code></td><td><code>(sinceMs, untilMs, limit, lang)</code></td><td><code>[{term, count, customers, examples[]}]</code></td><td><b>Cần job NLP/ index</b> (11.1)</td><td>A6</td></tr>
+    <tr><td>12</td><td><code>get<wbr/>Sentiment<wbr/>Trend</code></td><td><code>(sinceMs, untilMs, groupBy)</code></td><td><code>[{bucket, positive, neutral, negative}]</code></td><td><b>Cần dữ liệu mới</b> (11.1)</td><td>B5</td></tr>
+    <tr><td>13</td><td><code>get<wbr/>Satisfaction<wbr/>Ratings</code></td><td><code>(sinceMs, untilMs, groupBy)</code></td><td><code>[{bucket, count, avg, dist[1..5]}]</code></td><td><b>Cần luồng mới</b> (11.1)</td><td>B6</td></tr>
+    <tr><td>14</td><td><code>get<wbr/>Purchase<wbr/>Funnel</code></td><td><code>(sinceMs, untilMs, productId?)</code></td><td><code>[{step, customers, conversion}]</code></td><td>Bước 1–3 có; <b>bước 4 cần đánh dấu đơn</b> (11.1)</td><td>D1</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sua-hien-co"><span class="no">9.</span>Sửa đổi hàm hiện có (nên làm ngay)</h2>
+
+<div class="warn">
+<b>9.1. Thêm <code>until<wbr/>Ms</code> cho mọi hàm aggregate (P1, effort M).</b><br />
+Hiện chỉ <code>get<wbr/>Volume</code> và <code>get<wbr/>Customers<wbr/>Per<wbr/>Bucket</code> nhận <code>until<wbr/>Ms</code>; <code>get<wbr/>Heatmap</code>, <code>get<wbr/>Top<wbr/>Customers</code>, <code>get<wbr/>Response<wbr/>Latency</code>, <code>get<wbr/>Top<wbr/>Products</code>, <code>get<wbr/>Product<wbr/>Mention<wbr/>Summary</code>, <code>get<wbr/>Unknown<wbr/>Product<wbr/>Mentions</code>, <code>get<wbr/>Product<wbr/>Question<wbr/>Breakdown</code> đều chỉ tính “từ sinceMs đến hiện tại”. Hậu quả đã xảy ra thực tế (defect DEF-07/DEF-08, QA run-20261008): UI phải “hiệu hai lần gọi” (<code>f(since) − f(until)</code>, module <code>lib/range-aggregates.ts</code>) mới ra đúng kỳ đã kết thúc, và các đại lượng không cộng dồn được (median/P50, P90, uniqueCustomers) phải hiển thị “—”. Backend nhận <code>until<wbr/>Ms</code> sẽ: (i) đúng ngay từ nguồn, (ii) trả đủ P50/P90, (iii) giảm 1 call API cho mỗi yêu cầu, (iv) bớt code bù kỳ ở UI.
+</div>
+
+<ul class="tight">
+  <li><b>9.2. Pagination &amp; sort ổn định</b> — các hàm list (getConversations, getCustomersWithInterest, getAttentionItems…) nên trả kèm <code>total</code> + <code>offset</code> để UI phân trang thật (OBS-18: limit hiện là allow-list im lặng).</li>
+  <li><b>9.3. Đồng bộ <code>until<wbr/>Ms</code> semantics</b> — mọi hàm nhất quán [since, until); hiện có ngoại lệ “&lt;=” ở getVolume/getCustomersPerBucket (đã được ghi nhận trong spec) → dễ sai khi ghép 2 hàm.</li>
+  <li><b>9.4. Schema chữ ký hàm trong spec</b> — 10 hàm ở mục 2 <b>không có trong <code>data-api.html</code></b> (chỉ có trong skill) → cập nhật spec + thêm ví dụ trả về, tránh “hàm ma” không ai dùng.</li>
+  <li><b>9.5. Pre-aggregation theo ngày</b> — khi thêm trend (mục 8), nên có bảng rollup ngày (metric, date, value) thay vì quét <code>messages</code> mỗi request; dữ liệu chỉ tăng theo thời gian.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="lo-trinh"><span class="no">10.</span>Lộ trình ưu tiên</h2>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Giai đoạn</th><th>Nội dung</th><th>Backend</th><th>Ước tính</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>Phase 1 — Quick win</b></td>
+      <td>Nhóm R (6 widget từ 10 hàm sẵn), C1 delta KPI, C2 AI/nhân viên, D2 tín hiệu mua, E3 drill-down</td>
+      <td>Không đổi (chỉ sửa spec 9.4)</td>
+      <td>2–3 ngày UI</td>
+    </tr>
+    <tr>
+      <td><b>Phase 2 — Trend &amp; chất lượng</b></td>
+      <td>A1 xu hướng sản phẩm, B1 repliedRatio trend, B2/B3 attention &amp; handoff trend, B4 unanswered, D1 phễu 3 bước, E1 export</td>
+      <td>4–6 hàm mới (nguồn dữ liệu đã có) + 9.1 untilMs + 9.5 rollup</td>
+      <td>4–6 ngày (2 phía)</td>
+    </tr>
+    <tr>
+      <td><b>Phase 3 — Dữ liệu mới</b></td>
+      <td>A6 keywords, B5 sentiment, B6 CSAT rating, D1 bước 4 (đơn thực), C6 anomaly</td>
+      <td>Pipeline NLP/rating/order + 3–4 hàm mới</td>
+      <td>1–2 tuần (cần thống nhất với bot)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p><b>Đề xuất chọn Phase 1 + 2 làm backlog sprint tới</b>: 12/14 hàm ở mục 8 không cần thu thập dữ liệu mới, chỉ viết truy vấn trên bảng sẵn có — trong đó nhóm R là “mảnh đất chưa khai thác” rõ nhất (10 hàm sống, 0 nơi dùng).</p>
+
+<!-- ============================================================ -->
+<h2 id="luu-y"><span class="no">11.</span>Ghi chú kỹ thuật, diễn giải số liệu &amp; rủi ro</h2>
+
+<h3>11.1. Nhu cầu dữ liệu mới cho Phase 3</h3>
+<ul class="tight">
+  <li><b>Keywords (A6)</b>: job nightly tách từ/cụm từ từ <code>incoming</code> (tiếng Việt có dấu, cần tokenizer hỗ trợ), ghi vào bảng <code>keyword_daily(term, date, count)</code> — tránh tính realtime.</li>
+  <li><b>Sentiment (B5)</b>: gắn nhãn theo lô (model phân loại) khi tin vào, lưu <code>sentiment ∈ {positive, neutral, negative}</code> + confidence; chạy backfill tối đa 3 tháng đầu.</li>
+  <li><b>CSAT (B6)</b>: bot gửi câu đánh giá sau hội thoại; phản hồi ghi thành message đặc biệt (metadata.kind = "rating") để <code>get<wbr/>Satisfaction<wbr/>Ratings</code> đọc — <b>cần đồng ý với team bot trước khi bật</b>.</li>
+  <li><b>Đơn thực (D1 bước 4)</b>: đánh dấu <code>order_confirmed_at</code> khi khách xác nhận (nhân viên xác nhận hoặc tích hợp đơn hàng) — hiện mới có tín hiệu <code>ORDER</code> trong hội thoại, chưa có trạng thái chốt.</li>
+</ul>
+
+<h3>11.2. Nguyên tắc diễn giải (theo đúng spec — tránh số liệu gây hiểu lầm)</h3>
+<ul class="tight">
+  <li><code>unique<wbr/>Customers</code> = số khách <b>đã hỏi</b> — không viết thành “N khách muốn mua” (spec ghi rõ).</li>
+  <li><code>InterestStatus</code> là <b>tín hiệu tham khảo</b> từ hành vi, không phải dự đoán mua.</li>
+  <li><code>replied<wbr/>Ratio</code>/<code>unresolved<wbr/>Rate</code> là 0–1, có thể là <code>null</code> khi thiếu dữ liệu — <b>không hiển thị null thành 0%</b>.</li>
+  <li>Độ trễ phản hồi là <b>ước lượng</b> (ghép cặp tin cách nhau ≤ 6h, không phân biệt bot/nhân viên) — khi thêm B7 theo model thì chỉ gộp cặp do AI trả lời.</li>
+  <li>Sự kiện attention kiểu <code>ai_self_report</code> mang tính “AI tự báo” — khi thống kê B2 nên tách theo <code>source</code>.</li>
+</ul>
+
+<h3>11.3. Hiệu năng, PII &amp; tích hợp</h3>
+<ul class="tight">
+  <li><b>Hiệu năng</b>: mọi hàm trend phải có index theo <code>timestamp<wbr/>Ms</code>/ngày và nên đọc từ rollup (9.5); tránh quét bảng messages hàng trăm nghìn dòng/request. Thêm <code>until<wbr/>Ms</code> (9.1) giảm được ~1 call/request cho các trang period.</li>
+  <li><b>PII</b>: báo cáo export (E1/E2) chứa tên + ID Facebook khách → quyền xuất theo vai trò, ghi log ai đã xuất; không gửi raw message qua email.</li>
+  <li><b>CORS</b>: Data API không bật CORS — mọi hàm mới vẫn phải đi qua server Next.js (Server Component / route handler), không gọi trực tiếp từ browser.</li>
+  <li><b>Không thêm hàm ghi data</b> ngoài <code>insert<wbr/>Customer<wbr/>Note</code> nếu chưa cần — số liệu chỉ đọc, giữ nguyên nguyên tắc whitelist.</li>
+</ul>
+
+<footer class="doc">
+  <b>Nguồn tham chiếu:</b> <code>data-api.html</code> (spec RPC), skill <code>senzu-data-api</code> (danh sách 37 hàm), quét code <code>app/ + lib/ + components/</code> (27 hàm đang dùng), probe thật <code>POST /rpc</code> ngày 08/10/2026 (10 hàm chưa dùng), QA log <code>run-20261008</code> (13 defect + 18 observation).<br />
+  Tài liệu đề xuất — chưa có thay đổi code nào đi kèm. Ban hành: 08/10/2026.
+</footer>
+
+</div>
+</body>
+</html>

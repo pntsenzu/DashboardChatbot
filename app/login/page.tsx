@@ -3,7 +3,7 @@ import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
-import { authOptions, isGoogleConfigured, ALLOWED_EMAIL_DOMAIN } from "@/lib/auth";
+import { authOptions, isGoogleConfigured, ALLOWED_EMAIL_DOMAIN, isTestLoginEnabled } from "@/lib/auth";
 import { safeCallbackUrl } from "@/lib/utils";
 import { getDict } from "@/lib/i18n-server";
 import { LoginClient } from "./login-client";
@@ -55,7 +55,7 @@ export default async function LoginPage({
             </div>
           )}
 
-          <LoginClient configured={isGoogleConfigured} callbackUrl={callbackUrl} />
+          <LoginClient configured={isGoogleConfigured} testEnabled={isTestLoginEnabled} callbackUrl={callbackUrl} />
 
           <p className="t-meta flex items-start justify-center gap-1.5 text-center">
             <ShieldCheck className="mt-0.5 size-3.5 flex-shrink-0" aria-hidden="true" />
