@@ -8,12 +8,24 @@
  * - HSTS chỉ có hiệu lực khi trang được phục vụ qua HTTPS; gửi trước ở localhost
  *   là vô hại và sẵn sàng cho môi trường production.
  */
+/**
+ * `next dev` BẮT BUỘC đóng gói chunk bằng devtool `eval-source-map` (webpack
+ * tự ép, config có sửa cũng bị Next revert về eval) -> mọi chunk chứa eval().
+ * Nếu `script-src` thiếu `unsafe-eval`, trình duyệt chặn hết JS -> React không
+ * hydrate -> mọi nút onClick (bộ lọc ngày, đổi cột/đường, tab) đều không bấm
+ * được. Vì vậy development thêm `unsafe-eval`, production giữ CSP chặt như cũ
+ * (bundle production không dùng eval nên không cần).
+ */
+const isDev = process.env.NODE_ENV !== "production";
+
 const securityHeaders = [
   {
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      isDev
+        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+        : "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
