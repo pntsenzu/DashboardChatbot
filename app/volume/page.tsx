@@ -44,12 +44,25 @@ export default async function VolumePage({ searchParams }: { searchParams: Searc
   // -> bù thêm tham số `untilMs` để mọi bảng cùng một kỳ (DEF-07).
   const bounded = needsEndBound(untilMs, now);
 
-  const [volume, latency, topCustomers, heatmap] = await Promise.all([
-    rpc("getVolume", sinceMs, groupBy, untilMs),
-    getLatencyInRange(sinceMs, untilMs, bounded),
-    getTopCustomersInRange(sinceMs, untilMs, 10, bounded),
-    getHeatmapInRange(sinceMs, untilMs, bounded),
-  ]);
+  const [volume, latency, topCustomers, heatmap, customersPerBucket, replyTrend] =
+    await Promise.all([
+      rpc("getVolume", sinceMs, groupBy, untilMs),
+      getLatencyInRange(sinceMs, untilMs, bounded),
+      getTopCustomersInRange(sinceMs, untilMs, 10, bounded),
+      getHeatmapInRange(sinceMs, untilMs, bounded),
+      // Nhóm R: 2 hàm chưa trang nào dùng — số khách/bucket và nguồn tin trả lời.
+      rpc("getCustomersPerBucket", sinceMs, groupBy, untilMs),
+      rpc("getConversationVolumeTrend", sinceMs, untilMs),
+    ]);
+
+  // Tỷ lệ tin trả lời do AI đảm nhiệm = aiReplies / (aiReplies + otherOutgoing).
+  // Không có tin trả lời trong kỳ -> `null` để hiện đúng câu "chưa có dữ liệu",
+  // KHÔNG hiện 0% (spec §11.2).
+  const totalAi = replyTrend.reduce((sum, d) => sum + d.aiReplies, 0);
+  const totalOther = replyTrend.reduce((sum, d) => sum + d.otherOutgoing, 0);
+  const totalReplies = totalAi + totalOther;
+  const aiShare =
+    totalReplies > 0 ? `${((totalAi / totalReplies) * 100).toFixed(1)}%` : null;
 
   /** Ngày theo giờ VN, vd "01/10/2026". */
   const fmtDate = (ms: number) =>
@@ -218,6 +231,80 @@ export default async function VolumePage({ searchParams }: { searchParams: Searc
                   ))}
                 </ul>
               </>
+            )}
+          </CardContent>
+        </Card>
+      </Section>
+
+      {/* Nhóm R — số khách riêng biệt theo bucket (getCustomersPerBucket).
+          Đặt ngay dưới lượng tin: "nhiều tin" không nhất thiết là "nhiều khách". */}
+      <Section
+        titleId="volume-customers-bucket"
+        title={isHour ? t.volume.bucketTitleHour : t.volume.bucketTitle}
+        description={t.volume.bucketDesc}
+      >
+        <Card>
+          <CardContent>
+            {customersPerBucket.length === 0 ? (
+              <p className="t-meta" role="status">
+                {t.volume.bucketEmpty}
+              </p>
+            ) : (
+              <TrendChart
+                title={t.volume.bucketChartTitle}
+                description={t.volume.bucketChartDesc}
+                categories={customersPerBucket.map((v) => bucketLabel(v.bucket))}
+                series={[
+                  {
+                    key: "customers",
+                    label: t.volume.bucketSeries,
+                    tone: "info",
+                    values: customersPerBucket.map((v) => v.incoming),
+                  },
+                ]}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </Section>
+
+      {/* Nhóm R — nguồn tin trả lời theo ngày (getConversationVolumeTrend).
+          data-api: `otherOutgoing` KHÔNG được gọi là "nhân viên" -> nhãn "khác". */}
+      <Section
+        titleId="volume-ai-share"
+        title={t.volume.aiTrendTitle}
+        description={
+          aiShare != null
+            ? fmt(t.volume.aiTrendSummary, { pct: aiShare })
+            : t.volume.aiTrendSummaryNone
+        }
+      >
+        <Card>
+          <CardContent>
+            {replyTrend.length === 0 ? (
+              <p className="t-meta" role="status">
+                {t.volume.aiTrendEmpty}
+              </p>
+            ) : (
+              <TrendChart
+                title={t.volume.aiTrendChartTitle}
+                description={t.volume.aiTrendChartDesc}
+                categories={replyTrend.map((d) => `${d.date.slice(8, 10)}/${d.date.slice(5, 7)}`)}
+                series={[
+                  {
+                    key: "aiReplies",
+                    label: t.volume.seriesAi,
+                    tone: "success",
+                    values: replyTrend.map((d) => d.aiReplies),
+                  },
+                  {
+                    key: "otherOutgoing",
+                    label: t.volume.seriesOther,
+                    tone: "warning",
+                    values: replyTrend.map((d) => d.otherOutgoing),
+                  },
+                ]}
+              />
             )}
           </CardContent>
         </Card>

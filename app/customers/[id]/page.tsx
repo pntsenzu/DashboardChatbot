@@ -9,8 +9,9 @@ import { fmt } from "@/lib/i18n";
 import { getDict } from "@/lib/i18n-server";
 import { formatDateTime, formatNumber } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 import { MetricGrid, Metric } from "@/components/ui/metric";
-import { ArrowLeft, MessageSquare, ShoppingBag, FileText, Send } from "lucide-react";
+import { ArrowLeft, MessageSquare, ShoppingBag, ShoppingCart, FileText, Send } from "lucide-react";
 
 // Hồ sơ khách gồm cả hội thoại -> KHÔNG cache (data-api §9).
 export const dynamic = "force-dynamic";
@@ -53,12 +54,16 @@ export default async function CustomerDetailPage({
   const dl = t.dateLocale;
 
   // getCustomerConversations: danh sách hội thoại của khách (data-api §6).
-  const [detail, interests, notes, conversations] = await Promise.all([
-    rpc("getCustomerDetail", customerId),
-    rpc("getCustomerInterests", customerId),
-    rpc("getCustomerNotes", customerId),
-    rpc("getCustomerConversations", customerId, 10),
-  ]);
+  const [detail, interests, notes, conversations, purchaseSignal, openAttention] =
+    await Promise.all([
+      rpc("getCustomerDetail", customerId),
+      rpc("getCustomerInterests", customerId),
+      rpc("getCustomerNotes", customerId),
+      rpc("getCustomerConversations", customerId, 10),
+      // Nhóm R: 2 hàm đã có nhưng chưa trang nào dùng.
+      rpc("getCustomerPurchaseSignal", customerId),
+      rpc("getCustomerOpenAttention", customerId),
+    ]);
 
   if (!detail) {
     // Trả status 404 thật (không phải trang 404 giả status 200).
@@ -88,6 +93,30 @@ export default async function CustomerDetailPage({
           <h1 className="t-page truncate">{detail.customerName || detail.customerId}</h1>
         </div>
       </div>
+
+      {/* Nhóm R — sự kiện CHƯA giải quyết của riêng khách này
+          (getCustomerOpenAttention). Không có thì không hiện gì — tránh nhiễu. */}
+      {openAttention.length > 0 ? (
+        <Alert
+          variant="warning"
+          title={fmt(t.customerDetail.attentionTitle, { n: openAttention.length })}
+          description={
+            <>
+              {openAttention.slice(0, 3).map((item) => (
+                <span key={item.id} className="block">
+                  {fmt(t.customerDetail.attentionItem, {
+                    type: t.common.attentionType[item.type],
+                    time: formatDateTime(item.createdAtMs, dl),
+                  })}
+                </span>
+              ))}
+              {openAttention.length > 3
+                ? fmt(t.customerDetail.attentionMore, { n: openAttention.length - 3 })
+                : null}
+            </>
+          }
+        />
+      ) : null}
 
       {/* Info Stats — một khung hairline (§11) */}
       <MetricGrid className="sm:grid-cols-4" aria-label={t.customerDetail.overline}>
@@ -143,6 +172,34 @@ export default async function CustomerDetailPage({
             ))
           )}
         </div>
+      </div>
+
+      {/* Nhóm R — tín hiệu mua hàng (getCustomerPurchaseSignal): trước đây trang
+          chỉ hiện số tin & sản phẩm quan tâm, thiếu phần "khách đang ở đâu". */}
+      <div className="p-4 rounded-lg border border-border bg-card shadow-xs space-y-3">
+        <h3 className="t-card flex items-center gap-2">
+          <ShoppingCart className="w-4 h-4 text-primary" /> {t.customerDetail.purchaseSignalTitle}
+        </h3>
+        {purchaseSignal.totalProductQuestions === 0 && purchaseSignal.orderMentions === 0 ? (
+          <p className="t-meta">{t.customerDetail.purchaseSignalNone}</p>
+        ) : (
+          <div className="flex flex-wrap gap-x-10 gap-y-3">
+            <div>
+              <div className="t-meta">{t.customerDetail.purchaseSignalQuestions}</div>
+              <div className="t-metric tabular">
+                {formatNumber(purchaseSignal.totalProductQuestions, dl)}
+              </div>
+            </div>
+            <div>
+              <div className="t-meta">{t.customerDetail.purchaseSignalOrders}</div>
+              <div className="t-metric tabular text-priority">
+                {formatNumber(purchaseSignal.orderMentions, dl)}
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Diễn giải đúng spec §11.2 — không để số liệu thành "khách đã mua". */}
+        <p className="t-meta">{t.customerDetail.purchaseSignalNote}</p>
       </div>
 
       {/* Conversations của khách */}

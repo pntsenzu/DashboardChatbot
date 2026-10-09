@@ -1,4 +1,5 @@
 import React from "react";
+import { rpc } from "@/lib/senzu-api";
 import { fmt } from "@/lib/i18n";
 import { getDict } from "@/lib/i18n-server";
 import { formatNumber } from "@/lib/utils";
@@ -14,6 +15,7 @@ import {
 import { PageHeader } from "@/components/ui/page-header";
 import { MetricGrid, Metric } from "@/components/ui/metric";
 import { Section, Card, CardContent } from "@/components/ui/card";
+import { TrendChart } from "@/components/ui/trend-chart";
 import { DateRangeFilter } from "@/components/date-range-filter";
 
 // Kỳ lấy số liệu nằm trên URL (?range=&from=&to=) -> dynamic.
@@ -43,12 +45,15 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
   // gọi (`since` − `until`) để mọi số trên trang thuộc đúng kỳ đã chọn (DEF-08).
   const bounded = needsEndBound(untilMs, now);
 
-  const [topProducts, questionTypes, summary, unknownProducts] = await Promise.all([
-    getTopProductsInRange(sinceMs, untilMs, 10, bounded),
-    getProductQuestionBreakdownInRange(sinceMs, untilMs, bounded),
-    getProductMentionSummaryInRange(sinceMs, untilMs, bounded),
-    getUnknownProductMentionsInRange(sinceMs, untilMs, 10, bounded),
-  ]);
+  const [topProducts, questionTypes, summary, unknownProducts, interestTrend] =
+    await Promise.all([
+      getTopProductsInRange(sinceMs, untilMs, 10, bounded),
+      getProductQuestionBreakdownInRange(sinceMs, untilMs, bounded),
+      getProductMentionSummaryInRange(sinceMs, untilMs, bounded),
+      getUnknownProductMentionsInRange(sinceMs, untilMs, 10, bounded),
+      // Nhóm R: hàm đã có nhưng chưa trang nào dùng — lõi của phân tích sở thích.
+      rpc("getInterestSignalsTrend", sinceMs, untilMs),
+    ]);
 
   /** Ngày theo giờ VN, vd "01/10/2026". */
   const fmtDate = (ms: number) =>
@@ -110,6 +115,57 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
           valueClassName="text-warning"
         />
       </MetricGrid>
+
+      {/* Nhóm R — tín hiệu quan tâm theo ngày (getInterestSignalsTrend):
+          4 đường cho biết "khách chỉ dò giá" hay "khách muốn đặt hàng". */}
+      <Section
+        titleId="interest-trend"
+        title={t.products.interestTrendTitle}
+        description={t.products.interestTrendDesc}
+      >
+        <Card>
+          <CardContent>
+            {interestTrend.length === 0 ? (
+              <p className="t-meta" role="status">
+                {t.products.interestEmpty}
+              </p>
+            ) : (
+              <TrendChart
+                title={t.products.interestChartTitle}
+                categories={interestTrend.map(
+                  (d) => `${d.date.slice(8, 10)}/${d.date.slice(5, 7)}`
+                )}
+                series={[
+                  {
+                    key: "productMentions",
+                    label: t.products.seriesMentions,
+                    tone: "info",
+                    values: interestTrend.map((d) => d.productMentions),
+                  },
+                  {
+                    key: "priceQuestions",
+                    label: t.products.seriesPrice,
+                    tone: "warning",
+                    values: interestTrend.map((d) => d.priceQuestions),
+                  },
+                  {
+                    key: "informationQuestions",
+                    label: t.products.seriesInfo,
+                    tone: "success",
+                    values: interestTrend.map((d) => d.informationQuestions),
+                  },
+                  {
+                    key: "orderSignals",
+                    label: t.products.seriesOrder,
+                    tone: "primary",
+                    values: interestTrend.map((d) => d.orderSignals),
+                  },
+                ]}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </Section>
 
       {/* Top Products & Question Types */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

@@ -182,6 +182,15 @@ export const vi = {
       answered: "Đã trả lời",
       pending: "Chưa trả lời",
     },
+    /** Nhãn tiếng Việt cho `AttentionEventType` (data-api §3). */
+    attentionType: {
+      SYSTEM_ERROR: "Lỗi hệ thống",
+      HUMAN_REQUEST_SIGNAL: "Nhờ nhân viên",
+      LOW_CONFIDENCE: "Độ tin cậy thấp",
+      UNKNOWN_PRODUCT: "Sản phẩm chưa có",
+      UNKNOWN_PRICE: "Chưa có giá",
+      KNOWLEDGE_GAP: "Khoảng trống tri thức",
+    },
   },
 
   states: {
@@ -274,6 +283,17 @@ export const vi = {
     recentAction: "Chi tiết",
     recentEmptyTitle: "Chưa có hội thoại nào",
     recentEmptyDesc: "Hội thoại sẽ xuất hiện khi khách nhắn tin Messenger.",
+    /** Phân tích sự kiện cần chú ý — dùng getOpenAttentionItems (nhóm R). */
+    attentionStatsTitle: "Sự kiện cần chú ý theo loại & theo ngày",
+    attentionStatsDesc: "{n} sự kiện chưa giải quyết trong 7 ngày qua",
+    attentionStatsEmptyTitle: "Không có sự kiện chưa giải quyết",
+    attentionStatsEmptyDesc:
+      "Sự kiện cần chú ý sẽ xuất hiện tại đây khi bot gặp lỗi hoặc khách chờ quá lâu.",
+    attentionByType: "Phân bố theo loại sự kiện",
+    attentionTimeline: "Số sự kiện theo ngày (giờ VN)",
+    attentionTimelineDesc: "Mỗi loại một đường — xem loại nào đang tăng trong kỳ",
+    attentionTotal: "Tổng {n} sự kiện chưa giải quyết",
+    attentionShare: "{p}%",
   },
 
   conversations: {
@@ -323,7 +343,7 @@ export const vi = {
   customers: {
     overline: "Quản lý Khách hàng",
     title: "Danh sách khách hàng & Mức độ quan tâm",
-    description: "50 khách hoạt động gần nhất trong 7 ngày qua",
+    description: "{from} – {to} · tối đa 50 khách hoạt động trong kỳ",
     kpiGridAria: "Tổng hợp khách hàng trong kỳ",
     kpiTotal: "Tổng khách trong kỳ",
     kpiNew: "Khách hàng mới",
@@ -336,6 +356,8 @@ export const vi = {
     thReason: "Lý do ghi nhận",
     thLastSeen: "Lần cuối nhắn",
     lastSeenPrefix: "Lần cuối:",
+    /** Tin cuối trong kỳ không xác định được (getTopCustomersInRange trả null). */
+    lastMessageUnknown: "Không xác định được tin cuối trong kỳ đã chọn.",
     unknown: "Chưa xác định",
     unknownProduct: "Chưa xác định sản phẩm",
     emptyTitle: "Chưa có khách hàng nào trong kỳ",
@@ -346,6 +368,39 @@ export const vi = {
       new: "Mới quan tâm",
       inactive: "Không hoạt động",
     },
+    /** Tab chuyển giữa khách trong kỳ và danh bạ toàn cục (nhóm R). */
+    tabsLabel: "Chế độ xem khách hàng",
+    tabPeriod: "Hoạt động trong kỳ",
+    tabAll: "Danh bạ toàn cục",
+    /** KPI tín hiệu quan tâm (getTotalCustomersLifetime + getCustomerActivityStats). */
+    signalsTitle: "Tín hiệu quan tâm & độ phủ khách hàng",
+    signalsDesc:
+      "Ba chỉ số dưới tính theo kỳ đã chọn, riêng tổng khách là tích luỹ từ trước đến nay. Tín hiệu đặt hàng suy ra từ hành vi hỏi, không phải đơn hàng đã xác nhận.",
+    kpiLifetime: "Tổng khách (mọi thời điểm)",
+    kpiLifetimeMeta: "Không giới hạn theo kỳ",
+    kpiInterest: "Khách đã hỏi sản phẩm",
+    kpiInterestMeta: "Trong kỳ đã chọn",
+    kpiPurchase: "Khách có tín hiệu đặt hàng",
+    kpiPurchaseMeta: "Trong kỳ đã chọn",
+    /** Biểu đồ khách hoạt động (getCustomerActivityTrend). */
+    activityTitle: "Khách hoạt động theo ngày",
+    activityDesc: "Khách mới = người nhắn tin lần đầu trong ngày · giờ VN (UTC+7)",
+    activityChartTitle: "Khách hoạt động theo ngày",
+    seriesNew: "Khách mới",
+    seriesReturning: "Khách quay lại",
+    activityEmpty: "Chưa có khách hoạt động trong kỳ này.",
+    /** Badge cảnh báo trên từng dòng khách (getOpenAttentionItems). */
+    attentionBadge: "{n} cần chú ý",
+    /** Danh bạ toàn cục (getAllCustomers) — tab "Danh bạ toàn cục". */
+    directoryTitle: "Danh bạ khách toàn cục",
+    directoryDesc:
+      "Sắp theo lần tương tác gần nhất · không giới hạn bởi bộ lọc ngày · tối đa {n} khách",
+    directoryEmptyTitle: "Danh bạ chưa có khách nào",
+    directoryEmptyDesc: "Khi khách nhắn tin Messenger, hồ sơ sẽ tự động được tạo tại đây.",
+    thMessages: "Tổng tin",
+    thConversations: "Tổng hội thoại",
+    countMessages: "{n} tin",
+    countConversations: "{n} hội thoại",
   },
 
   customerDetail: {
@@ -365,6 +420,17 @@ export const vi = {
     notePlaceholder: "Nhập ghi chú mới cho khách hàng...",
     noteSubmit: "Thêm ghi chú",
     notesEmpty: "Chưa có ghi chú nào từ nhân viên.",
+    /** Cảnh báo sự kiện chưa xử lý của khách (getCustomerOpenAttention). */
+    attentionTitle: "{n} sự kiện cần chú ý của khách này",
+    attentionItem: "{type} · {time}",
+    attentionMore: "và {n} sự kiện khác…",
+    /** Tín hiệu mua hàng (getCustomerPurchaseSignal). */
+    purchaseSignalTitle: "Tín hiệu mua hàng",
+    purchaseSignalQuestions: "Lượt hỏi sản phẩm",
+    purchaseSignalOrders: "Lượt nhắc đặt hàng",
+    purchaseSignalNone: "Khách chưa đặt câu hỏi sản phẩm nào.",
+    purchaseSignalNote:
+      "Tín hiệu tham khảo từ hành vi hỏi trong hội thoại — không phải đơn hàng đã xác nhận.",
   },
 
   products: {
@@ -388,6 +454,16 @@ export const vi = {
     gapEmpty: "Không có câu hỏi nào bị lệch catalog trong kỳ đã chọn — tốt lắm!",
     gapMentions: "{n} lượt nhắc",
     gapExample: "Ví dụ tin nhắn:",
+    /** Tín hiệu quan tâm theo ngày (getInterestSignalsTrend — nhóm R). */
+    interestTrendTitle: "Tín hiệu quan tâm theo ngày",
+    interestTrendDesc:
+      "Suy ra từ tin nhắn khách trong kỳ — phản ánh sở thích theo thời gian, không phải dự đoán mua",
+    interestChartTitle: "Tín hiệu quan tâm theo ngày",
+    seriesMentions: "Hỏi sản phẩm",
+    seriesPrice: "Hỏi giá",
+    seriesInfo: "Hỏi thông tin",
+    seriesOrder: "Tín hiệu đặt hàng",
+    interestEmpty: "Chưa có tín hiệu quan tâm nào trong kỳ đã chọn.",
   },
 
   knowledge: {
@@ -451,6 +527,24 @@ export const vi = {
     countUnit: "{n} tin",
     aggregateNote:
       "Kỳ đã kết thúc: Heatmap / Top khách / độ trễ trung bình đã được tính đúng trong kỳ đã chọn; độ trễ trung vị (P50) và P90 không tính được cho kỳ đã kết thúc nên để trống.",
+    /** Số khách theo bucket (getCustomersPerBucket — nhóm R). */
+    bucketTitle: "Số khách theo ngày",
+    bucketTitleHour: "Số khách theo giờ",
+    bucketDesc:
+      "Khách riêng biệt nhắn tin trong kỳ — đối chiếu với biểu đồ lượng tin ở trên: nhiều tin không nhất thiết là nhiều khách.",
+    bucketChartTitle: "Khách nhắn tin",
+    bucketChartDesc: "Mỗi khách chỉ tính một lần trong mỗi khung · giờ VN (UTC+7)",
+    bucketSeries: "Khách riêng biệt",
+    bucketEmpty: "Chưa có khách nhắn tin trong kỳ đã chọn.",
+    /** AI vs nguồn trả lời khác (getConversationVolumeTrend — nhóm R). */
+    aiTrendTitle: "Nguồn tin trả lời theo ngày",
+    aiTrendSummary: "AI đảm nhiệm {pct} số tin trả lời trong kỳ",
+    aiTrendSummaryNone: "Chưa có tin trả lời trong kỳ để tính tỷ lệ AI",
+    aiTrendChartTitle: "Tin AI trả lời vs tin trả lời khác",
+    aiTrendChartDesc: "Không gồm tin khách gửi · theo ngày (giờ VN)",
+    seriesAi: "Tin AI trả lời",
+    seriesOther: "Tin trả lời khác (không phải AI)",
+    aiTrendEmpty: "Chưa có dữ liệu tin trả lời trong kỳ đã chọn.",
   },
 
   range: {
@@ -602,6 +696,15 @@ export const ja: Dict = {
       answered: "返信済み",
       pending: "未返信",
     },
+    /** `AttentionEventType` の日本語ラベル（data-api §3）。 */
+    attentionType: {
+      SYSTEM_ERROR: "システムエラー",
+      HUMAN_REQUEST_SIGNAL: "担当者への要求",
+      LOW_CONFIDENCE: "確信度が低い",
+      UNKNOWN_PRODUCT: "未登録の商品",
+      UNKNOWN_PRICE: "価格未登録",
+      KNOWLEDGE_GAP: "ナレッジ不足",
+    },
   },
 
   states: {
@@ -693,6 +796,16 @@ export const ja: Dict = {
     recentAction: "詳細",
     recentEmptyTitle: "会話はまだありません",
     recentEmptyDesc: "顧客から Messenger でメッセージが届くとここに表示されます。",
+    /** 要対応イベントの分析（getOpenAttentionItems — グループR）。 */
+    attentionStatsTitle: "要対応イベントの種類別・日別内訳",
+    attentionStatsDesc: "直近7日で未対応のイベント {n} 件",
+    attentionStatsEmptyTitle: "未対応のイベントはありません",
+    attentionStatsEmptyDesc: "Bot にエラーが出た場合や顧客の待ち時間が長い場合にここに表示されます。",
+    attentionByType: "種類別の内訳",
+    attentionTimeline: "日別のイベント数（UTC+7）",
+    attentionTimelineDesc: "種類ごとの推移 — 期間中に増えている種類がわかります",
+    attentionTotal: "未対応イベント 合計 {n} 件",
+    attentionShare: "{p}%",
   },
 
   conversations: {
@@ -742,7 +855,7 @@ export const ja: Dict = {
   customers: {
     overline: "顧客の管理",
     title: "顧客一覧と関心度",
-    description: "直近7日以内に活動した上位50名",
+    description: "{from} ～ {to} · 期間中に活動した顧客を最大50名",
     kpiGridAria: "期間内の顧客集計",
     kpiTotal: "期間内の総顧客数",
     kpiNew: "新規顧客",
@@ -755,6 +868,8 @@ export const ja: Dict = {
     thReason: "記録理由",
     thLastSeen: "最終メッセージ",
     lastSeenPrefix: "最終:",
+    /** 選択期間内の最新メッセージが特定できない場合（getTopCustomersInRange が null）。 */
+    lastMessageUnknown: "選択期間内の最新メッセージを特定できません。",
     unknown: "未確定",
     unknownProduct: "商品未確定",
     emptyTitle: "期間内の顧客はまだいません",
@@ -765,6 +880,38 @@ export const ja: Dict = {
       new: "新規関心",
       inactive: "非アクティブ",
     },
+    /** 期間内 / 全件ディレクトリのタブ切替（グループR）。 */
+    tabsLabel: "顧客の表示切替",
+    tabPeriod: "期間内の活動",
+    tabAll: "顧客ディレクトリ",
+    /** 関心シグナル指標（getTotalCustomersLifetime + getCustomerActivityStats）。 */
+    signalsTitle: "関心シグナルと顧客カバレッジ",
+    signalsDesc:
+      "下の3指標は選択期間内、総顧客数のみ全期間の累計です。注文シグナルは問い合わせ行動からの推定であり、確定した注文ではありません。",
+    kpiLifetime: "総顧客数（全期間）",
+    kpiLifetimeMeta: "期間の制限なし",
+    kpiInterest: "商品を問い合わせた顧客",
+    kpiInterestMeta: "選択期間内",
+    kpiPurchase: "注文シグナルのある顧客",
+    kpiPurchaseMeta: "選択期間内",
+    /** 顧客アクティビティの推移（getCustomerActivityTrend）。 */
+    activityTitle: "日別のアクティブ顧客",
+    activityDesc: "新規は当日初めてメッセージした顧客 · ベトナム時間（UTC+7）",
+    activityChartTitle: "日別のアクティブ顧客",
+    seriesNew: "新規顧客",
+    seriesReturning: "再来顧客",
+    activityEmpty: "この期間にアクティブな顧客はいません。",
+    /** 行ごとの警告バッジ（getOpenAttentionItems）。 */
+    attentionBadge: "要対応 {n} 件",
+    /** 全件顧客ディレクトリ（getAllCustomers）タブ。 */
+    directoryTitle: "顧客ディレクトリ（全期間）",
+    directoryDesc: "最終アクセス順 · 日付フィルターの対象外 · 最大 {n} 名まで表示",
+    directoryEmptyTitle: "ディレクトリに顧客がいません",
+    directoryEmptyDesc: "顧客から Messenger でメッセージが届くと、自動的にプロフィールが作成されます。",
+    thMessages: "総メッセージ",
+    thConversations: "総会話数",
+    countMessages: "{n} 件",
+    countConversations: "{n} 件の会話",
   },
 
   customerDetail: {
@@ -784,6 +931,16 @@ export const ja: Dict = {
     notePlaceholder: "顧客について新しいメモを入力…",
     noteSubmit: "メモを追加",
     notesEmpty: "スタッフのメモはまだありません。",
+    /** 顧客単位の未対応イベント（getCustomerOpenAttention）。 */
+    attentionTitle: "この顧客には未対応のイベントが {n} 件あります",
+    attentionItem: "{type} · {time}",
+    attentionMore: "ほか {n} 件…",
+    /** 購入シグナル（getCustomerPurchaseSignal）。 */
+    purchaseSignalTitle: "購入シグナル",
+    purchaseSignalQuestions: "商品問い合わせ回数",
+    purchaseSignalOrders: "注文言及回数",
+    purchaseSignalNone: "この顧客はまだ商品を問い合わせていません。",
+    purchaseSignalNote: "会話内の問い合わせ行動に基づく参考シグナルです — 確定した注文ではありません。",
   },
 
   products: {
@@ -807,6 +964,15 @@ export const ja: Dict = {
     gapEmpty: "選択期間にカタログ外の問い合わせはありません — 良好です。",
     gapMentions: "{n} 件の言及",
     gapExample: "メッセージ例:",
+    /** 日別関心シグナル（getInterestSignalsTrend — グループR）。 */
+    interestTrendTitle: "日別の関心シグナル",
+    interestTrendDesc: "期間内の顧客メッセージから算出 — 時間別の関心の推移（購入予測ではありません）",
+    interestChartTitle: "日別の関心シグナル",
+    seriesMentions: "商品の問い合わせ",
+    seriesPrice: "価格の問い合わせ",
+    seriesInfo: "情報の問い合わせ",
+    seriesOrder: "注文シグナル",
+    interestEmpty: "選択期間に関心シグナルのデータはありません。",
   },
 
   knowledge: {
@@ -870,6 +1036,24 @@ export const ja: Dict = {
     countUnit: "{n} 件",
     aggregateNote:
       "期間が終了: ヒートマップ・上位顧客・平均遅延は選択期間内で集計済みです。中央値（P50）と P90 は終了期間では算出できないため空欄にします。",
+    /** bucket 別の顧客数（getCustomersPerBucket — グループR）。 */
+    bucketTitle: "日別のお客様数",
+    bucketTitleHour: "時間帯別のお客様数",
+    bucketDesc:
+      "期間内にメッセージしたユニーク顧客数 — 上のメッセージ量グラフと見比べることで「件数が多いのか客が多いのか」がわかります。",
+    bucketChartTitle: "メッセージした顧客",
+    bucketChartDesc: "各bucket内で重複カウントなし · ベトナム時間（UTC+7）",
+    bucketSeries: "ユニーク顧客",
+    bucketEmpty: "選択期間に顧客からのメッセージはありません。",
+    /** AI とその他の返信源（getConversationVolumeTrend — グループR）。 */
+    aiTrendTitle: "日別の返信ソース",
+    aiTrendSummary: "期間内の返信のうち AI が担当した割合は {pct}",
+    aiTrendSummaryNone: "期間内に返信がないため AI 割合を算出できません",
+    aiTrendChartTitle: "AI の返信とその他の返信",
+    aiTrendChartDesc: "顧客からの受信を除く · 日別（UTC+7）",
+    seriesAi: "AI の返信",
+    seriesOther: "その他の返信（AI 以外）",
+    aiTrendEmpty: "選択期間に返信データはありません。",
   },
 
   range: {
