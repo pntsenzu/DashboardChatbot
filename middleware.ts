@@ -50,6 +50,19 @@ function safeCallback(raw: string | null): string {
  * cho render trang như bình thường, page-level `notFound()` vẫn giữ nội dung 404.
  */
 async function conversationExists(id: string): Promise<boolean | null> {
+  return threadRpcExists("getConversationMessages", id);
+}
+
+/** Kiểm tra khách hàng CÓ tồn tại trên Data API (cùng cách DEF-02 cho hội thoại). */
+async function customerExists(id: string): Promise<boolean | null> {
+  return threadRpcExists("getCustomerDetail", id);
+}
+
+/** Gọi 1 hàm RPC đơn giản để kiểm tra bản ghi còn tồn tại không. */
+async function threadRpcExists(
+  fn: "getConversationMessages" | "getCustomerDetail",
+  id: string
+): Promise<boolean | null> {
   const url = process.env.DATA_API_URL?.trim().replace(/\/+$/, "");
   const token = process.env.DATA_API_TOKEN?.trim();
   if (!url || !token) return null;
@@ -61,14 +74,15 @@ async function conversationExists(id: string): Promise<boolean | null> {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ fn: "getConversationMessages", args: [id] }),
+      body: JSON.stringify({ fn, args: [id] }),
       signal: AbortSignal.timeout(5000),
       cache: "no-store",
     });
     if (!res.ok) return null;
     const data = (await res.json()) as { result?: unknown };
-    if (!Array.isArray(data.result)) return null;
-    return data.result.length > 0;
+    // Hội thoại rỗng = không tồn tại; khách hàng null = không tồn tại.
+    if (fn === "getConversationMessages") return Array.isArray(data.result) && data.result.length > 0;
+    return data.result !== null && data.result !== undefined;
   } catch {
     return null;
   }
@@ -108,9 +122,13 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(login);
   }
 
-  // Chi tiết hội thoại: id không tồn tại -> 404 thật (DEF-02), giữ nguyên URL.
+  // Chi tiết hội thoại / khách hàng: id không tồn tại -> 404 thật (DEF-02),
+  // giữ nguyên URL. Bỏ qua ở chế độ DEMO — id mẫu (cus_demo_*, thr_demo_*)
+  // không tồn tại trên Data API thật.
+  const isDemo = token?.demo === true;
+
   const detail = pathname.match(/^\/conversations\/([^/]+)\/?$/);
-  if (detail) {
+  if (detail && !isDemo) {
     let id = detail[1];
     try {
       id = decodeURIComponent(id);
@@ -120,6 +138,19 @@ export default async function middleware(req: NextRequest) {
     if ((await conversationExists(id)) === false) {
       // Rewrite tới route không tồn tại -> Next render not-found.tsx (có thương hiệu)
       // với status 404 thật, URL vẫn là /conversations/<id>.
+      return NextResponse.rewrite(new URL("/khong-ton-tai", req.url));
+    }
+  }
+
+  const customerDetail = pathname.match(/^\/customers\/([^/]+)\/?$/);
+  if (customerDetail && !isDemo) {
+    let id = customerDetail[1];
+    try {
+      id = decodeURIComponent(id);
+    } catch {
+      /* percent-encoding hỏng -> giữ nguyên id gốc */
+    }
+    if ((await customerExists(id)) === false) {
       return NextResponse.rewrite(new URL("/khong-ton-tai", req.url));
     }
   }

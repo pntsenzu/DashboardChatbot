@@ -74,6 +74,7 @@ export default async function RootLayout({
             botStatusIsStale={botStatusIsStale}
             user={session?.user ?? null}
             mockMode={isMockMode()}
+            demoMode={session?.user?.demo === true}
           >
             {children}
           </AppShellClient>

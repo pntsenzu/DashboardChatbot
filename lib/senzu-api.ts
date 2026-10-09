@@ -1,5 +1,6 @@
 import "server-only";
 import { DataApiError, type DataApiErrorKind } from "@/lib/api-error";
+import { isDemoSession } from "@/lib/demo";
 import type {
   AiInsightCounts,
   AttentionItem,
@@ -448,6 +449,13 @@ function extractErrorBody(text: string): string {
 export async function rpc<F extends RpcFn>(fn: F, ...args: RpcArgs<F>): Promise<RpcResult<F>> {
   const validated = normalizeArgs(fn, args);
 
+  // Chế độ DEMO ("Xem thử với dữ liệu mẫu"): luôn trả dữ liệu mẫu — kể cả khi
+  // đã cấu hình token thật và kể cả ở production. Người xem demo không bao giờ
+  // chạm tới Data API thật -> không lộ dữ liệu khách hàng.
+  if (await isDemoSession()) {
+    return getMockData<RpcResult<F>>(fn, validated);
+  }
+
   const url = process.env.DATA_API_URL || "https://api-bot.senzu-base.vn";
   const token = process.env.DATA_API_TOKEN?.trim();
 
@@ -543,26 +551,213 @@ export async function getDataApiHealth(
   }
 }
 
+/* ------------------------------------------------------------------ *
+ * DỮ LIỆU MẪU                                                        *
+ *                                                                     *
+ * Bộ dữ liệu hard-code dùng cho:                                     *
+ * - development khi thiếu DATA_API_TOKEN (xem trước giao diện);      *
+ * - chế độ DEMO "Xem thử với dữ liệu mẫu" — chạy được cả production. *
+ *                                                                     *
+ * Số liệu sinh theo khóa CỐ ĐỊNH (không dùng Math.random) để trang  *
+ * không nhảy số mỗi lần tải, và bám theo kỳ đang chọn để biểu đồ     *
+ * luôn đủ số ngày trong kỳ.                                          *
+ * ------------------------------------------------------------------ */
+
+/** Số [0, 1) cố định theo khóa — cùng khóa thì cùng số giữa mọi lần render. */
+function sample01(...parts: Array<string | number>): number {
+  const key = parts.join("|");
+  let hash = 2166136261;
+  for (let i = 0; i < key.length; i += 1) {
+    hash ^= key.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return ((hash >>> 0) % 10_000) / 10_000;
+}
+
+/** Số nguyên cố định trong [min, max] theo khóa. */
+function sampleInt(min: number, max: number, ...parts: Array<string | number>): number {
+  return min + Math.floor(sample01(...parts) * (max - min + 1));
+}
+
+const DEMO_VN = 7 * 3_600_000;
+const DEMO_DAY = 86_400_000;
+
+/** `ms` -> `YYYY-MM-DD` theo giờ VN (data-api §5 — bucket theo giờ VN). */
+function demoISO(ms: number): string {
+  const d = new Date(ms + DEMO_VN);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+}
+
+/** Mọi ngày (giờ VN) trong `[sinceMs, untilMs)` — biểu đồ không được trống ngày. */
+function demoDays(sinceMs: number, untilMs: number, cap = 400): string[] {
+  const start = Math.floor((sinceMs + DEMO_VN) / DEMO_DAY) * DEMO_DAY - DEMO_VN;
+  const days: string[] = [];
+  for (let ms = start; ms < untilMs && days.length < cap; ms += DEMO_DAY) {
+    days.push(demoISO(ms));
+  }
+  return days;
+}
+
+/** Kỳ `[since, until]` từ tham số hàm — thiếu/mù thì mặc định 7 ngày gần nhất. */
+function demoRange(args: readonly unknown[], index = 0): [number, number] {
+  const now = Date.now();
+  const sinceMs = Number(args[index]);
+  const untilMs = Number(args[index + 1]);
+  return [
+    Number.isFinite(sinceMs) ? sinceMs : now - 7 * DEMO_DAY,
+    Number.isFinite(untilMs) ? untilMs : now,
+  ];
+}
+
+/** Danh bạ khách hàng mẫu — dùng chung cho mọi hàm để các trang tương khớp. */
+const DEMO_CUSTOMERS = [
+  { id: "cus_demo_01", name: "Nguyễn Văn An", product: "Senzu Green Tea Serum 50ml", interest: "purchase_intent", msgs: 38 },
+  { id: "cus_demo_02", name: "Trần Thị Mai", product: "Kem Dưỡng Da Senzu Hydra Glow", interest: "considering", msgs: 27 },
+  { id: "cus_demo_03", name: "Lê Hoàng Nam", product: "Áo Sơ Mi Senzu Cotton", interest: "new", msgs: 12 },
+  { id: "cus_demo_04", name: "Phạm Thu Thảo", product: "Sữa Rửa Mặt Senzu Gentle Clean", interest: "purchase_intent", msgs: 46 },
+  { id: "cus_demo_05", name: "Đặng Hoàng Việt", product: "Senzu Green Tea Serum 50ml", interest: "purchase_intent", msgs: 19 },
+  { id: "cus_demo_06", name: "Hoàng Thị Lan", product: "Kem Chống Nắng Senzu SunShield SPF50+", interest: "considering", msgs: 15 },
+  { id: "cus_demo_07", name: "Võ Minh Tuấn", product: "Tẩy Trang Senzu Deep Micellar", interest: "inactive", msgs: 8 },
+  { id: "cus_demo_08", name: "Bùi Ngọc Hân", product: "Kem Dưỡng Da Senzu Hydra Glow", interest: "new", msgs: 6 },
+  { id: "cus_demo_09", name: "Đỗ Gia Bảo", product: "Senzu Green Tea Serum 50ml", interest: "considering", msgs: 11 },
+  { id: "cus_demo_10", name: "Lý Thanh Vy", product: "Sữa Rửa Mặt Senzu Gentle Clean", interest: "purchase_intent", msgs: 23 },
+  { id: "cus_demo_11", name: "Ngô Hữu Phước", product: "Kem Chống Nắng Senzu SunShield SPF50+", interest: "new", msgs: 5 },
+  { id: "cus_demo_12", name: "Mai Phương Linh", product: "Tẩy Trang Senzu Deep Micellar", interest: "considering", msgs: 17 },
+] as ReadonlyArray<{
+  id: string;
+  name: string;
+  product: string;
+  interest: InterestStatus;
+  msgs: number;
+}>;
+
+/** Lý do phân loại quan tâm — cùng giọng văn với dữ liệu thật. */
+const DEMO_REASONS: Record<InterestStatus, string[]> = {
+  purchase_intent: ["Có câu hỏi về giá và tín hiệu đặt hàng (ORDER)", "Đã hỏi tồn kho trước khi chốt"],
+  considering: ["Đã hỏi từ 2 sản phẩm trở lên trong 7 ngày", "Đang so sánh giá giữa các dòng"],
+  new: ["Đã hỏi 1 sản phẩm lần đầu", "Mới tương tác trong kỳ"],
+  inactive: ["Chưa có tương tác mới trong kỳ"],
+  unknown: [],
+};
+
+/** ID hội thoại mẫu của một khách (mỗi khách một thread). */
+function threadIdOf(customerId: string): string {
+  return `thr_${customerId.replace("cus_", "")}`;
+}
+
+/** Khách theo id — `null` khi id không tồn tại (trang chi tiết sẽ trả 404 thật). */
+function demoCustomerById(id: string) {
+  return DEMO_CUSTOMERS.find((c) => c.id === id) ?? null;
+}
+
+/** Lượt tương tác cuối trong kỳ — neo về cuối kỳ đã chọn, không vượt ra ngoài. */
+function demoLastTs(sinceMs: number, id: string): number {
+  const end = Math.min(Date.now(), sinceMs + 30 * DEMO_DAY);
+  return end - sampleInt(5, 900, "lastTs", id) * 60_000;
+}
+
+/** Script hội thoại mẫu của một khách (tên + sản phẩm của khách đó). */
+function demoScript(c: (typeof DEMO_CUSTOMERS)[number]): Array<{
+  direction: "incoming" | "outgoing";
+  text: string;
+}> {
+  const price = sampleInt(190, 590, "price", c.id) * 1_000;
+  const shortName = c.name.split(" ").at(-1) ?? c.name;
+  const script: Array<{ direction: "incoming" | "outgoing"; text: string }> = [
+    { direction: "incoming", text: `Chào shop, cho mình hỏi ${c.product} giá bao nhiêu ạ?` },
+    {
+      direction: "outgoing",
+      text: `Chào bạn ${shortName}! Dạ ${c.product} đang giá ${price.toLocaleString("vi-VN")}đ ạ.`,
+    },
+    { direction: "incoming", text: "Sản phẩm này còn hàng không shop?" },
+    { direction: "outgoing", text: "Dạ còn hàng bạn nhé, tồn kho đang được đồng bộ theo thời gian thực ạ." },
+  ];
+  if (c.interest === "purchase_intent") {
+    script.push(
+      { direction: "incoming", text: "Cho mình đặt 1 cái nhé, ship về TP.HCM mất bao lâu?" },
+      { direction: "outgoing", text: "Dạ bạn xác nhận giúp shop tên và số điện thoại để chốt đơn ạ." }
+    );
+  } else if (c.interest === "considering") {
+    script.push({ direction: "incoming", text: "Để mình suy nghĩ thêm nha shop." });
+  }
+  return script;
+}
+
+/** Sự kiện cần chú ý mẫu — "nóng" trong vài giờ gần đây. */
+function demoAttentionItems(): AttentionItem[] {
+  const now = Date.now();
+  const [a, b, c] = DEMO_CUSTOMERS;
+  return [
+    {
+      id: 101,
+      type: "HUMAN_REQUEST_SIGNAL",
+      severity: "warning",
+      source: "messenger_bot",
+      conversationId: threadIdOf(a.id),
+      customerId: a.id,
+      customerName: a.name,
+      messagePreview: "Cho mình gặp tư vấn viên trực tiếp với!",
+      detail: "Khách hàng yêu cầu hỗ trợ từ nhân viên con người",
+      metadata: { confidence: 0.95 },
+      createdAtMs: now - 3_600_000,
+    },
+    {
+      id: 102,
+      type: "UNKNOWN_PRODUCT",
+      severity: "warning",
+      source: "ai_pipeline",
+      conversationId: threadIdOf(b.id),
+      customerId: b.id,
+      customerName: b.name,
+      messagePreview: "Bên bạn có mẫu Áo Sơ Mi Senzu Premium 2026 không?",
+      detail: "Sản phẩm không có trong catalog tri thức",
+      metadata: { mentioned_name: "Áo Sơ Mi Senzu Premium 2026" },
+      createdAtMs: now - 7_200_000,
+    },
+    {
+      id: 103,
+      type: "KNOWLEDGE_GAP",
+      severity: "info",
+      source: "ai_pipeline",
+      conversationId: threadIdOf(c.id),
+      customerId: c.id,
+      customerName: c.name,
+      messagePreview: "Chính sách bảo hành đổi trả trong bao nhiêu ngày?",
+      detail: "AI độ tin cậy thấp (< 70%)",
+      metadata: { confidence: 0.62 },
+      createdAtMs: now - 14_400_000,
+    },
+  ];
+}
+
 function getMockData<T>(fn: RpcFn, args: readonly unknown[]): T {
   const now = Date.now();
   const DAY = 86_400_000;
 
   switch (fn) {
-    case "getPeriodStats":
+    case "getPeriodStats": {
+      // Kỳ có ý nghĩa với số liệu mẫu: lượng tin và số khách tăng theo số ngày.
+      const [sinceMs, untilMs] = demoRange(args);
+      const days = Math.max(1, Math.round((untilMs - sinceMs) / DAY));
+      const incoming = days * sampleInt(38, 52, "incoming", days);
       return {
-        incomingCount: 428,
-        outgoingCount: 412,
-        distinctCustomers: 94,
-        avgLatencyMs: 6420,
-        repliedRatio: 0.962,
+        incomingCount: incoming,
+        outgoingCount: Math.round(incoming * 0.95),
+        distinctCustomers: Math.min(DEMO_CUSTOMERS.length, 6 + Math.round(days * 0.3)),
+        avgLatencyMs: sampleInt(5200, 7400, "latency", days),
+        repliedRatio: 0.9 + sample01("ratio", days) * 0.08,
       } as unknown as T;
+    }
 
-    case "getDailyPerformanceTrend":
-      return Array.from({ length: 7 }, (_, i) => ({
-        date: new Date(now - (6 - i) * DAY).toISOString().slice(0, 10),
-        repliedRatio: 0.92 + Math.random() * 0.07,
-        avgLatencyMs: 5000 + Math.floor(Math.random() * 3000),
+    case "getDailyPerformanceTrend": {
+      const [sinceMs, untilMs] = demoRange(args);
+      return demoDays(sinceMs, untilMs).map((date) => ({
+        date,
+        repliedRatio: 0.9 + sample01("replied", date) * 0.08,
+        avgLatencyMs: sampleInt(4500, 8200, "avgLatency", date),
       })) as unknown as T;
+    }
 
     case "getAiInsightCounts":
       return { humanRequestCount: 14, productGapCount: 6 } as unknown as T;
@@ -570,25 +765,22 @@ function getMockData<T>(fn: RpcFn, args: readonly unknown[]): T {
     case "getCustomersPerBucket":
     case "getVolume": {
       // Tôn trọng since/until/groupBy (data-api §6) để bộ lọc ngày có ý nghĩa.
-      const VN = 7 * 3_600_000;
       const sinceMs = typeof args[0] === "number" ? args[0] : now - 7 * DAY;
       const groupBy: GroupBy = args[1] === "hour" ? "hour" : "day";
       const untilMs = typeof args[2] === "number" ? args[2] : now;
       const step = groupBy === "hour" ? 3_600_000 : DAY;
       const start =
-        Math.floor((sinceMs + VN) / step) * step - VN;
+        Math.floor((sinceMs + DEMO_VN) / step) * step - DEMO_VN;
       const points: Array<{ bucket: string; incoming: number; outgoing: number }> = [];
       for (let ms = start; ms < untilMs && points.length < 400; ms += step) {
-        const vnDate = new Date(ms + VN);
-        const pad = (n: number) => String(n).padStart(2, "0");
         const bucket =
           groupBy === "hour"
-            ? `${vnDate.getUTCFullYear()}-${pad(vnDate.getUTCMonth() + 1)}-${pad(vnDate.getUTCDate())}T${pad(vnDate.getUTCHours())}`
-            : vnDate.toISOString().slice(0, 10);
+            ? `${demoISO(ms)}T${String(new Date(ms + DEMO_VN).getUTCHours()).padStart(2, "0")}`
+            : demoISO(ms);
         points.push({
           bucket,
-          incoming: Math.floor(4 + Math.random() * (groupBy === "hour" ? 8 : 60)),
-          outgoing: Math.floor(4 + Math.random() * (groupBy === "hour" ? 8 : 58)),
+          incoming: sampleInt(4, groupBy === "hour" ? 12 : 64, "incoming", bucket),
+          outgoing: sampleInt(4, groupBy === "hour" ? 12 : 62, "outgoing", bucket),
         });
       }
       return points as unknown as T;
@@ -597,59 +789,38 @@ function getMockData<T>(fn: RpcFn, args: readonly unknown[]): T {
     case "getAttentionItems":
     case "getOpenAttentionItems":
     case "getCustomerOpenAttention":
-    case "getConversationAttention":
-      return [
-        {
-          id: 101,
-          type: "HUMAN_REQUEST_SIGNAL",
-          severity: "warning",
-          source: "messenger_bot",
-          conversationId: "thread_1001",
-          customerId: "cus_fb_901",
-          customerName: "Nguyễn Văn An",
-          messagePreview: "Cho mình gặp tư vấn viên trực tiếp với!",
-          detail: "Khách hàng yêu cầu hỗ trợ từ nhân viên con người",
-          metadata: { confidence: 0.95 },
-          createdAtMs: now - 3600_000,
-        },
-        {
-          id: 102,
-          type: "UNKNOWN_PRODUCT",
-          severity: "warning",
-          source: "ai_pipeline",
-          conversationId: "thread_1002",
-          customerId: "cus_fb_902",
-          customerName: "Trần Thị Mai",
-          messagePreview: "Bên bạn có mẫu Áo Sơ Mi Senzu Premium 2026 không?",
-          detail: "Sản phẩm không có trong catalog tri thức",
-          metadata: { mentioned_name: "Áo Sơ Mi Senzu Premium 2026" },
-          createdAtMs: now - 7200_000,
-        },
-        {
-          id: 103,
-          type: "KNOWLEDGE_GAP",
-          severity: "info",
-          source: "ai_pipeline",
-          conversationId: "thread_1003",
-          customerId: "cus_fb_903",
-          customerName: "Lê Hoàng Nam",
-          messagePreview: "Chính sách bảo hành đổi trả trong bao nhiêu ngày?",
-          detail: "AI độ tin cậy thấp (< 70%)",
-          metadata: { confidence: 0.62 },
-          createdAtMs: now - 14400_000,
-        }
-      ] as unknown as T;
+    case "getConversationAttention": {
+      // Cùng một nguồn sự kiện mẫu — lọc theo khách / hội thoại / limit (data-api §6).
+      const items = demoAttentionItems();
+      if (fn === "getCustomerOpenAttention") {
+        const cid = String(args[0] ?? "");
+        return items.filter((i) => i.customerId === cid) as unknown as T;
+      }
+      if (fn === "getConversationAttention") {
+        const cid = String(args[0] ?? "");
+        return items.filter((i) => i.conversationId === cid) as unknown as T;
+      }
+      return items.slice(0, Number(args[0] ?? 50)) as unknown as T;
+    }
 
-    case "getRecentConversations":
-      return [
-        { threadId: "thread_1001", customerName: "Nguyễn Văn An", lastMessageText: "Cho mình gặp tư vấn viên trực tiếp với!", lastMessageAtMs: now - 1200_000, status: "needs_attention", responseTimeMs: null },
-        { threadId: "thread_1002", customerName: "Trần Thị Mai", lastMessageText: "Dạ vâng mình cám ơn bot nhiều nha", lastMessageAtMs: now - 3600_000, status: "answered", responseTimeMs: 4200 },
-        { threadId: "thread_1003", customerName: "Lê Hoàng Nam", lastMessageText: "Mẫu này còn size L không shop?", lastMessageAtMs: now - 7200_000, status: "needs_attention", responseTimeMs: null },
-        { threadId: "thread_1004", customerName: "Phạm Thu Thảo", lastMessageText: "Shop ship về Hà Nội mất bao lâu?", lastMessageAtMs: now - 10800_000, status: "answered", responseTimeMs: 3800 },
-      ] as unknown as T;
+    case "getRecentConversations": {
+      const attentionThreads = new Set(demoAttentionItems().map((i) => i.conversationId));
+      const rows = DEMO_CUSTOMERS.map((c) => {
+        const needsAttention = attentionThreads.has(threadIdOf(c.id));
+        return {
+          threadId: threadIdOf(c.id),
+          customerName: c.name,
+          lastMessageText: demoScript(c).at(-1)?.text ?? "",
+          lastMessageAtMs: demoLastTs(now - 7 * DAY, c.id),
+          status: needsAttention ? ("needs_attention" as const) : ("answered" as const),
+          responseTimeMs: needsAttention ? null : sampleInt(2500, 9000, "resp", c.id),
+        };
+      }).sort((a, b) => b.lastMessageAtMs - a.lastMessageAtMs);
+      return rows.slice(0, Number(args[0] ?? 10)) as unknown as T;
+    }
 
     case "getOpenAttentionCount":
-      return 3 as unknown as T;
+      return demoAttentionItems().length as unknown as T;
 
     case "getSystemStatus":
       return {
@@ -670,13 +841,18 @@ function getMockData<T>(fn: RpcFn, args: readonly unknown[]): T {
       // Tôn trọng options { search, status, limit } để UI test được đúng (data-api §6).
       const opts = (args[0] ?? {}) as { search?: string; status?: string; limit?: number };
       const q = (opts.search || "").toLowerCase();
-      const rows = [
-        { conversationId: "thread_1001", customerId: "cus_fb_901", customerName: "Nguyễn Văn An", lastMessageText: "Cho mình gặp tư vấn viên trực tiếp với!", lastMessageAtMs: now - 1200_000, messageCount: 12, status: "attention" },
-        { conversationId: "thread_1002", customerId: "cus_fb_902", customerName: "Trần Thị Mai", lastMessageText: "Dạ vâng mình cám ơn bot nhiều nha", lastMessageAtMs: now - 3600_000, messageCount: 8, status: "answered" },
-        { conversationId: "thread_1003", customerId: "cus_fb_903", customerName: "Lê Hoàng Nam", lastMessageText: "Mẫu này còn size L không shop?", lastMessageAtMs: now - 7200_000, messageCount: 5, status: "active" },
-        { conversationId: "thread_1004", customerId: "cus_fb_904", customerName: "Phạm Thu Thảo", lastMessageText: "Shop ship về Hà Nội mất bao lâu?", lastMessageAtMs: now - 10800_000, messageCount: 14, status: "answered" },
-        { conversationId: "thread_1005", customerId: "cus_fb_905", customerName: "Đặng Hoàng Việt", lastMessageText: "Cho mình đặt 2 cái màu xanh lá", lastMessageAtMs: now - 14400_000, messageCount: 9, status: "answered" },
-      ] as Array<Record<string, unknown>>;
+      const attentionThreads = new Set(demoAttentionItems().map((i) => i.conversationId));
+      const rows = DEMO_CUSTOMERS.map((c) => ({
+        conversationId: threadIdOf(c.id),
+        customerId: c.id,
+        customerName: c.name,
+        lastMessageText: demoScript(c).at(-1)?.text ?? "",
+        lastMessageAtMs: demoLastTs(now - 7 * DAY, c.id),
+        messageCount: c.msgs,
+        status: attentionThreads.has(threadIdOf(c.id))
+          ? ("attention" as const)
+          : ("answered" as const),
+      })) as Array<Record<string, unknown>>;
       const filtered = rows
         .filter((r) => (opts.status ? r.status === opts.status : true))
         .filter((r) =>
@@ -691,14 +867,19 @@ function getMockData<T>(fn: RpcFn, args: readonly unknown[]): T {
       return filtered as unknown as T;
     }
 
-    case "getTopCustomers":
-      return [
-        { senderId: "cus_fb_904", senderName: "Phạm Thu Thảo", msgCount: 46, lastTs: now - 10800_000, isNew: false },
-        { senderId: "cus_fb_901", senderName: "Nguyễn Văn An", msgCount: 38, lastTs: now - 1200_000, isNew: false },
-        { senderId: "cus_fb_905", senderName: "Đặng Hoàng Việt", msgCount: 27, lastTs: now - 14400_000, isNew: false },
-        { senderId: "cus_fb_906", senderName: "Hoàng Thị Lan", msgCount: 19, lastTs: now - 7200_000, isNew: true },
-        { senderId: "cus_fb_903", senderName: "Lê Hoàng Nam", msgCount: 12, lastTs: now - 7200_000, isNew: false },
-      ] as unknown as T;
+    case "getTopCustomers": {
+      const sinceMs = Number(args[0]) || now - 7 * DAY;
+      const limit = Number(args[1]) || 10;
+      return DEMO_CUSTOMERS.map((c) => ({
+        senderId: c.id,
+        senderName: c.name,
+        msgCount: c.msgs,
+        lastTs: demoLastTs(sinceMs, c.id),
+        isNew: c.interest === "new",
+      }))
+        .sort((a, b) => b.msgCount - a.msgCount)
+        .slice(0, limit) as unknown as T;
+    }
 
     case "getHeatmap":
       // Chỉ trả ô có dữ liệu (data-api §5) — mô phỏng giờ cao điểm 9–11 và 20–22.
@@ -718,75 +899,126 @@ function getMockData<T>(fn: RpcFn, args: readonly unknown[]): T {
 
     case "getCustomerConversations": {
       const cid = String(args[0] ?? "");
-      return [
-        { conversationId: "thread_1001", customerId: cid, customerName: "Nguyễn Văn An", lastMessageText: "Cho mình gặp tư vấn viên trực tiếp với!", lastMessageAtMs: now - 1200_000, messageCount: 12, status: "attention" },
-        { conversationId: "thread_1007", customerId: cid, customerName: "Nguyễn Văn An", lastMessageText: "Serum này dùng bao lâu thì thấy hiệu quả ạ?", lastMessageAtMs: now - 259_200_000, messageCount: 6, status: "answered" },
-      ] as unknown as T;
-    }
-
-    case "getConversationMessages":
-      return [
-        { id: "msg_1", senderId: "cus_fb_901", senderName: "Nguyễn Văn An", text: "Xin chào shop, shop có sản phẩm Senzu Green Tea Serum không?", direction: "incoming", timestampMs: now - 1800_000, frameTsMs: now - 1799_000 },
-        { id: "msg_2", senderId: "bot", senderName: "Senzu Bot", text: "Chào bạn An! Dạ bên mình có Senzu Green Tea Serum chai 50ml giá 350.000đ đang có sẵn hàng ạ.", direction: "outgoing", timestampMs: now - 1795_000, frameTsMs: now - 1795_000 },
-        { id: "msg_3", senderId: "cus_fb_901", senderName: "Nguyễn Văn An", text: "Cho mình gặp tư vấn viên trực tiếp với!", direction: "incoming", timestampMs: now - 1200_000, frameTsMs: now - 1199_000 },
-      ] as unknown as T;
-
-    case "getConversationProcessing":
+      const limit = Number(args[1]) || 10;
+      const c = demoCustomerById(cid);
+      if (!c) return [] as unknown as T;
+      const attentionThreads = new Set(demoAttentionItems().map((i) => i.conversationId));
       return [
         {
-          incomingMessageId: "msg_1",
-          receivedAtMs: now - 1800_000,
-          aiStartedAtMs: now - 1799_000,
-          aiCompletedAtMs: now - 1796_000,
-          sentAtMs: now - 1795_000,
+          conversationId: threadIdOf(c.id),
+          customerId: c.id,
+          customerName: c.name,
+          lastMessageText: demoScript(c).at(-1)?.text ?? "",
+          lastMessageAtMs: demoLastTs(now - 7 * DAY, c.id),
+          messageCount: c.msgs,
+          status: attentionThreads.has(threadIdOf(c.id)) ? "attention" : "answered",
+        },
+      ].slice(0, limit) as unknown as T;
+    }
+
+    case "getConversationMessages": {
+      const tid = String(args[0] ?? "");
+      const c = DEMO_CUSTOMERS.find((x) => threadIdOf(x.id) === tid);
+      // Thread không tồn tại -> [] để trang chi tiết trả 404 thật (như dữ liệu thật).
+      if (!c) return [] as unknown as T;
+      const script = demoScript(c);
+      const startMs = demoLastTs(now - 7 * DAY, c.id) - script.length * 90_000;
+      return script.map((m, i) => ({
+        id: `msg_${tid}_${i + 1}`,
+        senderId: m.direction === "incoming" ? c.id : "bot",
+        senderName: m.direction === "incoming" ? c.name : "Senzu Bot",
+        text: m.text,
+        direction: m.direction,
+        timestampMs: startMs + i * 90_000,
+        frameTsMs: startMs + i * 90_000 + 800,
+      })) as unknown as T;
+    }
+
+    case "getConversationProcessing": {
+      const tid = String(args[0] ?? "");
+      const c = DEMO_CUSTOMERS.find((x) => threadIdOf(x.id) === tid);
+      if (!c) return [] as unknown as T;
+      const script = demoScript(c);
+      const startMs = demoLastTs(now - 7 * DAY, c.id) - script.length * 90_000;
+      return script
+        .map((m, i) => ({ m, i }))
+        .filter(({ m }) => m.direction === "incoming")
+        .map(({ i }) => ({
+          incomingMessageId: `msg_${tid}_${i + 1}`,
+          receivedAtMs: startMs + i * 90_000,
+          aiStartedAtMs: startMs + i * 90_000 + 900,
+          aiCompletedAtMs: startMs + i * 90_000 + 3_200,
+          sentAtMs: startMs + i * 90_000 + 3_800,
           aiProvider: "Google Gemini",
           aiModel: "gemini-1.5-pro",
-          knowledgePath: "catalog/skincare.md",
+          knowledgePath: "catalog/senzu.md",
           hasCatalog: true,
           status: "success",
           errorDetail: null,
-        }
-      ] as unknown as T;
+        })) as unknown as T;
+    }
 
-    case "getCustomersWithInterest":
-      return [
-        { customerId: "cus_fb_901", customerName: "Nguyễn Văn An", totalMessages: 12, totalConversations: 2, lastInteractionMs: now - 1200_000, primaryProductName: "Senzu Green Tea Serum", otherProductsCount: 1, interest: { status: "purchase_intent", reasons: ["Có câu hỏi muốn đặt hàng (ORDER)", "Hỏi chi tiết về giá sản phẩm"] } },
-        { customerId: "cus_fb_902", customerName: "Trần Thị Mai", totalMessages: 8, totalConversations: 1, lastInteractionMs: now - 3600_000, primaryProductName: "Kem Dưỡng Da Senzu Hydra", otherProductsCount: 2, interest: { status: "considering", reasons: ["Đã hỏi từ 2 sản phẩm trở lên trong 7 ngày"] } },
-        { customerId: "cus_fb_903", customerName: "Lê Hoàng Nam", totalMessages: 5, totalConversations: 1, lastInteractionMs: now - 7200_000, primaryProductName: "Áo Sơ Mi Senzu Cotton", otherProductsCount: 0, interest: { status: "new", reasons: ["Đã hỏi 1 sản phẩm lần đầu"] } },
-        { customerId: "cus_fb_904", customerName: "Phạm Thu Thảo", totalMessages: 14, totalConversations: 3, lastInteractionMs: now - 10800_000, primaryProductName: "Sữa Rửa Mặt Senzu Gentle", otherProductsCount: 1, interest: { status: "purchase_intent", reasons: ["Khách có 2 lượt tín hiệu đặt hàng"] } },
-        { customerId: "cus_fb_905", customerName: "Đặng Hoàng Việt", totalMessages: 9, totalConversations: 1, lastInteractionMs: now - 14400_000, primaryProductName: "Senzu Green Tea Serum", otherProductsCount: 0, interest: { status: "purchase_intent", reasons: ["Đã gửi cú pháp mua hàng"] } },
-      ] as unknown as T;
+    case "getCustomersWithInterest": {
+      const opts = (args[0] ?? {}) as { search?: string; status?: string; limit?: number };
+      const q = (opts.search || "").toLowerCase();
+      return DEMO_CUSTOMERS.map((c) => ({
+        customerId: c.id,
+        customerName: c.name,
+        totalMessages: c.msgs,
+        totalConversations: 1,
+        lastInteractionMs: demoLastTs(now - 30 * DAY, c.id),
+        primaryProductName: c.product,
+        otherProductsCount: sampleInt(0, 2, "others", c.id),
+        interest: { status: c.interest, reasons: DEMO_REASONS[c.interest] },
+      }))
+        .filter((r) => (opts.status ? r.interest.status === opts.status : true))
+        .filter((r) =>
+          q
+            ? r.customerName.toLowerCase().includes(q) || r.customerId.includes(q)
+            : true
+        )
+        .sort((a, b) => b.lastInteractionMs - a.lastInteractionMs)
+        .slice(0, opts.limit ?? 50) as unknown as T;
+    }
 
     case "getCustomerDetail": {
-      const known: Record<string, { customerName: string; totalMessages: number; totalConversations: number; lastAgo: number }> = {
-        cus_fb_901: { customerName: "Nguyễn Văn An", totalMessages: 12, totalConversations: 2, lastAgo: 1200_000 },
-        cus_fb_902: { customerName: "Trần Thị Mai", totalMessages: 8, totalConversations: 1, lastAgo: 3600_000 },
-        cus_fb_903: { customerName: "Lê Hoàng Nam", totalMessages: 5, totalConversations: 1, lastAgo: 7200_000 },
-        cus_fb_904: { customerName: "Phạm Thu Thảo", totalMessages: 14, totalConversations: 3, lastAgo: 10800_000 },
-        cus_fb_905: { customerName: "Đặng Hoàng Việt", totalMessages: 9, totalConversations: 1, lastAgo: 14400_000 },
-      };
       const id = String(args[0] ?? "");
-      const hit = known[id];
-      // ID không tồn tại -> null để UI trả 404 thật (khá với dữ liệu thật).
-      if (!hit) return null as unknown as T;
+      const c = demoCustomerById(id);
+      // ID không tồn tại -> null để UI trả 404 thật (khớp dữ liệu thật).
+      if (!c) return null as unknown as T;
       return {
-        customerId: id,
-        customerName: hit.customerName,
-        totalMessages: hit.totalMessages,
-        totalConversations: hit.totalConversations,
-        firstInteractionMs: now - 30 * DAY,
-        lastInteractionMs: now - hit.lastAgo,
+        customerId: c.id,
+        customerName: c.name,
+        totalMessages: c.msgs,
+        totalConversations: 1,
+        firstInteractionMs: now - 45 * DAY,
+        lastInteractionMs: demoLastTs(now - 30 * DAY, c.id),
       } as unknown as T;
     }
 
-    case "getCustomerInterests":
+    case "getCustomerInterests": {
+      const c = demoCustomerById(String(args[0] ?? ""));
+      if (!c) return [] as unknown as T;
       return [
-        { productId: "prod_01", productName: "Senzu Green Tea Serum", totalMentions: 6, priceCount: 3, orderCount: 2, lastMentionAtMs: now - 1200_000 },
-        { productId: "prod_02", productName: "Kem Dưỡng Da Senzu Hydra", totalMentions: 2, priceCount: 1, orderCount: 0, lastMentionAtMs: now - 86400_000 },
+        {
+          productId: "prod_demo_01",
+          productName: c.product,
+          totalMentions: sampleInt(2, 9, "mentions", c.id),
+          priceCount: sampleInt(1, 5, "priceCount", c.id),
+          orderCount: c.interest === "purchase_intent" ? sampleInt(1, 3, "orders", c.id) : 0,
+          lastMentionAtMs: demoLastTs(now - 30 * DAY, c.id),
+        },
       ] as unknown as T;
+    }
 
-    case "getCustomerPurchaseSignal":
-      return { totalProductQuestions: 8, orderMentions: 3 } as unknown as T;
+    case "getCustomerPurchaseSignal": {
+      const c = demoCustomerById(String(args[0] ?? ""));
+      if (!c) return { totalProductQuestions: 0, orderMentions: 0 } as unknown as T;
+      return {
+        totalProductQuestions: sampleInt(2, 10, "questions", c.id),
+        orderMentions: c.interest === "purchase_intent" ? sampleInt(1, 4, "orderMentions", c.id) : 0,
+      } as unknown as T;
+    }
 
     case "getCustomerNotes":
       return [
@@ -794,14 +1026,25 @@ function getMockData<T>(fn: RpcFn, args: readonly unknown[]): T {
         { id: 2, authorEmail: "nhan_vien@senzu.co.jp", authorName: "Nhân Viên Hỗ Trợ", text: "Khách đã chốt chuyển khoản VCB.", createdAtMs: now - 43200_000 },
       ] as unknown as T;
 
-    case "getTopProducts":
+    case "getTopProducts": {
+      // Quy mô theo số ngày trong kỳ — đổi bộ lọc ngày thì bảng đổi theo.
+      const sinceMs = Number(args[0]) || now - 30 * DAY;
+      const limit = Number(args[1]) || 10;
+      const scale = Math.max(1, Math.round((now - sinceMs) / DAY)) / 30;
       return [
         { productId: "prod_01", productName: "Senzu Green Tea Serum 50ml", mentionCount: 142, uniqueCustomers: 68 },
         { productId: "prod_02", productName: "Kem Dưỡng Da Senzu Hydra Glow", mentionCount: 98, uniqueCustomers: 45 },
         { productId: "prod_03", productName: "Sữa Rửa Mặt Senzu Gentle Clean", mentionCount: 76, uniqueCustomers: 39 },
         { productId: "prod_04", productName: "Kem Chống Nắng Senzu SunShield SPF50+", mentionCount: 54, uniqueCustomers: 28 },
         { productId: "prod_05", productName: "Tẩy Trang Senzu Deep Micellar", mentionCount: 32, uniqueCustomers: 19 },
-      ] as unknown as T;
+      ]
+        .map((p) => ({
+          ...p,
+          mentionCount: Math.max(1, Math.round(p.mentionCount * scale)),
+          uniqueCustomers: Math.max(1, Math.round(p.uniqueCustomers * scale)),
+        }))
+        .slice(0, limit) as unknown as T;
+    }
 
     case "getProductQuestionBreakdown":
       return [
@@ -826,49 +1069,86 @@ function getMockData<T>(fn: RpcFn, args: readonly unknown[]): T {
     case "getTotalCustomersLifetime":
       return 1248 as unknown as T;
 
-    case "getCustomerActivityStats":
-      return { customersWithProductInterest: 84, customersWithPurchaseSignal: 38 } as unknown as T;
+    case "getCustomerActivityStats": {
+      // Cùng công thức với getPeriodStats -> các KPI trên trang khách hàng khớp nhau.
+      const [sinceMs, untilMs] = demoRange(args);
+      const days = Math.max(1, Math.round((untilMs - sinceMs) / DAY));
+      const active = Math.min(DEMO_CUSTOMERS.length, 6 + Math.round(days * 0.3));
+      return {
+        customersWithProductInterest: Math.round(active * 0.65),
+        customersWithPurchaseSignal: Math.round(active * 0.3),
+      } as unknown as T;
+    }
 
     case "getResponseLatency":
       return { matchedCount: 380, incomingCount: 428, avgMs: 6420, medianMs: 4100, p90Ms: 14200 } as unknown as T;
 
-    case "getCustomerSummary":
-      return { totalCustomers: 94, newCustomers: 32, returningCustomers: 62 } as unknown as T;
+    case "getCustomerSummary": {
+      const sinceMs = Number(args[0]) || now - 7 * DAY;
+      const days = Math.max(1, Math.round((now - sinceMs) / DAY));
+      const total = Math.min(DEMO_CUSTOMERS.length, 6 + Math.round(days * 0.3));
+      const fresh = Math.max(1, Math.round(total * 0.35));
+      return {
+        totalCustomers: total,
+        newCustomers: fresh,
+        returningCustomers: total - fresh,
+      } as unknown as T;
+    }
 
     case "insertCustomerNote":
       return null as unknown as T;
 
-    case "getAllCustomers":
-      return [
-        { customerId: "cus_fb_901", customerName: "Nguyễn Văn An", totalMessages: 12, totalConversations: 2, lastInteractionMs: now - 1200_000 },
-        { customerId: "cus_fb_902", customerName: "Trần Thị Mai", totalMessages: 8, totalConversations: 1, lastInteractionMs: now - 3600_000 },
-        { customerId: "cus_fb_903", customerName: "Lê Hoàng Nam", totalMessages: 5, totalConversations: 1, lastInteractionMs: now - 7200_000 },
-      ] as unknown as T;
+    case "getAllCustomers": {
+      const limit = Number(args[0]) || 200;
+      return DEMO_CUSTOMERS.map((c) => ({
+        customerId: c.id,
+        customerName: c.name,
+        totalMessages: c.msgs,
+        totalConversations: 1,
+        lastInteractionMs: demoLastTs(now - 30 * DAY, c.id),
+      }))
+        .sort((a, b) => b.lastInteractionMs - a.lastInteractionMs)
+        .slice(0, limit) as unknown as T;
+    }
 
-    case "getCustomerActivityTrend":
-      return Array.from({ length: 7 }, (_, i) => ({
-        date: new Date(now - (6 - i) * DAY).toISOString().slice(0, 10),
-        activeCustomers: 18 + Math.floor(Math.random() * 14),
-        newCustomers: 3 + Math.floor(Math.random() * 6),
-        returningCustomers: 12 + Math.floor(Math.random() * 10),
-      })) as unknown as T;
+    case "getCustomerActivityTrend": {
+      // "Khách mới" thưa (≈1/5 số ngày) để cộng dồn không vượt số khách trong kỳ.
+      const [sinceMs, untilMs] = demoRange(args);
+      return demoDays(sinceMs, untilMs).map((date) => {
+        const active = sampleInt(8, 24, "active", date);
+        const fresh = sample01("newCustomer", date) > 0.8 ? 1 : 0;
+        return {
+          date,
+          activeCustomers: active,
+          newCustomers: fresh,
+          returningCustomers: Math.max(0, active - fresh),
+        };
+      }) as unknown as T;
+    }
 
-    case "getConversationVolumeTrend":
-      return Array.from({ length: 7 }, (_, i) => ({
-        date: new Date(now - (6 - i) * DAY).toISOString().slice(0, 10),
-        customerMessages: 40 + Math.floor(Math.random() * 50),
-        aiReplies: 36 + Math.floor(Math.random() * 48),
-        otherOutgoing: Math.floor(Math.random() * 6),
-      })) as unknown as T;
+    case "getConversationVolumeTrend": {
+      const [sinceMs, untilMs] = demoRange(args);
+      return demoDays(sinceMs, untilMs).map((date) => {
+        const incoming = sampleInt(28, 96, "incoming", date);
+        return {
+          date,
+          customerMessages: incoming,
+          aiReplies: Math.round(incoming * (0.85 + sample01("aiShare", date) * 0.12)),
+          otherOutgoing: sampleInt(0, 6, "other", date),
+        };
+      }) as unknown as T;
+    }
 
-    case "getInterestSignalsTrend":
-      return Array.from({ length: 7 }, (_, i) => ({
-        date: new Date(now - (6 - i) * DAY).toISOString().slice(0, 10),
-        productMentions: 12 + Math.floor(Math.random() * 18),
-        priceQuestions: 5 + Math.floor(Math.random() * 10),
-        informationQuestions: 4 + Math.floor(Math.random() * 8),
-        orderSignals: 1 + Math.floor(Math.random() * 5),
+    case "getInterestSignalsTrend": {
+      const [sinceMs, untilMs] = demoRange(args);
+      return demoDays(sinceMs, untilMs).map((date) => ({
+        date,
+        productMentions: sampleInt(8, 34, "mentions", date),
+        priceQuestions: sampleInt(3, 16, "price", date),
+        informationQuestions: sampleInt(2, 14, "info", date),
+        orderSignals: sampleInt(0, 7, "orders", date),
       })) as unknown as T;
+    }
 
     default:
       // Không bao giờ trả [] im lặng: hàm chưa có mock sẽ làm UI hiểu nhầm là "rỗng".

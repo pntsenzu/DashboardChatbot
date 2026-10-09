@@ -35,6 +35,8 @@ interface AppShellProps {
   user?: ShellUser | null;
   /** true = chưa cấu hình DATA_API_TOKEN, toàn bộ số liệu là dữ liệu mẫu. */
   mockMode?: boolean;
+  /** true = vào bằng nút "Xem thử với dữ liệu mẫu" — số liệu là dữ liệu mẫu hard-code. */
+  demoMode?: boolean;
 }
 
 function initials(user?: ShellUser | null): string {
@@ -316,6 +318,7 @@ export function AppShellClient({
   botStatusIsStale = null,
   user = null,
   mockMode = false,
+  demoMode = false,
 }: AppShellProps) {
   const pathname = usePathname();
   const { t } = useI18n();
@@ -413,8 +416,32 @@ export function AppShellClient({
 
       {/* Cột chính */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Dữ liệu mẫu (chỉ hiện khi chưa cấu hình DATA_API_TOKEN) */}
-        {mockMode && (
+        {/* Chế độ demo — số liệu là dữ liệu MẪU, không phải dữ liệu thật */}
+        {demoMode && (
+          <div
+            role="status"
+            className="flex items-center justify-between gap-2 border-b border-warning-border bg-warning-subtle px-4 py-2 text-xs font-medium text-warning sm:px-6 lg:px-8"
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <AlertTriangle className="size-3.5 flex-shrink-0" aria-hidden="true" />
+              <span className="min-w-0">
+                {t.shell.demoA}
+                <b>{t.shell.demoStrong}</b>
+                {t.shell.demoB}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="flex-shrink-0 rounded-md border border-warning-border px-2 py-1 text-2xs font-semibold transition-colors hover:bg-warning-border/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {t.shell.demoExit}
+            </button>
+          </div>
+        )}
+
+        {/* Dữ liệu mẫu (chỉ hiện khi chưa cấu hình DATA_API_TOKEN và không ở chế độ demo) */}
+        {mockMode && !demoMode && (
           <div
             role="status"
             className="flex items-center gap-2 border-b border-warning-border bg-warning-subtle px-4 py-2 text-xs font-medium text-warning sm:px-6 lg:px-8"

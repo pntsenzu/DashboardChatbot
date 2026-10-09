@@ -130,6 +130,10 @@ export const vi = {
     mockStrong: "dữ liệu mẫu",
     mockB: " — chưa cấu hình ",
     mockC: ". Số liệu không phải dữ liệu thật.",
+    demoA: "Bạn đang xem ",
+    demoStrong: "chế độ demo",
+    demoB: " — số liệu là dữ liệu minh họa, không phải dữ liệu thật.",
+    demoExit: "Thoát demo",
   },
 
   nav: {
@@ -219,6 +223,8 @@ export const vi = {
     emailNoteB: " đã xác minh bởi Google.",
     continueGoogle: "Tiếp tục với Google",
     redirectNote: "Sau khi đăng nhập bạn sẽ quay lại trang đã yêu cầu.",
+    demoTitle: "Xem thử với dữ liệu mẫu",
+    demoNote: "Không cần tài khoản — toàn bộ số liệu là dữ liệu minh họa, không phải dữ liệu thật.",
     notConfiguredTitle: "Chưa cấu hình Google OAuth",
     notConfiguredBodyA: "Hãy điền ",
     notConfiguredBodyB: " và ",
@@ -644,6 +650,10 @@ export const ja: Dict = {
     mockStrong: "サンプルデータ",
     mockB: " を表示中 — ",
     mockC: " が未設定のため、数値は実データではありません。",
+    demoA: "現在 ",
+    demoStrong: "デモモード",
+    demoB: " を表示中 — 数値は見本データで、実データではありません。",
+    demoExit: "デモを終了",
   },
 
   nav: {
@@ -732,6 +742,8 @@ export const ja: Dict = {
     emailNoteB: " メールアドレスのみ利用できます。",
     continueGoogle: "Google で続行",
     redirectNote: "ログイン後、元のページに戻ります。",
+    demoTitle: "サンプルデータで見てみる",
+    demoNote: "アカウント不要 — 数値はすべて見本データで、実データではありません。",
     notConfiguredTitle: "Google OAuth が未設定です",
     notConfiguredBodyA: "",
     notConfiguredBodyB: " と ",
