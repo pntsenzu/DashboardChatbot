@@ -3,7 +3,7 @@ import { rpc } from "@/lib/senzu-api";
 import { fmt } from "@/lib/i18n";
 import { getDict } from "@/lib/i18n-server";
 import { formatMs, formatDateTime, formatNumber } from "@/lib/utils";
-import { resolveRange, toISODateVN } from "@/lib/date-range";
+import { fillDailyTrend, resolveRange, toISODateVN } from "@/lib/date-range";
 import {
   getHeatmapInRange,
   getLatencyInRange,
@@ -54,6 +54,13 @@ export default async function VolumePage({ searchParams }: { searchParams: Searc
       rpc("getCustomersPerBucket", sinceMs, groupBy, untilMs),
       rpc("getConversationVolumeTrend", sinceMs, untilMs),
     ]);
+
+  // Cùng lỗi DEF-14: nguồn tin trả lời theo ngày cũng sparse -> bù ngày 0.
+  const replyDays = fillDailyTrend(replyTrend, sinceMs, untilMs, {
+    customerMessages: 0,
+    aiReplies: 0,
+    otherOutgoing: 0,
+  });
 
   // Tỷ lệ tin trả lời do AI đảm nhiệm = aiReplies / (aiReplies + otherOutgoing).
   // Không có tin trả lời trong kỳ -> `null` để hiện đúng câu "chưa có dữ liệu",
@@ -289,19 +296,19 @@ export default async function VolumePage({ searchParams }: { searchParams: Searc
               <TrendChart
                 title={t.volume.aiTrendChartTitle}
                 description={t.volume.aiTrendChartDesc}
-                categories={replyTrend.map((d) => `${d.date.slice(8, 10)}/${d.date.slice(5, 7)}`)}
+                categories={replyDays.map((d) => `${d.date.slice(8, 10)}/${d.date.slice(5, 7)}`)}
                 series={[
                   {
                     key: "aiReplies",
                     label: t.volume.seriesAi,
                     tone: "success",
-                    values: replyTrend.map((d) => d.aiReplies),
+                    values: replyDays.map((d) => d.aiReplies),
                   },
                   {
                     key: "otherOutgoing",
                     label: t.volume.seriesOther,
                     tone: "warning",
-                    values: replyTrend.map((d) => d.otherOutgoing),
+                    values: replyDays.map((d) => d.otherOutgoing),
                   },
                 ]}
               />

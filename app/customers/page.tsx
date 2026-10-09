@@ -4,7 +4,7 @@ import { rpc } from "@/lib/senzu-api";
 import { fmt } from "@/lib/i18n";
 import { getDict } from "@/lib/i18n-server";
 import { formatDateTime, formatNumber } from "@/lib/utils";
-import { resolveRange, toISODateVN } from "@/lib/date-range";
+import { fillDailyTrend, resolveRange, toISODateVN } from "@/lib/date-range";
 import { getTopCustomersInRange, needsEndBound } from "@/lib/range-aggregates";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
@@ -266,6 +266,13 @@ export default async function CustomersPage({ searchParams }: { searchParams: Se
       rpc("getCustomerActivityTrend", sinceMs, untilMs),
     ]);
 
+  // Cùng lỗi DEF-14: khách hoạt động theo ngày cũng sparse -> bù ngày 0.
+  const activityDays = fillDailyTrend(activityTrend, sinceMs, untilMs, {
+    activeCustomers: 0,
+    newCustomers: 0,
+    returningCustomers: 0,
+  });
+
   const totalInPeriod = periodStats.distinctCustomers;
   const newInPeriod = activityTrend.reduce((sum, d) => sum + d.newCustomers, 0);
   // Khách hoạt động trong kỳ = khách mới (lần đầu nhắn trong kỳ) + khách đã từng nhắn trước đây.
@@ -382,7 +389,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Se
             ) : (
               <TrendChart
                 title={t.customers.activityChartTitle}
-                categories={activityTrend.map(
+                categories={activityDays.map(
                   (d) => `${d.date.slice(8, 10)}/${d.date.slice(5, 7)}`
                 )}
                 series={[
@@ -390,13 +397,13 @@ export default async function CustomersPage({ searchParams }: { searchParams: Se
                     key: "newCustomers",
                     label: t.customers.seriesNew,
                     tone: "success",
-                    values: activityTrend.map((d) => d.newCustomers),
+                    values: activityDays.map((d) => d.newCustomers),
                   },
                   {
                     key: "returningCustomers",
                     label: t.customers.seriesReturning,
                     tone: "info",
-                    values: activityTrend.map((d) => d.returningCustomers),
+                    values: activityDays.map((d) => d.returningCustomers),
                   },
                 ]}
               />

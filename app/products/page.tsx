@@ -4,7 +4,7 @@ import { fmt } from "@/lib/i18n";
 import { getDict } from "@/lib/i18n-server";
 import { formatNumber } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { resolveRange, toISODateVN } from "@/lib/date-range";
+import { fillDailyTrend, resolveRange, toISODateVN } from "@/lib/date-range";
 import {
   getProductMentionSummaryInRange,
   getProductQuestionBreakdownInRange,
@@ -54,6 +54,14 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
       // Nhóm R: hàm đã có nhưng chưa trang nào dùng — lõi của phân tích sở thích.
       rpc("getInterestSignalsTrend", sinceMs, untilMs),
     ]);
+
+  // API trả sparse (chỉ ngày có dữ liệu) -> bù ngày 0 để trục X đủ mọi ngày (DEF-14).
+  const interestDays = fillDailyTrend(interestTrend, sinceMs, untilMs, {
+    productMentions: 0,
+    priceQuestions: 0,
+    informationQuestions: 0,
+    orderSignals: 0,
+  });
 
   /** Ngày theo giờ VN, vd "01/10/2026". */
   const fmtDate = (ms: number) =>
@@ -132,7 +140,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
             ) : (
               <TrendChart
                 title={t.products.interestChartTitle}
-                categories={interestTrend.map(
+                categories={interestDays.map(
                   (d) => `${d.date.slice(8, 10)}/${d.date.slice(5, 7)}`
                 )}
                 series={[
@@ -140,25 +148,25 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
                     key: "productMentions",
                     label: t.products.seriesMentions,
                     tone: "info",
-                    values: interestTrend.map((d) => d.productMentions),
+                    values: interestDays.map((d) => d.productMentions),
                   },
                   {
                     key: "priceQuestions",
                     label: t.products.seriesPrice,
                     tone: "warning",
-                    values: interestTrend.map((d) => d.priceQuestions),
+                    values: interestDays.map((d) => d.priceQuestions),
                   },
                   {
                     key: "informationQuestions",
                     label: t.products.seriesInfo,
                     tone: "success",
-                    values: interestTrend.map((d) => d.informationQuestions),
+                    values: interestDays.map((d) => d.informationQuestions),
                   },
                   {
                     key: "orderSignals",
                     label: t.products.seriesOrder,
                     tone: "primary",
-                    values: interestTrend.map((d) => d.orderSignals),
+                    values: interestDays.map((d) => d.orderSignals),
                   },
                 ]}
               />

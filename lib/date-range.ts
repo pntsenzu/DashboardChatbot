@@ -143,3 +143,44 @@ export function resolveRange(
       return buildDefault();
   }
 }
+
+/**
+ * Liệt kê **mọi ngày** (giờ VN) trong kỳ `[sinceMs, untilMs)` dạng `YYYY-MM-DD`.
+ *
+ * Data API trả trend theo ngày ở dạng *sparse* (chỉ ngày có dữ liệu) — biểu đồ
+ * phải tự bù ngày 0, nếu không trục X chỉ hiện vài mốc trong kỳ (DEF-14).
+ */
+export function daysInPeriodISOVN(
+  sinceMs: number,
+  untilMs: number,
+  maxDays = MAX_CUSTOM_DAYS
+): string[] {
+  const days: string[] = [];
+  for (
+    let ms = startOfDayVN(sinceMs);
+    ms < untilMs && days.length < maxDays;
+    ms += DAY
+  ) {
+    days.push(toISODateVN(ms));
+  }
+  return days;
+}
+
+/**
+ * Bù ngày 0 cho trend sparse: mọi ngày trong kỳ đều có một dòng, ngày nào API
+ * không trả thì dùng `blank`. Mảng đầu vào rỗng vẫn trả về rỗng — để trang hiện
+ * EmptyState thay vì vẽ biểu đồ toàn số 0 (DEF-14).
+ */
+export function fillDailyTrend<T extends { date: string }>(
+  rows: T[],
+  sinceMs: number,
+  untilMs: number,
+  blank: Omit<T, "date">,
+  maxDays = MAX_CUSTOM_DAYS
+): T[] {
+  if (rows.length === 0) return [];
+  const byDate = new Map(rows.map((row) => [row.date, row]));
+  return daysInPeriodISOVN(sinceMs, untilMs, maxDays).map(
+    (date) => ({ date, ...(byDate.get(date) ?? blank) }) as T
+  );
+}
